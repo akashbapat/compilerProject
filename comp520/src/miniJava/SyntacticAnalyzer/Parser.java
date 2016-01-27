@@ -18,13 +18,13 @@ public class Parser {
 	private ErrorReporter reporter;
 	private Token token;
 	private boolean trace = true;
-
+	int i;
 	public Parser(Scanner scanner, ErrorReporter reporter) {
 		this.scanner = scanner;
 		this.reporter = reporter;
 	}
 
-
+//comment
 	/**
 	 * SyntaxError is used to unwind parse stack when parse fails
 	 *
