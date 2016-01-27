@@ -19,6 +19,7 @@ public class Scanner{
 	private ErrorReporter reporter;
 
 	private char currentChar;
+	private TokenKind prevToken;
 	private StringBuilder currentSpelling;
 	
 	private boolean eot = false; 
@@ -90,6 +91,8 @@ public class Scanner{
 		nextChar();
 	}
 
+	
+	
 	private void skipIt() {
 		nextChar();
 	}
@@ -127,4 +130,60 @@ public class Scanner{
 			eot = true;
 		}
 	}
+
+
+
+	
+	private boolean ignoreComments(char starOrSlash){
+		char prevChar;
+		if(starOrSlash== '*'){ //big comment
+			prevChar=currentChar;
+			nextChar();
+			while(currentChar!='/' && prevChar !='*' ){
+				prevChar=currentChar;
+				nextChar();
+				if(eot)
+					return false;
+			}
+			
+		}
+		else {  // single line comment
+			
+			while(currentChar!='\n'){
+				nextChar();
+			}
+			
+				
+		}
+		
+		return true;
+	}
+	
+	private boolean isBrace(){
+		
+		if(currentChar == '{' || currentChar == '}' || currentChar == '('|| currentChar == ')' || currentChar == '[' || currentChar == ']')
+			takeIt();
+			return true;
+		else 
+			return false;
+	}
+	
+	
+	private boolean isBinOp(){
+		
+		switch (currentChar) {
+		//TO DO : take care for /
+		case '+': case '-': case '*': case '3': case '/':
+		case '+':
+			takeIt();
+		 
+
+		default:
+			 return false;
+		} 
+	
+		
+		return true;
+	}
+	
 }
