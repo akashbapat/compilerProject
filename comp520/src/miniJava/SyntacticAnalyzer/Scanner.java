@@ -98,7 +98,14 @@ public class Scanner{
 				return(TokenKind.BINOP);
 			else
 				return (TokenKind.EQUAL);
-
+		case '.':
+			takeIt();
+			return (TokenKind.DOT);
+			
+			
+		case ',':
+			takeIt();
+			return (TokenKind.COMMA);
 		default:
 			scanError("Unrecognized character '" + currentChar + "' in input");
 			return(TokenKind.ERROR);
