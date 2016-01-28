@@ -55,30 +55,49 @@ public class Scanner{
 		
 		if (eot)
 			return(TokenKind.EOT); 
+		
+		if(isBrace())
+			return (TokenKind.BRACE);
+		
+		if(isBinOp())
+			return (TokenKind.BINOP);
+		
+		
+		if(isBrace())
+			return (TokenKind.BRACE);
 
 		// scan Token
 		switch (currentChar) {
-		case '+':
+		case '/':
 			takeIt();
-			return(TokenKind.PLUS);
+			if(currentChar=='*' || currentChar=='/')
+				ignoreComments();
+			else
+				return(TokenKind.BINOP);
 
-		case '*':
+		case '!':
 			takeIt();
-			return(TokenKind.TIMES);
+			
+			if(currentChar=='=')
+				return (TokenKind.BINOP);
+			else
+			return(TokenKind.UNOP);
 
-		case '(': 
+		 
+		case '-':
 			takeIt();
-			return(TokenKind.LPAREN);
-
-		case ')':
+			if(prevToken==TokenKind.NUM || prevToken==TokenKind.ID)
+				return (TokenKind.BINOP);
+			else
+				return (TokenKind.UNOP);
+			
+			
+		case '=':
 			takeIt();
-			return(TokenKind.RPAREN);
-
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			while (isDigit(currentChar))
-				takeIt();
-			return(TokenKind.NUM);
+			if(currentChar=='=')
+				return(TokenKind.BINOP);
+			else
+				return (TokenKind.EQUAL);
 
 		default:
 			scanError("Unrecognized character '" + currentChar + "' in input");
@@ -134,9 +153,9 @@ public class Scanner{
 
 
 	
-	private boolean ignoreComments(char starOrSlash){
+	private boolean ignoreComments(){
 		char prevChar;
-		if(starOrSlash== '*'){ //big comment
+		if(currentChar== '*'){ //big comment
 			prevChar=currentChar;
 			nextChar();
 			while(currentChar!='/' && prevChar !='*' ){
@@ -161,9 +180,10 @@ public class Scanner{
 	
 	private boolean isBrace(){
 		
-		if(currentChar == '{' || currentChar == '}' || currentChar == '('|| currentChar == ')' || currentChar == '[' || currentChar == ']')
+		if(currentChar == '{' || currentChar == '}' || currentChar == '('|| currentChar == ')' || currentChar == '[' || currentChar == ']'){
 			takeIt();
 			return true;
+			}
 		else 
 			return false;
 	}
@@ -173,17 +193,46 @@ public class Scanner{
 		
 		switch (currentChar) {
 		//TO DO : take care for /
-		case '+': case '-': case '*': case '3': case '/':
-		case '+':
+		case '+':  case '*': 
+			takeIt();	
+			return true;
+		case '|':
 			takeIt();
-		 
+			if(currentChar=='|'){
+				takeIt();
+				return true;
+			}
+			else return false;
+		case '>': case '<':
+			
+			takeIt();
+			if(currentChar=='=') {
+				takeIt();
+				return true;
+			}
+			else if(isWhitespace())			
+				return true;
+			
+				
+			else 
+				return false;
+		  
 
 		default:
 			 return false;
 		} 
 	
 		
-		return true;
+		 
+	}
+	
+	
+	private boolean isWhitespace() {
+		
+		if(currentChar== '\n'|| currentChar== ' '|| currentChar== '\r'|| currentChar== '\t')
+			return true;
+		
+		return false;
 	}
 	
 }
