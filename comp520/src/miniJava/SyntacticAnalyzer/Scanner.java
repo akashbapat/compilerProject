@@ -110,6 +110,9 @@ public class Scanner{
 		case ',':
 			takeIt();
 			return (TokenKind.COMMA);
+			
+		case ';':
+			return (TokenKind.SEMICOLON);
 		default:
 			scanError("Unrecognized character '" + currentChar + "' in input");
 			return(TokenKind.ERROR);

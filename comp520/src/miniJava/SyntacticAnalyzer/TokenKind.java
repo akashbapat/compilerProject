@@ -4,4 +4,4 @@
  */
 package miniJava.SyntacticAnalyzer;
 
-public enum TokenKind {KEYWORD, ID, NUM,  EOT, BRACE, BINOP, UNOP, ERROR, EQUAL , DOT, COMMA}
+public enum TokenKind {KEYWORD, ID, NUM,  EOT, BRACE, BINOP, UNOP, ERROR, EQUAL , DOT, COMMA,SEMICOLON}
