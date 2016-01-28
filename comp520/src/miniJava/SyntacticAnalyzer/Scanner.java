@@ -53,118 +53,100 @@ public class Scanner{
 	}
 
 
-	public TokenKind scanToken() {
-		
+	public TokenKind scanToken() 
+	{
+
 		if (eot)
-			return(TokenKind.EOT); 
-		
-		else if(isBrace())
+			return (TokenKind.EOT);
+
+		else if (isBrace())
 			return (TokenKind.BRACE);
-		
-		else	if(isBinOp())
+
+		else if (isBinOp())
 			return (TokenKind.BINOP);
-		
-		
-		else if(isBrace())
+
+		else if (isBrace())
 			return (TokenKind.BRACE);
 
-		// scan Token
- 
-
-		switch (currentChar) {
-		case '/':
-			takeIt();
-			if(currentChar=='*' || currentChar=='/')
-				ignoreComments();
-			else
-				return(TokenKind.BINOP);
-
-		case '!':
-			takeIt();
-			
-			if(currentChar=='=')
-				return (TokenKind.BINOP);
-			else
-			return(TokenKind.UNOP);
-
-		 
-		case '-':
-			takeIt();
-			if(prevToken==TokenKind.NUM || prevToken==TokenKind.ID)
-				return (TokenKind.BINOP);
-			else
-				return (TokenKind.UNOP);
-			
-			
-		case '=':
-			takeIt();
-			if(currentChar=='=')
-				return(TokenKind.BINOP);
-			else
-				return (TokenKind.EQUAL);
-		case '.':
-			takeIt();
-			return (TokenKind.DOT);
-			
-			
-		case ',':
-			takeIt();
-			return (TokenKind.COMMA);
-			
-		case ';':
-			return (TokenKind.SEMICOLON);
-		default:
-			scanError("Unrecognized character '" + currentChar + "' in input");
-			return(TokenKind.ERROR);
-
-		if (isAlphanumeric(currentChar))
-		{
-			while (isAlphanumeric(currentChar))
-				takeIt();
-			if(isKeyword(currentSpelling.toString()))
-			{
-				return(TokenKind.KEYWORD);
-			}
-			else
-			{
-				prevToken = TokenKind.ID;
-				return(TokenKind.ID);
-			}
-
- 
-		if (isAlphanumeric(currentChar))
-		{
-			while (isAlphanumeric(currentChar))
-				takeIt();
-			if(isKeyword(currentSpelling.toString()))
-			{
-				return(TokenKind.KEYWORD);
-			}
-			else
-			{
-				prevToken = TokenKind.ID;
-				return(TokenKind.ID);
-			}
- 
-		}
-		else
+		else 
 		{
 			switch (currentChar) {
 			
-			case '0': case '1': case '2': case '3': case '4':
-			case '5': case '6': case '7': case '8': case '9':
+			case 'a':  case 'b':  case 'c':  case 'd':  case 'e':
+		    case 'f':  case 'g':  case 'h':  case 'i':  case 'j':
+		    case 'k':  case 'l':  case 'm':  case 'n':  case 'o':
+		    case 'p':  case 'q':  case 'r':  case 's':  case 't':
+		    case 'u':  case 'v':  case 'w':  case 'x':  case 'y':
+		    case 'z':
+		    case 'A':  case 'B':  case 'C':  case 'D':  case 'E':
+		    case 'F':  case 'G':  case 'H':  case 'I':  case 'J':
+		    case 'K':  case 'L':  case 'M':  case 'N':  case 'O':
+		    case 'P':  case 'Q':  case 'R':  case 'S':  case 'T':
+		    case 'U':  case 'V':  case 'W':  case 'X':  case 'Y':
+		    case 'Z':
+		    	while (isAlphabet(currentChar) || isDigit(currentChar))
+					takeIt();
+				if (isKeyword(currentSpelling.toString())) 
+				{
+					return (TokenKind.KEYWORD);
+				} 
+				else 
+				{
+					prevToken = TokenKind.ID;
+					return (TokenKind.ID);
+				}	
+				
+		    case '0':			case '1':			case '2':			case '3':			case '4':
+		    case '5':			case '6':			case '7':			case '8':			case '9':
 				while (isDigit(currentChar))
 					takeIt();
 				prevToken = TokenKind.NUM;
-				return(TokenKind.NUM);
+				return (TokenKind.NUM);	
+				
+			case '/':
+				takeIt();
+				if (currentChar == '*' || currentChar == '/')
+					ignoreComments();
+				else
+					return (TokenKind.BINOP);
 
+			case '!':
+				takeIt();
+
+				if (currentChar == '=')
+					return (TokenKind.BINOP);
+				else
+					return (TokenKind.UNOP);
+
+			case '-':
+				takeIt();
+				if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID)
+					return (TokenKind.BINOP);
+				else
+					return (TokenKind.UNOP);
+
+			case '=':
+				takeIt();
+				if (currentChar == '=')
+					return (TokenKind.BINOP);
+				else
+					return (TokenKind.EQUAL);
+			case '.':
+				takeIt();
+				return (TokenKind.DOT);
+
+			case ',':
+				takeIt();
+				return (TokenKind.COMMA);
+
+			case ';':
+				return (TokenKind.SEMICOLON);
 			default:
 				scanError("Unrecognized character '" + currentChar + "' in input");
-				return(TokenKind.ERROR);
+				return (TokenKind.ERROR);
 			}
-			
+
 		}
-		
 
 	}
 
@@ -183,10 +165,10 @@ public class Scanner{
 		return (c >= '0') && (c <= '9');
 	}
 	
-	private boolean isAlphanumeric(char c) {
+	private boolean isAlphabet(char c) {
 		boolean isCapAlpha = (c >= 'A') && (c <= 'Z');
 		boolean isSmallAlpha = (c >= 'a') && (c <= 'z');
-		return isCapAlpha || isSmallAlpha || isDigit(c);
+		return isCapAlpha || isSmallAlpha;
 	}
 	
 	private void initializeHMap()
