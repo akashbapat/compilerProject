@@ -69,7 +69,7 @@ public class Scanner{
 			return (TokenKind.BRACE);
 
 		// scan Token
-<<<<<<< HEAD
+ 
 
 		switch (currentChar) {
 		case '/':
@@ -128,7 +128,7 @@ public class Scanner{
 				return(TokenKind.ID);
 			}
 
-=======
+ 
 		if (isAlphanumeric(currentChar))
 		{
 			while (isAlphanumeric(currentChar))
@@ -142,7 +142,7 @@ public class Scanner{
 				prevToken = TokenKind.ID;
 				return(TokenKind.ID);
 			}
->>>>>>> refs/remotes/origin/master
+ 
 		}
 		else
 		{
