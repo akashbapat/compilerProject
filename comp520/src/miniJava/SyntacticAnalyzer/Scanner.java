@@ -12,12 +12,14 @@ package miniJava.SyntacticAnalyzer;
 
 import java.io.*;
 import miniJava.ErrorReporter;
- 
+import java.util.HashMap;
+import java.lang.String;
+
 public class Scanner{
 
 	private InputStream inputStream;
 	private ErrorReporter reporter;
-
+	private HashMap<String,Integer> keywordHmap; 
 	private char currentChar;
 	private TokenKind prevToken;
 	private StringBuilder currentSpelling;
@@ -27,7 +29,7 @@ public class Scanner{
 	public Scanner(InputStream inputStream, ErrorReporter reporter) {
 		this.inputStream = inputStream;
 		this.reporter = reporter;
-
+		this.keywordHmap = new HashMap<String, Integer>();
 		// initialize scanner state
 		readChar();
 	}
@@ -56,17 +58,18 @@ public class Scanner{
 		if (eot)
 			return(TokenKind.EOT); 
 		
-		if(isBrace())
+		else if(isBrace())
 			return (TokenKind.BRACE);
 		
-		if(isBinOp())
+		else	if(isBinOp())
 			return (TokenKind.BINOP);
 		
 		
-		if(isBrace())
+		else if(isBrace())
 			return (TokenKind.BRACE);
 
 		// scan Token
+
 		switch (currentChar) {
 		case '/':
 			takeIt();
@@ -109,7 +112,41 @@ public class Scanner{
 		default:
 			scanError("Unrecognized character '" + currentChar + "' in input");
 			return(TokenKind.ERROR);
+
+		if (isAlphanumeric(currentChar))
+		{
+			while (isAlphanumeric(currentChar))
+				takeIt();
+			if(isKeyword(currentSpelling.toString()))
+			{
+				return(TokenKind.KEYWORD);
+			}
+			else
+			{
+				prevToken = TokenKind.ID;
+				return(TokenKind.ID);
+			}
+
 		}
+		else
+		{
+			switch (currentChar) {
+			
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
+				while (isDigit(currentChar))
+					takeIt();
+				prevToken = TokenKind.NUM;
+				return(TokenKind.NUM);
+
+			default:
+				scanError("Unrecognized character '" + currentChar + "' in input");
+				return(TokenKind.ERROR);
+			}
+			
+		}
+		
+
 	}
 
 	private void takeIt() {
@@ -126,7 +163,32 @@ public class Scanner{
 	private boolean isDigit(char c) {
 		return (c >= '0') && (c <= '9');
 	}
-
+	
+	private boolean isAlphanumeric(char c) {
+		boolean isCapAlpha = (c >= 'A') && (c <= 'Z');
+		boolean isSmallAlpha = (c >= 'a') && (c <= 'z');
+		return isCapAlpha || isSmallAlpha || isDigit(c);
+	}
+	
+	private void initializeHMap()
+	{
+		keywordHmap.put("public",1);
+		keywordHmap.put("private",1);
+		keywordHmap.put("class",1);
+		keywordHmap.put("void",1);
+		keywordHmap.put("static",1);
+		keywordHmap.put("this",1);
+		keywordHmap.put("return",1);
+		keywordHmap.put("if",1);
+		keywordHmap.put("else",1);
+		keywordHmap.put("while",1);
+		keywordHmap.put("new",1);
+		keywordHmap.put("true",1);
+		keywordHmap.put("false",1);
+	}
+	private boolean isKeyword(String s){
+		return this.keywordHmap.containsKey(s);
+	}
 	private void scanError(String m) {
 		reporter.reportError("Scan Error:  " + m);
 	}
@@ -230,7 +292,7 @@ public class Scanner{
 		} 
 	
 		
-		 
+	
 	}
 	
 	
