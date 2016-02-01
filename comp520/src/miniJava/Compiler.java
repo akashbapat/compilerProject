@@ -22,7 +22,9 @@ import java.io.InputStream;
 
 import miniJava.SyntacticAnalyzer.Parser;
 import miniJava.SyntacticAnalyzer.Scanner;
-
+//Remove later
+import miniJava.SyntacticAnalyzer.Token;
+import miniJava.SyntacticAnalyzer.TokenKind;
 /**
  * Recognize whether input is an arithmetic expression as defined by
  * a simple context free grammar for expressions and a scanner grammar.
@@ -54,18 +56,27 @@ public class Compiler {
 		ErrorReporter reporter = new ErrorReporter();
 		Scanner scanner = new Scanner(inputStream, reporter);
 		Parser parser = new Parser(scanner, reporter);
-
-		System.out.println("Syntactic analysis ... ");
-		parser.parse();
-		System.out.print("Syntactic analysis complete:  ");
-		if (reporter.hasErrors()) {
-			System.out.println("INVALID arithmetic expression");
-			System.exit(4);
-		}
-		else {
-			System.out.println("valid arithmetic expression");
-			System.exit(0);
-		}
+		//Code for testing scanner
+		Token t;
+		do
+		{
+			t = scanner.scan();
+			System.out.print(t.kind);
+			System.out.print(" ");
+			System.out.println(t.spelling);
+			
+		}while (t.kind != TokenKind.EOT);
+//		System.out.println("Syntactic analysis ... ");
+//		parser.parse();
+//		System.out.print("Syntactic analysis complete:  ");
+//		if (reporter.hasErrors()) {
+//			System.out.println("INVALID arithmetic expression");
+//			System.exit(4);
+//		}
+//		else {
+//			System.out.println("valid arithmetic expression");
+//			System.exit(0);
+//		}
 	}
 }
 

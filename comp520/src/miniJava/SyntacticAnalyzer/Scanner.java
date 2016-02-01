@@ -30,6 +30,7 @@ public class Scanner{
 		this.inputStream = inputStream;
 		this.reporter = reporter;
 		this.keywordHmap = new HashMap<String, Integer>();
+		initializeHMap();
 		// initialize scanner state
 		readChar();
 	}
@@ -47,7 +48,6 @@ public class Scanner{
 		// collect spelling and identify token kind
 		currentSpelling = new StringBuilder();
 		TokenKind kind = scanToken();
-
 		// return new token
 		return new Token(kind, currentSpelling.toString());
 	}
@@ -56,22 +56,23 @@ public class Scanner{
 	public TokenKind scanToken() 
 	{
 
-		if (eot)
+		while (!eot && (currentChar == ' ' ||  currentChar == '\r' || currentChar == '\n' || currentChar == '\t') )
+			skipIt();
+		if (eot){
+			prevToken = TokenKind.EOT;
 			return (TokenKind.EOT);
-
-		else if (isBrace())
+		}
+		else if (isBrace()){
+			prevToken = TokenKind.BRACE;
 			return (TokenKind.BRACE);
-
-		else if (isBinOp())
+		}
+		else if (isBinOp()){
+			prevToken = TokenKind.BINOP;
 			return (TokenKind.BINOP);
-
-		else if (isBrace())
-			return (TokenKind.BRACE);
-
+		}
 		else 
 		{
 			switch (currentChar) {
-			
 			case 'a':  case 'b':  case 'c':  case 'd':  case 'e':
 		    case 'f':  case 'g':  case 'h':  case 'i':  case 'j':
 		    case 'k':  case 'l':  case 'm':  case 'n':  case 'o':
@@ -86,8 +87,8 @@ public class Scanner{
 		    case 'Z':
 		    	while (isAlphabet(currentChar) || isDigit(currentChar))
 					takeIt();
-				if (isKeyword(currentSpelling.toString())) 
-				{
+		    	if (isKeyword(currentSpelling.toString())) {
+					prevToken = TokenKind.KEYWORD;
 					return (TokenKind.KEYWORD);
 				} 
 				else 
@@ -102,47 +103,102 @@ public class Scanner{
 					takeIt();
 				prevToken = TokenKind.NUM;
 				return (TokenKind.NUM);	
+			
 				
+		    case '|':
+				takeIt();
+				if(currentChar=='|'){
+					takeIt();
+					prevToken = TokenKind.BINOP;
+					return (TokenKind.BINOP);
+				}
+				else {
+					scanError("Unrecognized character '" + '|' + "' in input");
+					prevToken = TokenKind.ERROR;
+					takeIt();
+					return (TokenKind.ERROR);
+				}
+				
+			case '&':
+				takeIt();
+				if(currentChar=='&'){
+					takeIt();
+					prevToken = TokenKind.BINOP;
+					return (TokenKind.BINOP);
+				}
+				else {
+					scanError("Unrecognized character '" + '&' + "' in input");
+					skipIt();
+					prevToken = TokenKind.ERROR;
+					return (TokenKind.ERROR);
+				}	
 			case '/':
 				takeIt();
-				if (currentChar == '*' || currentChar == '/')
-					ignoreComments();
-				else
+				if (currentChar == '*' || currentChar == '/'){
+					if(ignoreComments()){
+						return scanToken();
+					}
+					else{
+						scanError("Unterminated multi-line comment");
+						prevToken = TokenKind.ERROR;
+						return (TokenKind.ERROR);
+					}
+				}
+				else{
+					prevToken = TokenKind.BINOP;
 					return (TokenKind.BINOP);
-
+				}
 			case '!':
 				takeIt();
-
-				if (currentChar == '=')
+				if (currentChar == '='){
+					takeIt();
+					prevToken = TokenKind.BINOP;
 					return (TokenKind.BINOP);
-				else
+				}
+				else{
+					prevToken = TokenKind.UNOP;
 					return (TokenKind.UNOP);
-
+				}
 			case '-':
 				takeIt();
-				if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID)
+				if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID){
+					prevToken = TokenKind.BINOP;
 					return (TokenKind.BINOP);
-				else
+				}
+				else{
+					prevToken = TokenKind.UNOP;
 					return (TokenKind.UNOP);
-
+				}
 			case '=':
 				takeIt();
-				if (currentChar == '=')
+				if (currentChar == '='){
+					takeIt();
+					prevToken = TokenKind.BINOP;
 					return (TokenKind.BINOP);
-				else
+				}
+				else{
+					prevToken = TokenKind.EQUAL;
 					return (TokenKind.EQUAL);
+					}
 			case '.':
 				takeIt();
+				prevToken = TokenKind.DOT;
 				return (TokenKind.DOT);
 
 			case ',':
 				takeIt();
+				prevToken = TokenKind.COMMA;
 				return (TokenKind.COMMA);
 
 			case ';':
+				takeIt();
+				prevToken = TokenKind.SEMICOLON;
 				return (TokenKind.SEMICOLON);
+			
 			default:
 				scanError("Unrecognized character '" + currentChar + "' in input");
+				prevToken = TokenKind.ERROR;
+				takeIt();
 				return (TokenKind.ERROR);
 			}
 
@@ -186,6 +242,8 @@ public class Scanner{
 		keywordHmap.put("new",1);
 		keywordHmap.put("true",1);
 		keywordHmap.put("false",1);
+		keywordHmap.put("int",1);
+		keywordHmap.put("boolean",1);
 	}
 	private boolean isKeyword(String s){
 		return this.keywordHmap.containsKey(s);
@@ -193,7 +251,6 @@ public class Scanner{
 	private void scanError(String m) {
 		reporter.reportError("Scan Error:  " + m);
 	}
-
 
 	private final static char eolUnix = '\n';
 	private final static char eolWindows = '\r';
@@ -211,7 +268,7 @@ public class Scanner{
 		try {
 			int c = inputStream.read();
 			currentChar = (char) c;
-			if (c == -1 || currentChar == eolUnix || currentChar == eolWindows) {
+			if (c == -1 ) {
 				eot = true;
 			}
 		} catch (IOException e) {
@@ -228,21 +285,25 @@ public class Scanner{
 		if(currentChar== '*'){ //big comment
 			prevChar=currentChar;
 			nextChar();
-			while(currentChar!='/' && prevChar !='*' ){
+			do{
 				prevChar=currentChar;
 				nextChar();
 				if(eot)
 					return false;
-			}
+			}while(!(currentChar=='/' && prevChar =='*') );
 			
+			nextChar();
+			currentSpelling.setLength(0);
 		}
 		else {  // single line comment
 			
-			while(currentChar!='\n'){
+			while(! (currentChar=='\n' || currentChar=='\r')){
 				nextChar();
 			}
-			
-				
+			nextChar();
+			if(currentChar=='\n')
+				skipIt();
+			currentSpelling.setLength(0);
 		}
 		
 		return true;
@@ -266,13 +327,7 @@ public class Scanner{
 		case '+':  case '*': 
 			takeIt();	
 			return true;
-		case '|':
-			takeIt();
-			if(currentChar=='|'){
-				takeIt();
-				return true;
-			}
-			else return false;
+		
 		case '>': case '<':
 			
 			takeIt();
@@ -280,13 +335,10 @@ public class Scanner{
 				takeIt();
 				return true;
 			}
-			else if(isWhitespace())			
+			else 
 				return true;
 			
-				
-			else 
-				return false;
-		  
+	
 
 		default:
 			 return false;

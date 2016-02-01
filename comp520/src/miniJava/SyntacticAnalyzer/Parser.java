@@ -53,10 +53,10 @@ public class Parser {
 	//    E ::= T (("+" | "*") T)*     
 	private void parseE() throws SyntaxError {
 		parseT();
-		while (token.kind == TokenKind.PLUS || token.kind == TokenKind.TIMES) {
-			acceptIt();
-			parseT();
-		} 
+//		while (token.kind == TokenKind.PLUS || token.kind == TokenKind.TIMES) {
+//			acceptIt();
+//			parseT();
+//		} 
 	}
 
 	//   T ::= num | "(" E ")"
@@ -67,11 +67,11 @@ public class Parser {
 			acceptIt();
 			return;
 
-		case LPAREN:
-			acceptIt();
-			parseE();
-			accept(TokenKind.RPAREN);
-			return;
+//		case LPAREN:
+//			acceptIt();
+//			parseE();
+//			accept(TokenKind.RPAREN);
+//			return;
 
 		default:
 			parseError("Invalid Term - expecting NUM or LPAREN but found " + token.kind);
