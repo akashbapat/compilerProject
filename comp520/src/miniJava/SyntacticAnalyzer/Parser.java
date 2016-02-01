@@ -126,8 +126,15 @@ public class Parser {
 				System.out.println(token.spelling);
 				acceptIt();
 				}
-				else
-				parseError("Invalid Term - expecting "+ tk + " " + tSpell + " but found " + token.kind + " " + token.spelling);
+				else{
+					if(tk == TokenKind.ID)
+						parseError("Invalid Term - expecting "+ tk + " but found " + token.kind + " " + token.spelling);
+					
+					else
+						parseError("Invalid Term - expecting "+ tk + " " + tSpell + " but found " + token.kind + " " + token.spelling);
+				
+				}
+				
 		 
 	}
 	
