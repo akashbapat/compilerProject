@@ -47,7 +47,7 @@ public class Parser {
 	//    P ::= (CD)*$
 	private void parseP() throws SyntaxError {
 		System.out.print(token.kind + " " + token.spelling + "*");
-		 while(token.kind == TokenKind.KEYWORD && token.spelling =="class")
+		 while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class"))
 			 parseCD();
 		accept(TokenKind.EOT);
 	}
@@ -121,7 +121,7 @@ public class Parser {
 	//parses braces and checks for brace type
 	private void parseSpecificToken(TokenKind tk, String tSpell) throws SyntaxError {
 		 	
-			if(token.kind ==tk && tSpell==token.spelling  ){
+			if(token.kind ==tk && tSpell.equals(token.spelling)  ){
 				System.out.print(token.kind + " ");
 				System.out.println(token.spelling);
 				acceptIt();
@@ -136,7 +136,7 @@ public class Parser {
 	//R ::=(this|id)(.id)*
 	private void parseR() throws SyntaxError {
 		
-		if(token.kind ==TokenKind.KEYWORD && token.spelling == "this")
+		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("this"))
 			 acceptIt();
 			 
 			else if (token.kind ==TokenKind.ID)
@@ -161,7 +161,7 @@ private void parseT() throws SyntaxError {
 
 	case ID:
 		acceptIt();
-		 if(token.kind==TokenKind.BRACE && token.spelling =="["){
+		 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 			 acceptIt();
 			 parseSpecificToken(TokenKind.BRACE,"]");
 		 }
@@ -169,12 +169,12 @@ private void parseT() throws SyntaxError {
 		return;
 
 	case KEYWORD:
-		if(token.spelling =="boolean")
+		if(token.spelling.equals("boolean"))
 			acceptIt();
 		
-		else if (token.spelling =="int"){
+		else if (token.spelling.equals("int")){
 			acceptIt();
-			 if(token.kind==TokenKind.BRACE && token.spelling =="["){
+			 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 				 acceptIt();
 				 parseSpecificToken(TokenKind.BRACE,"]");
 			 }
@@ -194,7 +194,7 @@ private void parseT() throws SyntaxError {
 //A ::=static?
 	private void parseA() throws SyntaxError {
 		
-		if(token.kind ==TokenKind.KEYWORD && token.spelling == "static")
+		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("static"))
 			 acceptIt();
 		 
 	}
@@ -204,7 +204,7 @@ private void parseT() throws SyntaxError {
 	//V ::=(public|private)?
 		private void parseV() throws SyntaxError {
 			
-			if(token.kind ==TokenKind.KEYWORD && ( token.spelling == "public" || token.spelling == "private"))
+			if(token.kind ==TokenKind.KEYWORD && ( token.spelling.equals("public") || token.spelling.equals("private")))
 				 acceptIt();
 			 
 		}
@@ -240,16 +240,16 @@ private void parseT() throws SyntaxError {
 			parseV();
 			parseA();
 			
-			if(token.kind ==TokenKind.KEYWORD &&  token.spelling == "void" ){
+			if(token.kind ==TokenKind.KEYWORD &&  token.spelling.equals("void") ){
 				
 				parseSpecificToken(TokenKind.ID, token.spelling);
 				
-				if(token.spelling =="boolean" || token.spelling =="int" || token.kind ==TokenKind.ID)
+				if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.kind ==TokenKind.ID)
 					 parsePL();
 				
 				parseSpecificToken(TokenKind.BRACE, "{");
 				
-				while(token.spelling!="}")
+				while(!token.spelling.equals("}"))
 					parseS();
 				
 				parseSpecificToken(TokenKind.BRACE, "}");
@@ -259,12 +259,12 @@ private void parseT() throws SyntaxError {
 				parseT();
 				parseSpecificToken(TokenKind.ID, token.spelling);
 				
-				 if(token.spelling =="boolean" || token.spelling =="int" || token.kind ==TokenKind.ID)
+				 if(token.spelling.equals("boolean") || token.spelling.equals("int")  || token.kind ==TokenKind.ID)
 					 parsePL();
 				
 				parseSpecificToken(TokenKind.BRACE, "{");
 				
-				while(token.spelling!="}")
+				while(!token.spelling.equals("}"))
 					parseS();
 				
 				parseSpecificToken(TokenKind.BRACE, "}");
@@ -315,7 +315,7 @@ private void parseT() throws SyntaxError {
 
 			case BRACE:
 				parseSpecificToken(TokenKind.BRACE, "{");
-				while(token.spelling!="}")
+				while(!token.spelling.equals("}"))
 					parseS();
 				
 				parseSpecificToken(TokenKind.BRACE, "}");
@@ -324,7 +324,7 @@ private void parseT() throws SyntaxError {
 
 			case KEYWORD:
 				
-					 if(token.spelling == "boolean"){
+					 if(token.spelling.equals("boolean") ){
 						 acceptIt();
 						 parseSpecificToken(TokenKind.ID, token.spelling);
 						 parseSpecificToken(TokenKind.EQUAL, "=");
@@ -332,9 +332,9 @@ private void parseT() throws SyntaxError {
 						 parseSpecificToken(TokenKind.SEMICOLON, ";");
 					 }
 					 
-					 else  if(token.spelling == "int"){
+					 else  if(  token.spelling.equals("int") ){
 						 acceptIt();
-						 if(token.kind==TokenKind.BRACE && token.spelling =="["){
+						 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 							 acceptIt();
 							 parseSpecificToken(TokenKind.BRACE,"]");
 						 }
@@ -347,7 +347,7 @@ private void parseT() throws SyntaxError {
 					 }
 					 
 					 
-					 else  if(token.spelling == "return"){
+					 else  if(token.spelling.equals("return")){
 						 acceptIt();
 						 
 						 while(token.kind!=TokenKind.SEMICOLON)
@@ -357,7 +357,7 @@ private void parseT() throws SyntaxError {
 						   
 					 }
 					 
-					 else  if(token.spelling == "if"){
+					 else  if(token.spelling.equals("if")){
 						 acceptIt();
 						 
 						 parseSpecificToken(TokenKind.BRACE, "(");
@@ -366,7 +366,7 @@ private void parseT() throws SyntaxError {
 						 
 						 parseS();
 						 
-						 if(token.spelling == "else" && token.kind==TokenKind.KEYWORD){
+						 if(token.spelling.equals("else") && token.kind==TokenKind.KEYWORD){
 							 acceptIt();
 							 parseS();
 						 }
@@ -375,7 +375,7 @@ private void parseT() throws SyntaxError {
 					 }
 					 
 					 
-					 else  if(token.spelling == "while"){
+					 else  if(token.spelling.equals( "while")){
 						 acceptIt();
 						 
 						 parseSpecificToken(TokenKind.BRACE, "(");
@@ -385,7 +385,7 @@ private void parseT() throws SyntaxError {
 						  
 						 }
 					 
-					 else  if(token.spelling == "this"){
+					 else  if(token.spelling.equals("this")){
 						 acceptIt();
 						 
 						 while(token.kind == TokenKind.DOT){
@@ -436,10 +436,10 @@ private void parseT() throws SyntaxError {
 							 parseSpecificToken(TokenKind.SEMICOLON,";"); 
 				 }
 				 
-				 else if (token.kind == TokenKind.BRACE && token.spelling == "["){
+				 else if (token.kind == TokenKind.BRACE && token.spelling.equals("[")){
 					 acceptIt();
 					 
-					 if(token.kind == TokenKind.BRACE && token.spelling == "]"){
+					 if(token.kind == TokenKind.BRACE && token.spelling.equals("]")){
 						 acceptIt();
 						 parseSpecificToken(TokenKind.ID, token.spelling);
 						 parseSpecificToken(TokenKind.EQUAL,  "=");
@@ -480,21 +480,21 @@ private void parseT() throws SyntaxError {
 				
 			case ID:
 				acceptIt();
-				if(token.spelling == "[" && token.kind == TokenKind.BRACE ){
+				if(token.spelling.equals("[") && token.kind == TokenKind.BRACE ){
 					acceptIt();
 					parseE();
 					parseSpecificToken(TokenKind.BRACE, "]");
 				}
-				else if(token.spelling == "." && token.kind == TokenKind.DOT ){
+				else if(token.spelling.equals(".") && token.kind == TokenKind.DOT ){
 					
 					while(token.kind==TokenKind.DOT){
 						acceptIt();
 						parseSpecificToken(TokenKind.ID, token.spelling);
 						}
 					
-					if(token.spelling == "(" && token.kind == TokenKind.BRACE){
+					if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
 						acceptIt();
-						 if(token.spelling != ")" )
+						 if(!token.spelling.equals(")") )
 							 parseAL();
 						 parseSpecificToken(TokenKind.BRACE, ")");
 					}
@@ -507,13 +507,13 @@ private void parseT() throws SyntaxError {
 				
 			case KEYWORD:
 				
-				if(token.spelling == "true" || token.spelling == "false" )
+				if(token.spelling.equals("true") || token.spelling.equals("false") )
 					acceptIt();
 				
-				else if(token.spelling == "new" ){
+				else if(token.spelling.equals("new") ){
 					acceptIt();
 					
-					if(token.spelling == "int" && token.kind == TokenKind.KEYWORD ){
+					if(token.spelling.equals("int") && token.kind == TokenKind.KEYWORD ){
 						parseSpecificToken(TokenKind.BRACE, "[");
 						parseE();
 						parseSpecificToken(TokenKind.BRACE, "]");
@@ -521,11 +521,11 @@ private void parseT() throws SyntaxError {
 					else if(token.kind == TokenKind.ID){
 						acceptIt();
 						
-						if(token.spelling == "(" && token.kind == TokenKind.BRACE){
+						if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
 							acceptIt();
 							parseSpecificToken(TokenKind.BRACE, ")");
 						}
-						else if(token.spelling == "[" && token.kind == TokenKind.BRACE){
+						else if(token.spelling.equals("[") && token.kind == TokenKind.BRACE){
 							acceptIt();
 							parseE();
 							parseSpecificToken(TokenKind.BRACE, "]");
@@ -537,16 +537,16 @@ private void parseT() throws SyntaxError {
 						parseError("Invalid Term - expecting ID or new/int but found " + token.kind + token.spelling);
 				}
 				
-				else if(token.spelling == "this"){
+				else if(token.spelling.equals("this")){
 					
 					while(token.kind == TokenKind.DOT ){
 						acceptIt();
 						parseSpecificToken(TokenKind.ID, token.spelling);
 					}
 					
-					if(token.spelling == "(" && token.kind == TokenKind.BRACE){
+					if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
 						acceptIt();
-						 if(token.spelling != ")" )
+						 if(!token.spelling.equals(")") )
 							 parseAL();
 						 parseSpecificToken(TokenKind.BRACE, ")");
 					}
