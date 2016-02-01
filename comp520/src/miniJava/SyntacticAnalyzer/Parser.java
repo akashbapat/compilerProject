@@ -46,7 +46,7 @@ public class Parser {
 
 	//    P ::= (CD)*$
 	private void parseP() throws SyntaxError {
-		
+		System.out.print(token.kind + " " + token.spelling + "*");
 		 while(token.kind == TokenKind.KEYWORD && token.spelling =="class")
 			 parseCD();
 		accept(TokenKind.EOT);
@@ -120,9 +120,12 @@ public class Parser {
 	
 	//parses braces and checks for brace type
 	private void parseSpecificToken(TokenKind tk, String tSpell) throws SyntaxError {
-		 
-			if(token.kind ==tk && tSpell==token.spelling  )
+		 	
+			if(token.kind ==tk && tSpell==token.spelling  ){
+				System.out.print(token.kind + " ");
+				System.out.println(token.spelling);
 				acceptIt();
+				}
 				else
 				parseError("Invalid Term - expecting "+ tk + tSpell + "but found " + token.kind + token.spelling);
 		 
