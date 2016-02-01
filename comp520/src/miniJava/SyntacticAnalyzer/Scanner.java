@@ -85,7 +85,7 @@ public class Scanner{
 		    case 'P':  case 'Q':  case 'R':  case 'S':  case 'T':
 		    case 'U':  case 'V':  case 'W':  case 'X':  case 'Y':
 		    case 'Z':
-		    	while (isAlphabet(currentChar) || isDigit(currentChar))
+		    	while (isAlphabet(currentChar) || isDigit(currentChar) || currentChar=='_')
 					takeIt();
 		    	if (isKeyword(currentSpelling.toString())) {
 					prevToken = TokenKind.KEYWORD;

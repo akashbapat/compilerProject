@@ -127,7 +127,7 @@ public class Parser {
 				acceptIt();
 				}
 				else
-				parseError("Invalid Term - expecting "+ tk + tSpell + "but found " + token.kind + token.spelling);
+				parseError("Invalid Term - expecting "+ tk + " " + tSpell + " but found " + token.kind + " " + token.spelling);
 		 
 	}
 	
@@ -166,8 +166,7 @@ private void parseT() throws SyntaxError {
 			 parseSpecificToken(TokenKind.BRACE,"]");
 		 }
 		
-		return;
-
+		 break;
 	case KEYWORD:
 		if(token.spelling.equals("boolean"))
 			acceptIt();
@@ -182,8 +181,7 @@ private void parseT() throws SyntaxError {
 		else 
 			parseError("Invalid Term - expecting int or boolean but found " + token.spelling);
 		 
-		return;
-
+		break;
 	default:
 		parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
 	}
@@ -237,15 +235,19 @@ private void parseT() throws SyntaxError {
 			
 			parseSpecificToken(TokenKind.BRACE, "{");
 			
+				
+			while(!token.spelling.equals("}")){
+			
 			parseV();
 			parseA();
 			
 			if(token.kind ==TokenKind.KEYWORD &&  token.spelling.equals("void") ){
-				
+				acceptIt();
 				parseSpecificToken(TokenKind.ID, token.spelling);
-				
+				parseSpecificToken(TokenKind.BRACE, "(");
 				if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.kind ==TokenKind.ID)
 					 parsePL();
+				parseSpecificToken(TokenKind.BRACE, ")");
 				
 				parseSpecificToken(TokenKind.BRACE, "{");
 				
@@ -253,25 +255,38 @@ private void parseT() throws SyntaxError {
 					parseS();
 				
 				parseSpecificToken(TokenKind.BRACE, "}");
+				
 				
 			}
 			else{
 				parseT();
 				parseSpecificToken(TokenKind.ID, token.spelling);
 				
-				 if(token.spelling.equals("boolean") || token.spelling.equals("int")  || token.kind ==TokenKind.ID)
-					 parsePL();
+				if(token.spelling.equals(";") && token.kind == TokenKind.SEMICOLON){
+					acceptIt();
+				//System.out.println(token.kind + " " + token.spelling);
 				
-				parseSpecificToken(TokenKind.BRACE, "{");
-				
-				while(!token.spelling.equals("}"))
-					parseS();
-				
-				parseSpecificToken(TokenKind.BRACE, "}");
-				
+				}
+				else{	
+					parseSpecificToken(TokenKind.BRACE, "(");
+						 if(token.spelling.equals("boolean") || token.spelling.equals("int")  || token.kind ==TokenKind.ID)
+							 parsePL();
+						 
+						parseSpecificToken(TokenKind.BRACE, ")");
+						 
+						parseSpecificToken(TokenKind.BRACE, "{");
+						
+						while(!token.spelling.equals("}"))
+							parseS();
+						
+						parseSpecificToken(TokenKind.BRACE, "}");
+				}
 			}
+		}
+			
+	 parseSpecificToken(TokenKind.BRACE, "}");
 				
-	}
+	}	
 		
 		
 		
@@ -310,7 +325,7 @@ private void parseT() throws SyntaxError {
 	//S ::= 
 		private void parseS() throws SyntaxError {
 			
-			 
+		System.out.println("In S");	 
 			switch (token.kind) {
 
 			case BRACE:
@@ -321,7 +336,7 @@ private void parseT() throws SyntaxError {
 				parseSpecificToken(TokenKind.BRACE, "}");
 				
 				 
-
+				break;
 			case KEYWORD:
 				
 					 if(token.spelling.equals("boolean") ){
@@ -398,22 +413,26 @@ private void parseT() throws SyntaxError {
 									 parseE();
 																	
 								 }
-								 else if(token.kind != TokenKind.SEMICOLON)
-									 	parseAL();
+								 else if(token.kind == TokenKind.BRACE   && token.spelling.equals("(")) {
 									 	
-								 parseSpecificToken(TokenKind.SEMICOLON,";"); 
-								  
-								  
-						  
+									 acceptIt();
+									 	if ( !token.spelling.equals(")"))
+									 		parseAL();
+									 	
+									 	parseSpecificToken(TokenKind.BRACE, ")");
+								 }
+								 
+								 else
+									 parseError("Invalid Term - expecting   = or ( but found" + token.spelling); 
+					
+								 parseSpecificToken(TokenKind.SEMICOLON, ";");
 					 }
 					 else
-						 parseError("Invalid Term - expecting  this/while/return/boolean/int/if but found" + token.spelling); 
+						 parseError("Invalid Term - expecting  this/while/return/boolean/int/if but found " + token.spelling); 
 						 
-						 
-						   
-					 
+						  
 			
-				
+					 break;
 			case ID:
 				 parseSpecificToken(TokenKind.ID, token.spelling);
 				 
@@ -430,9 +449,17 @@ private void parseT() throws SyntaxError {
 								 parseE();
 																
 							 }
-							 else if(token.kind != TokenKind.SEMICOLON)
-								 	parseAL();
-								 	
+							 
+							 
+							 else if(token.kind == TokenKind.BRACE && token.spelling.equals("(")){
+								acceptIt();
+								
+								if(!token.spelling.equals(")"))
+										parseAL();
+								
+								 parseSpecificToken(TokenKind.BRACE,")"); 
+								 
+							 } 	
 							 parseSpecificToken(TokenKind.SEMICOLON,";"); 
 				 }
 				 
@@ -454,8 +481,36 @@ private void parseT() throws SyntaxError {
 						 parseSpecificToken(TokenKind.SEMICOLON, ";");
 					 }
 				 }
-				
 				 
+				 else if(token.kind == TokenKind.EQUAL){
+					 acceptIt();
+					 	parseE();
+					 	parseSpecificToken(TokenKind.SEMICOLON, ";");
+				 }
+				 
+				 else if(token.kind == TokenKind.BRACE && token.spelling.equals("(")){
+					 acceptIt();
+
+						if(!token.spelling.equals(")"))
+								parseAL();
+						
+						 parseSpecificToken(TokenKind.BRACE,")"); 
+						 parseSpecificToken(TokenKind.SEMICOLON, ";");
+					 
+				 }
+				 
+				 else if(token.kind == TokenKind.ID){
+					 acceptIt();
+					 
+					 parseSpecificToken(TokenKind.EQUAL, "=");
+					 parseE();
+					 parseSpecificToken(TokenKind.SEMICOLON, ";");
+				 }
+				 
+			  else
+				 	 parseError("Invalid Term - expecting . or ID or = or ( or [ but found " + token.spelling); 
+				 
+				 break; 
 			default:
 				parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
 			}
@@ -466,7 +521,7 @@ private void parseT() throws SyntaxError {
  
 		//E ::= Rest (binop E)*
 		private void parseE() throws SyntaxError {
-			
+			System.out.println("In E");	 
 			 
 			switch(token.kind){
 			
@@ -477,7 +532,7 @@ private void parseT() throws SyntaxError {
 				
 				parseSpecificToken(TokenKind.BRACE, ")");
 				
-				
+				break;
 			case ID:
 				acceptIt();
 				if(token.spelling.equals("[") && token.kind == TokenKind.BRACE ){
@@ -500,11 +555,16 @@ private void parseT() throws SyntaxError {
 					}
 					
 				}
+				else if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+					acceptIt();
+					 if(!token.spelling.equals(")") )
+						 parseAL();
+					 parseSpecificToken(TokenKind.BRACE, ")");
+				}
 				
-				else
-					parseError("Invalid Term - expecting  . or [ but found " + token.spelling);	
+				// else is not there as it has epsilon in it.
 				
-				
+				break;
 			case KEYWORD:
 				
 				if(token.spelling.equals("true") || token.spelling.equals("false") )
@@ -514,6 +574,7 @@ private void parseT() throws SyntaxError {
 					acceptIt();
 					
 					if(token.spelling.equals("int") && token.kind == TokenKind.KEYWORD ){
+						acceptIt();
 						parseSpecificToken(TokenKind.BRACE, "[");
 						parseE();
 						parseSpecificToken(TokenKind.BRACE, "]");
@@ -556,13 +617,14 @@ private void parseT() throws SyntaxError {
 				else
 					parseError("Invalid Term - expecting Keyword true/false/new/this but found " + token.spelling);
 				
+				break;
 			case NUM :
 					acceptIt();
-					
+					break;	
 			case UNOP:
 				acceptIt();
 				parseE();
-				
+				break;
 			default:
 				parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
 			}
