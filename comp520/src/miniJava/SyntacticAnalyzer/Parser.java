@@ -254,6 +254,7 @@ private void parseT() throws SyntaxError {
 				parseSpecificToken(TokenKind.BRACE, "(");
 				if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.kind ==TokenKind.ID)
 					 parsePL();
+				
 				parseSpecificToken(TokenKind.BRACE, ")");
 				
 				parseSpecificToken(TokenKind.BRACE, "{");
@@ -606,7 +607,7 @@ private void parseT() throws SyntaxError {
 				}
 				
 				else if(token.spelling.equals("this")){
-					
+					acceptIt();
 					while(token.kind == TokenKind.DOT ){
 						acceptIt();
 						parseSpecificToken(TokenKind.ID, token.spelling);
