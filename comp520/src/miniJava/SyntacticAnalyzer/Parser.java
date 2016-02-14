@@ -105,7 +105,7 @@ public class Parser {
 	
 	
 	
-//  AR ::= id [E]
+/*//  AR ::= id [E]
 	private void parseAR() throws SyntaxError {
 			
 		if(token.kind ==TokenKind.ID){
@@ -117,7 +117,7 @@ public class Parser {
 		else
 			parseError("Invalid Term - expecting ID " + token.kind);
 	}
-	
+	*/
 	//parses braces and checks for brace type
 	private void parseSpecificToken(TokenKind tk, String tSpell) throws SyntaxError {
 		 	
@@ -140,8 +140,8 @@ public class Parser {
 	
 	
 	
-	//R ::=(this|id)(.id)*
-	private void parseR() throws SyntaxError {
+	/*//R ::=(this|id)(.id)*
+	private void  parseR() {
 		
 		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("this"))
 			 acceptIt();
@@ -158,6 +158,7 @@ public class Parser {
 		}
 		 
 	}
+	*/
 	
 	
 	
