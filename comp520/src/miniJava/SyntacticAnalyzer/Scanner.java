@@ -161,14 +161,25 @@ public class Scanner{
 				}
 			case '-':
 				takeIt();
-				if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID){
-					prevToken = TokenKind.BINOP;
-					return (TokenKind.BINOP);
+				if(currentChar != '-')
+				{
+					if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID){
+						prevToken = TokenKind.BINOP;
+						return (TokenKind.BINOP);
+					}
+					else{
+						prevToken = TokenKind.UNOP;
+						return (TokenKind.UNOP);
+					}
 				}
-				else{
-					prevToken = TokenKind.UNOP;
-					return (TokenKind.UNOP);
+				else
+				{
+					scanError("Unrecognized character '" + " -- " + "' in input");
+					prevToken = TokenKind.ERROR;
+					skipIt();
+					return (TokenKind.ERROR);
 				}
+				
 			case '=':
 				takeIt();
 				if (currentChar == '='){
@@ -299,6 +310,8 @@ public class Scanner{
 			
 			while(! (currentChar=='\n' || currentChar=='\r')){
 				nextChar();
+				if(eot)
+					return false;
 			}
 			nextChar();
 			if(currentChar=='\n')
