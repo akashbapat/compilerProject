@@ -653,8 +653,11 @@ private void parseT() throws SyntaxError {
 			
 			parseOR();
 			
-			while(token.kind==TokenKind.BINOP && token.spelling.equals("||"))
+			while(token.kind==TokenKind.BINOP && token.spelling.equals("||")){
+				acceptIt();
 				parseOR();
+			}
+				
 		}
 		
 		
@@ -663,8 +666,11 @@ private void parseT() throws SyntaxError {
 			
 			parseAND();
 			
-			while(token.kind==TokenKind.BINOP && token.spelling.equals("&&")  )
+			while(token.kind==TokenKind.BINOP && token.spelling.equals("&&")  ){
+				acceptIt();
 				parseAND();
+			}
+				
 		}
 		
 		
@@ -675,8 +681,11 @@ private void parseT() throws SyntaxError {
 					
 					parseEquality();
 					
-					while(token.kind==TokenKind.BINOP &&( token.spelling.equals("==") || token.spelling.equals("!=")))
+					while(token.kind==TokenKind.BINOP &&( token.spelling.equals("==") || token.spelling.equals("!="))){
+						acceptIt();
 						parseEquality();
+					}
+						
 				}
 		
 				//equality = relational ((< | >| <=| >= ) relational)*
@@ -684,8 +693,11 @@ private void parseT() throws SyntaxError {
 					
 					parseRelational();
 					
-					while(token.kind==TokenKind.BINOP &&(token.spelling.equals(">")  || token.spelling.equals("<") || token.spelling.equals("<=") || token.spelling.equals(">=")))
+					while(token.kind==TokenKind.BINOP &&(token.spelling.equals(">")  || token.spelling.equals("<") || token.spelling.equals("<=") || token.spelling.equals(">="))){
+						acceptIt();
 						parseRelational();
+					}
+						
 				}
 		
 				//relational = additive ((+ | - ) additive)*
@@ -693,8 +705,11 @@ private void parseT() throws SyntaxError {
 					
 					parseAdditive();
 					
-					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("+") || token.spelling.equals("-")))
+					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("+") || token.spelling.equals("-"))){
+						acceptIt();
 						parseAdditive();
+					}
+						
 				}	
 				
 				
@@ -704,25 +719,29 @@ private void parseT() throws SyntaxError {
 					
 					parseMultiplicative();
 					
-					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("*") || token.spelling.equals("/")))
+					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("*") || token.spelling.equals("/"))){
+						acceptIt();
 						parseMultiplicative();
+					}
+						
 				}	
 				
 
 				
-				//multiplicative = unary ((-| ! ) unary)*
+				//multiplicative =   (-| ! |e )  rest
 				private void parseMultiplicative() throws SyntaxError {
 					
-					parseUnary();
-					
-					while(token.kind==TokenKind.UNOP &&(  token.spelling.equals("-") || token.spelling.equals("!")))
-						parseUnary();
+					 if(token.kind == TokenKind.UNOP)
+						 acceptIt();
+					 
+					 parseRest();
 				}
+				 
 				
-				//unary = unary ((-| ! ) unary)*
-				private void parseUnary() throws SyntaxError {
+				//rest  
+				private void parseRest() throws SyntaxError {
 					
-				
+					 
 					
 					switch(token.kind){
 					
