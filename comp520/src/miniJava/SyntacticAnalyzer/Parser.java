@@ -46,11 +46,13 @@ public class Parser {
 
 	//    P ::= (CD)*$
 	private AST parseP() throws SyntaxError {
-		System.out.print(token.kind + " " + token.spelling + "*");
+		 
+		ClassDeclList	cdl = new ClassDeclList();
+		
 		 while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class"))
-			 parseCD();
+			cdl.add(parseCD());
 		accept(TokenKind.EOT);
-		return Package(ClassDeclList cdl, SourcePosition posn);
+		return new Package( cdl, null);
 	}
 
 
@@ -62,8 +64,9 @@ public class Parser {
 	/**
 	 * accept current token and advance to next token
 	 */
-	private void acceptIt() throws SyntaxError {
+	private Token acceptIt() throws SyntaxError {
 		accept(token.kind);
+		return token;
 	}
 
 	/**
@@ -164,56 +167,67 @@ public class Parser {
 	
 	
 	// T::= boolean | int(e|[]) | id (e|[])
-private void parseT() throws SyntaxError {
-		
+private Type parseT() throws SyntaxError {
+	Token t;
 	switch (token.kind) {
-
 	case ID:
-		acceptIt();
+		 t = acceptIt();
 		 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 			 acceptIt();
 			 parseSpecificToken(TokenKind.BRACE,"]");
+			 return new ArrayType(new BaseType(TypeKind.CLASS, null),null);
 		 }
-		
-		 break;
+		 return new ClassType(new Identifier(t),null);
 	case KEYWORD:
-		if(token.spelling.equals("boolean"))
-			acceptIt();
-		
+		if(token.spelling.equals("boolean")){
+			t = acceptIt();
+			return new BaseType(TypeKind.BOOLEAN,null);
+		}
 		else if (token.spelling.equals("int")){
-			acceptIt();
+			t = acceptIt();
 			 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 				 acceptIt();
 				 parseSpecificToken(TokenKind.BRACE,"]");
+				 return new ArrayType(new BaseType(TypeKind.INT,null),null);
 			 }
+			 return new BaseType(TypeKind.INT,null);
 		}
 		else 
+		{
 			parseError("Invalid Term - expecting int or boolean but found " + token.spelling);
-		 
-		break;
+		 	return new BaseType(TypeKind.UNSUPPORTED,null);
+		}
 	default:
 		parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
+			return new BaseType(TypeKind.ERROR,null);
 	}
-		 
+	 
  }
 
 
 //A ::=static?
-	private void parseA() throws SyntaxError {
+	private String parseA() throws SyntaxError {
 		
-		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("static"))
+		String a="";
+		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("static")){
+			a=token.spelling;
 			 acceptIt();
-		 
+		}
+			
+		return a; 
 	}
 	
 	
 	
 	//V ::=(public|private)?
-		private void parseV() throws SyntaxError {
-			
-			if(token.kind ==TokenKind.KEYWORD && ( token.spelling.equals("public") || token.spelling.equals("private")))
-				 acceptIt();
-			 
+		private String parseV() throws SyntaxError {
+			String v="";
+			if(token.kind ==TokenKind.KEYWORD && ( token.spelling.equals("public") || token.spelling.equals("private"))){
+				v=token.spelling;
+				acceptIt();
+				
+			}
+			return v;
 		}
 	
 	//dont need MD and FD as they dont occur in simplified grammar	
@@ -236,10 +250,16 @@ private void parseT() throws SyntaxError {
 				     	 ) 
 					  }
 	 */
-		private void parseCD() throws SyntaxError {
-
+		private AST parseCD() throws SyntaxError {
+			
+			 String cn ;
+			 FieldDeclList fdList;
+			 MethodDeclList mdList;
+			 
+			 
 			parseSpecificToken(TokenKind.KEYWORD,"class");
 			
+			cn=token.spelling;
 			parseSpecificToken(TokenKind.ID, token.spelling);
 			
 			parseSpecificToken(TokenKind.BRACE, "{");
@@ -251,6 +271,9 @@ private void parseT() throws SyntaxError {
 			parseA();
 			
 			if(token.kind ==TokenKind.KEYWORD &&  token.spelling.equals("void") ){
+				StatementList sl;
+				ParameterDeclList pdl;
+				MemberDecl md;
 				acceptIt();
 				parseSpecificToken(TokenKind.ID, token.spelling);
 				parseSpecificToken(TokenKind.BRACE, "(");
@@ -295,7 +318,8 @@ private void parseT() throws SyntaxError {
 		}
 			
 	 parseSpecificToken(TokenKind.BRACE, "}");
-				
+		
+	 
 	}	
 		
 		
