@@ -11,7 +11,7 @@ package miniJava.SyntacticAnalyzer;
 import miniJava.SyntacticAnalyzer.Scanner;
 import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.ErrorReporter;
-
+import miniJava.AbstractSyntaxTrees.*;
 public class Parser {
 
 	private Scanner scanner;
@@ -36,20 +36,21 @@ public class Parser {
 	/**
 	 * start parse
 	 */
-	public void parse() {
+	public AST parse() {
 		token = scanner.scan();
 		try {
-			parseP();
+			return parseP();
 		}
-		catch (SyntaxError e) { }
+		catch (SyntaxError e) {return null; }
 	}
 
 	//    P ::= (CD)*$
-	private void parseP() throws SyntaxError {
+	private AST parseP() throws SyntaxError {
 		System.out.print(token.kind + " " + token.spelling + "*");
 		 while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class"))
 			 parseCD();
 		accept(TokenKind.EOT);
+		return Package(ClassDeclList cdl, SourcePosition posn);
 	}
 
 
