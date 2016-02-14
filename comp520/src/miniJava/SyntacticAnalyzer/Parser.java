@@ -528,7 +528,7 @@ private void parseT() throws SyntaxError {
 		}
  
 		//E ::= Rest (binop E)*
-		private void parseE() throws SyntaxError {
+		/*private void parseE() throws SyntaxError {
 			System.out.println("In E");	 
 			 
 			switch(token.kind){
@@ -645,6 +645,190 @@ private void parseT() throws SyntaxError {
 			}
 			
 				
-		}			
+		}*/		
 		
+		
+		//E ::= OR (|| OR)*
+		private void parseE() throws SyntaxError {
+			
+			parseOR();
+			
+			while(token.kind==TokenKind.BINOP && token.spelling.equals("||"))
+				parseOR();
+		}
+		
+		
+		//OR ::= AND (&& AND)*
+		private void parseOR() throws SyntaxError {
+			
+			parseAND();
+			
+			while(token.kind==TokenKind.BINOP && token.spelling.equals("&&")  )
+				parseAND();
+		}
+		
+		
+		
+		
+		//AND ::= equality ((== | != ) equality)*
+				private void parseAND() throws SyntaxError {
+					
+					parseEquality();
+					
+					while(token.kind==TokenKind.BINOP &&( token.spelling.equals("==") || token.spelling.equals("!=")))
+						parseEquality();
+				}
+		
+				//equality = relational ((< | >| <=| >= ) relational)*
+				private void parseEquality() throws SyntaxError {
+					
+					parseRelational();
+					
+					while(token.kind==TokenKind.BINOP &&(token.spelling.equals(">")  || token.spelling.equals("<") || token.spelling.equals("<=") || token.spelling.equals(">=")))
+						parseRelational();
+				}
+		
+				//relational = additive ((+ | - ) additive)*
+				private void parseRelational() throws SyntaxError {
+					
+					parseAdditive();
+					
+					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("+") || token.spelling.equals("-")))
+						parseAdditive();
+				}	
+				
+				
+				
+				//additive = multiplicative ((*| / ) multiplicative)*
+				private void parseAdditive() throws SyntaxError {
+					
+					parseMultiplicative();
+					
+					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("*") || token.spelling.equals("/")))
+						parseMultiplicative();
+				}	
+				
+
+				
+				//multiplicative = unary ((-| ! ) unary)*
+				private void parseMultiplicative() throws SyntaxError {
+					
+					parseUnary();
+					
+					while(token.kind==TokenKind.UNOP &&(  token.spelling.equals("-") || token.spelling.equals("!")))
+						parseUnary();
+				}
+				
+				//unary = unary ((-| ! ) unary)*
+				private void parseUnary() throws SyntaxError {
+					
+				
+					
+					switch(token.kind){
+					
+					case BRACE:
+						parseSpecificToken(TokenKind.BRACE, "(");
+						 
+							parseE();
+						
+						parseSpecificToken(TokenKind.BRACE, ")");
+						
+						break;
+					case ID:
+						acceptIt();
+						if(token.spelling.equals("[") && token.kind == TokenKind.BRACE ){
+							acceptIt();
+							parseE();
+							parseSpecificToken(TokenKind.BRACE, "]");
+						}
+						else if(token.spelling.equals(".") && token.kind == TokenKind.DOT ){
+							
+							while(token.kind==TokenKind.DOT){
+								acceptIt();
+								parseSpecificToken(TokenKind.ID, token.spelling);
+								}
+							
+							if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+								acceptIt();
+								 if(!token.spelling.equals(")") )
+									 parseAL();
+								 parseSpecificToken(TokenKind.BRACE, ")");
+							}
+							
+						}
+						else if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+							acceptIt();
+							 if(!token.spelling.equals(")") )
+								 parseAL();
+							 parseSpecificToken(TokenKind.BRACE, ")");
+						}
+						
+						// else is not there as it has epsilon in it.
+						
+						break;
+					case KEYWORD:
+						
+						if(token.spelling.equals("true") || token.spelling.equals("false") )
+							acceptIt();
+						
+						else if(token.spelling.equals("new") ){
+							acceptIt();
+							
+							if(token.spelling.equals("int") && token.kind == TokenKind.KEYWORD ){
+								acceptIt();
+								parseSpecificToken(TokenKind.BRACE, "[");
+								parseE();
+								parseSpecificToken(TokenKind.BRACE, "]");
+							}
+							else if(token.kind == TokenKind.ID){
+								acceptIt();
+								
+								if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+									acceptIt();
+									parseSpecificToken(TokenKind.BRACE, ")");
+								}
+								else if(token.spelling.equals("[") && token.kind == TokenKind.BRACE){
+									acceptIt();
+									parseE();
+									parseSpecificToken(TokenKind.BRACE, "]");
+								}
+								else
+									parseError("Invalid Term - expecting Brace [ or ( but found " + token.kind + token.spelling);
+							}
+							else
+								parseError("Invalid Term - expecting ID or new/int but found " + token.kind + token.spelling);
+						}
+						
+						else if(token.spelling.equals("this")){
+							acceptIt();
+							while(token.kind == TokenKind.DOT ){
+								acceptIt();
+								parseSpecificToken(TokenKind.ID, token.spelling);
+							}
+							
+							if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+								acceptIt();
+								 if(!token.spelling.equals(")") )
+									 parseAL();
+								 parseSpecificToken(TokenKind.BRACE, ")");
+							}
+						}
+							
+							
+						else
+							parseError("Invalid Term - expecting Keyword true/false/new/this but found " + token.spelling);
+						
+						break;
+					case NUM :
+							acceptIt();
+							break;	
+					 
+						 
+					default:
+						parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
+					}
+					
+				 	
+				
+				}		
 }
