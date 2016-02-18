@@ -10,6 +10,9 @@ package miniJava.SyntacticAnalyzer;
 
 import miniJava.SyntacticAnalyzer.Scanner;
 import miniJava.SyntacticAnalyzer.TokenKind;
+
+import com.sun.javafx.fxml.expression.BinaryExpression;
+
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
 public class Parser {
@@ -123,12 +126,15 @@ public class Parser {
 	}
 	*/
 	//parses braces and checks for brace type
-	private void parseSpecificToken(TokenKind tk, String tSpell) throws SyntaxError {
+	private Token parseSpecificToken(TokenKind tk, String tSpell) throws SyntaxError {
 		 	
+		
+		Token t = new Token(TokenKind.ERROR,""); 
+		
 			if(token.kind ==tk && tSpell.equals(token.spelling)  ){
 				System.out.print(token.kind + " ");
 				System.out.println(token.spelling);
-				acceptIt();
+			t	= acceptIt();
 				}
 				else{
 					if(tk == TokenKind.ID)
@@ -139,7 +145,7 @@ public class Parser {
 				
 				}
 				
-		 
+		 return t;
 	}
 	
 	
@@ -250,7 +256,7 @@ private Type parseT() throws SyntaxError {
 				     	 ) 
 					  }
 	 */
-		private AST parseCD() throws SyntaxError {
+		private ClassDecl parseCD() throws SyntaxError {
 			
 			 String cn ;
 			 FieldDeclList fdList;
@@ -274,25 +280,33 @@ private Type parseT() throws SyntaxError {
 				StatementList sl;
 				ParameterDeclList pdl;
 				MemberDecl md;
+				Statement s;
+				BlockStmt blockS;
+				StatementList sList =new StatementList();
+				
 				acceptIt();
 				parseSpecificToken(TokenKind.ID, token.spelling);
 				parseSpecificToken(TokenKind.BRACE, "(");
 				if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.kind ==TokenKind.ID)
-					 parsePL();
+				pdl=	 parsePL();
 				
 				parseSpecificToken(TokenKind.BRACE, ")");
 				
 				parseSpecificToken(TokenKind.BRACE, "{");
 				
-				while(!token.spelling.equals("}"))
-					parseS();
+				while(!token.spelling.equals("}")){
+				s	= parseS();
+				sList.add(s);
 				
+				}
 				parseSpecificToken(TokenKind.BRACE, "}");
 				
+				blockS = new BlockStmt(sList, null);
 				
+				 
 			}
 			else{
-				parseT();
+				Type tType = parseT();
 				parseSpecificToken(TokenKind.ID, token.spelling);
 				
 				if(token.spelling.equals(";") && token.kind == TokenKind.SEMICOLON){
@@ -315,6 +329,8 @@ private Type parseT() throws SyntaxError {
 						parseSpecificToken(TokenKind.BRACE, "}");
 				}
 			}
+			
+			
 		}
 			
 	 parseSpecificToken(TokenKind.BRACE, "}");
@@ -325,34 +341,37 @@ private Type parseT() throws SyntaxError {
 		
 		
 		//PL ::= T id ( , T id)*
-				private void parsePL() throws SyntaxError {
+				private ParameterDeclList parsePL() throws SyntaxError {
 					
-					 
-					parseT();
-					parseSpecificToken(TokenKind.ID, token.spelling);
+					ParameterDeclList retPL =new ParameterDeclList();	  
+					Type t =	parseT();
+				
+				Token id=	parseSpecificToken(TokenKind.ID, token.spelling);
 					
+				retPL.add(new ParameterDecl(t, id.spelling, null));
+			
 					while(token.kind==TokenKind.COMMA){
 						acceptIt();
-						parseT();
-						parseSpecificToken(TokenKind.ID, token.spelling);
-						
+					t=	parseT();
+					id	= parseSpecificToken(TokenKind.ID, token.spelling);
+					retPL.add(new ParameterDecl(t, id.spelling, null));
 					}
 						
-						
+			return retPL;			
 				}
 				
 				
 
 	//AL ::= E ( , E)*
-	private void parseAL() throws SyntaxError {
-		
-		parseE();
+	private ExprList parseAL() throws SyntaxError {
+		ExprList retEList = new ExprList();
+		retEList.add(	parseE() );
 		 		
 		while(token.kind==TokenKind.COMMA){
 			acceptIt();
-			parseE();
+			retEList.add(parseE());
 		}
-								
+		return retEList;						
 	}
 	
 	
@@ -675,205 +694,293 @@ private Type parseT() throws SyntaxError {
 		
 		
 		//E ::= OR (|| OR)*
-		private void parseE() throws SyntaxError {
+		private Expression parseE() throws SyntaxError { //parseE 's name can be kept as parseOR
+			Expression e1,e2;
+			Token opToken;
+			Operator op;
 			
-			parseOR();
+			e1 = parseAND();
 			
 			while(token.kind==TokenKind.BINOP && token.spelling.equals("||")){
-				acceptIt();
-				parseOR();
+				opToken= acceptIt();
+				 op = new Operator(opToken);
+			e2=	parseAND();
+			e1= new BinaryExpr(op,e1,e2,null);
 			}
-				
+			return e1;		
 		}
 		
 		
-		//OR ::= AND (&& AND)*
-		private void parseOR() throws SyntaxError {
+		//AND ::= equality (&& equality)*
+		private Expression parseAND() throws SyntaxError {
+			Expression e1,e2;
+			Token opToken;
+			Operator op;
 			
-			parseAND();
+		e1 =	parseEquality();
 			
 			while(token.kind==TokenKind.BINOP && token.spelling.equals("&&")  ){
-				acceptIt();
-				parseAND();
+				opToken= acceptIt();
+				 op = new Operator(opToken);
+			e2 = 	parseEquality();
+			e1= new BinaryExpr(op,e1,e2,null);
 			}
-				
+			return e1;		
 		}
 		
 		
 		
 		
-		//AND ::= equality ((== | != ) equality)*
-				private void parseAND() throws SyntaxError {
+		//equality ::= relational ((== | != ) relational)*
+				private Expression parseEquality() throws SyntaxError {
+					Expression e1,e2;
+					Token opToken;
+					Operator op;
 					
-					parseEquality();
+					e1 = parseRelational();
 					
 					while(token.kind==TokenKind.BINOP &&( token.spelling.equals("==") || token.spelling.equals("!="))){
-						acceptIt();
-						parseEquality();
+						opToken= acceptIt();
+						 op = new Operator(opToken);
+					e2 = 	parseRelational();
+					e1= new BinaryExpr(op,e1,e2,null);
 					}
-						
+					return e1;		
 				}
 		
-				//equality = relational ((< | >| <=| >= ) relational)*
-				private void parseEquality() throws SyntaxError {
+				//relational = additive ((< | >| <=| >= ) additive)*
+				private Expression parseRelational() throws SyntaxError {
+					Expression e1,e2;
+					Token opToken;
+					Operator op;
 					
-					parseRelational();
+					e1 = parseAdditive();
 					
 					while(token.kind==TokenKind.BINOP &&(token.spelling.equals(">")  || token.spelling.equals("<") || token.spelling.equals("<=") || token.spelling.equals(">="))){
-						acceptIt();
-						parseRelational();
+						opToken= acceptIt();
+						 op = new Operator(opToken);
+						e2 = parseAdditive();
+						e1= new BinaryExpr(op,e1,e2,null);
 					}
-						
+					return e1;			
 				}
 		
-				//relational = additive ((+ | - ) additive)*
-				private void parseRelational() throws SyntaxError {
+				//additive = multiplicative ((+ | - ) multiplicative)*
+				private Expression parseAdditive() throws SyntaxError {
+					Expression e1,e2;
+					Token opToken;
+					Operator op;
 					
-					parseAdditive();
+					
+					e1 = parseMultiplicative();
 					
 					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("+") || token.spelling.equals("-"))){
-						acceptIt();
-						parseAdditive();
-					}
+						opToken= acceptIt();
+						 op = new Operator(opToken);
+						e2 = parseMultiplicative();
 						
+						e1= new BinaryExpr(op,e1,e2,null);
+					}
+					return e1;	
 				}	
 				
 				
 				
-				//additive = multiplicative ((*| / ) multiplicative)*
-				private void parseAdditive() throws SyntaxError {
+				//multiplicative = unary ((*| / ) unary)*
+				private Expression parseMultiplicative() throws SyntaxError {
+					Expression e1,e2;
+					Token opToken;
+					Operator op;
 					
-					parseMultiplicative();
+				e1=	parseUnary();
 					
 					while(token.kind==TokenKind.BINOP &&(  token.spelling.equals("*") || token.spelling.equals("/"))){
-						acceptIt();
-						parseMultiplicative();
+						opToken= acceptIt();
+						 op= new Operator(opToken);
+					e2=	parseUnary();
+					e1= new BinaryExpr(op,e1,e2,null);
+					
 					}
-						
+					
+					return e1;
 				}	
 				
 
 				
-				//multiplicative =   (-| ! |e )  rest
-				private void parseMultiplicative() throws SyntaxError {
-					
-					 if(token.kind == TokenKind.UNOP)
-						 acceptIt();
-					 
-					 parseRest();
+				//unary =   (-| !  )  unary |rest
+				private Expression parseUnary() throws SyntaxError {
+					Expression e;
+					Token opToken;
+					Operator op;
+					 if(token.kind == TokenKind.UNOP){
+						 opToken= acceptIt();
+						 op= new Operator(opToken);
+					e=	 parseUnary();
+					return new UnaryExpr(op,e, null);
+					 }
+					 else{
+						 e	= parseRest();
+						return e; 
+					 }
 				}
 				 
 				
 				//rest  
-				private void parseRest() throws SyntaxError {
+				private Expression parseRest() throws SyntaxError {
 					
-					 
+					Expression	e;
+					Token idToken;
+					ExprList alExpList;
+					alExpList =new ExprList();
 					
 					switch(token.kind){
 					
 					case BRACE:
 						parseSpecificToken(TokenKind.BRACE, "(");
 						 
-							parseE();
+					e = parseE();
 						
 						parseSpecificToken(TokenKind.BRACE, ")");
 						
-						break;
+						  return e;
 					case ID:
-						acceptIt();
+						  idToken = acceptIt();
+						Identifier  idIdentifier = new Identifier( idToken);
+						Reference idRef = new IdRef(idIdentifier,null);
+						
 						if(token.spelling.equals("[") && token.kind == TokenKind.BRACE ){
 							acceptIt();
-							parseE();
+						  e =	parseE();
 							parseSpecificToken(TokenKind.BRACE, "]");
+							
+							return new RefExpr(new  IndexedRef(new IdRef(idIdentifier,null), e, null) , null);
 						}
 						else if(token.spelling.equals(".") && token.kind == TokenKind.DOT ){
 							
 							while(token.kind==TokenKind.DOT){
 								acceptIt();
-								parseSpecificToken(TokenKind.ID, token.spelling);
+							Token	qualIdToken= parseSpecificToken(TokenKind.ID, token.spelling);
+								
+								idRef= new QualifiedRef(idRef,new Identifier(qualIdToken),null);
 								}
 							
 							if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+								
 								acceptIt();
-								 if(!token.spelling.equals(")") )
-									 parseAL();
+								 if(!token.spelling.equals(")") ){
+									 alExpList	= parseAL();
+								 }
 								 parseSpecificToken(TokenKind.BRACE, ")");
+								 
+								 
+								 return new CallExpr(idRef,alExpList,null);
+							  
 							}
-							
+							return new RefExpr(idRef,null);	
 						}
 						else if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
 							acceptIt();
-							 if(!token.spelling.equals(")") )
-								 parseAL();
+							 if(!token.spelling.equals(")") ){
+								 alExpList	=  parseAL();
+							 }
 							 parseSpecificToken(TokenKind.BRACE, ")");
+							 return new CallExpr(idRef,alExpList,null);
 						}
 						
 						// else is not there as it has epsilon in it.
 						
-						break;
+						 
 					case KEYWORD:
 						
-						if(token.spelling.equals("true") || token.spelling.equals("false") )
-							acceptIt();
-						
+						if(token.spelling.equals("true") || token.spelling.equals("false") ){
+						Token booleanToken = 	acceptIt();
+							return new LiteralExpr(new BooleanLiteral(booleanToken), null);
+						}
 						else if(token.spelling.equals("new") ){
-							acceptIt();
+							 acceptIt();
 							
 							if(token.spelling.equals("int") && token.kind == TokenKind.KEYWORD ){
 								acceptIt();
 								parseSpecificToken(TokenKind.BRACE, "[");
-								parseE();
+							e=	parseE();
 								parseSpecificToken(TokenKind.BRACE, "]");
+								
+								return new NewArrayExpr(new BaseType(TypeKind.INT,null), e, null);
 							}
 							else if(token.kind == TokenKind.ID){
-								acceptIt();
+								
+						 	idToken=	acceptIt();
 								
 								if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
 									acceptIt();
 									parseSpecificToken(TokenKind.BRACE, ")");
+									return new NewObjectExpr(new ClassType(new Identifier(idToken),null), null);
 								}
 								else if(token.spelling.equals("[") && token.kind == TokenKind.BRACE){
 									acceptIt();
-									parseE();
+								e=	parseE();
 									parseSpecificToken(TokenKind.BRACE, "]");
+									
+									return new NewArrayExpr(new ClassType(new Identifier(idToken),null), e, null);
 								}
-								else
+								else{
 									parseError("Invalid Term - expecting Brace [ or ( but found " + token.kind + token.spelling);
+								return null;
+								}
+							
 							}
-							else
+							else{
 								parseError("Invalid Term - expecting ID or new/int but found " + token.kind + token.spelling);
+							return null;
+							}
+						
+						
+						
 						}
 						
 						else if(token.spelling.equals("this")){
-							acceptIt();
+						 	acceptIt();
+						Reference thisReference= 	new ThisRef(null);
+						
 							while(token.kind == TokenKind.DOT ){
 								acceptIt();
-								parseSpecificToken(TokenKind.ID, token.spelling);
+							  idToken=	parseSpecificToken(TokenKind.ID, token.spelling);
+							
+							thisReference= new QualifiedRef(thisReference,new Identifier(idToken), null);
 							}
 							
 							if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
 								acceptIt();
-								 if(!token.spelling.equals(")") )
-									 parseAL();
+							 
+								 if(!token.spelling.equals(")") ){
+									 
+									   alExpList  =	 parseAL();
+								 }
 								 parseSpecificToken(TokenKind.BRACE, ")");
+								 
+						 	 return new CallExpr(thisReference,alExpList,null);
 							}
+							
+							return new RefExpr(thisReference,null);
 						}
 							
 							
-						else
+						else{
 							parseError("Invalid Term - expecting Keyword true/false/new/this but found " + token.spelling);
-						
-						break;
-					case NUM :
-							acceptIt();
-							break;	
-					 
+						return null;
+						}
 						 
+					case NUM :
+						Token numToken=	acceptIt();
+						
+					 
+						return new LiteralExpr(new Identifier(numToken),null); 
 					default:
 						parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
+						
 					}
 					
 				 	
-				
+					return null;
 				}		
 }
