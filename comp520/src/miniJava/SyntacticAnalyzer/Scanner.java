@@ -21,9 +21,12 @@ public class Scanner{
 	private ErrorReporter reporter;
 	private HashMap<String,Integer> keywordHmap; 
 	private char currentChar;
+	private char previousChar; //Used to maintain line number
 	private TokenKind prevToken;
 	private StringBuilder currentSpelling;
-	
+	private int currPosn;
+	private int currLinePosn;
+	private int currLine;
 	private boolean eot = false; 
 
 	public Scanner(InputStream inputStream, ErrorReporter reporter) {
@@ -31,6 +34,9 @@ public class Scanner{
 		this.reporter = reporter;
 		this.keywordHmap = new HashMap<String, Integer>();
 		initializeHMap();
+		currPosn = 0;
+		currLinePosn = 0;
+		currLine = 0;
 		// initialize scanner state
 		readChar();
 	}
@@ -41,9 +47,7 @@ public class Scanner{
 	 */
 	public Token scan() {
 
-		// skip whitespace
-		while (!eot && currentChar == ' ')
-			skipIt();
+
 
 		// collect spelling and identify token kind
 		currentSpelling = new StringBuilder();
@@ -272,7 +276,17 @@ public class Scanner{
 	 */
 	private void nextChar() {
 		if (!eot)
+		{
 			readChar();
+			currPosn++;
+			currLinePosn++;
+			if(currentChar == '\n')
+			{
+				currLinePosn = 0;
+				currLine++;
+			}
+		}
+			
 	}
 
 	private void readChar() {

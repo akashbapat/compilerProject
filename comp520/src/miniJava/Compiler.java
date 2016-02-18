@@ -25,6 +25,7 @@ import miniJava.SyntacticAnalyzer.Scanner;
 ////Remove later
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
+import miniJava.AbstractSyntaxTrees.*;
 /**
  * Recognize whether input is an arithmetic expression as defined by
  * a simple context free grammar for expressions and a scanner grammar.
@@ -56,6 +57,7 @@ public class Compiler {
 		ErrorReporter reporter = new ErrorReporter();
 		Scanner scanner = new Scanner(inputStream, reporter);
 		Parser parser = new Parser(scanner, reporter);
+		AST ast;
 		int debug = 0;
 		//Code for testing scanner
 		if(debug == 1)
@@ -74,8 +76,11 @@ public class Compiler {
 		else
 		{
 			System.out.println("Syntactic analysis ... ");
-			parser.parse();
-			System.out.print("Syntactic analysis complete:  ");
+			ast = parser.parse();
+			System.out.print("Syntactic analysis complete: \n ");
+			ASTDisplay display = new ASTDisplay();
+			display.showTree(ast);
+	        //String textRepr = ast.visit(display,null);
 			if (reporter.hasErrors()) {
 				System.out.println("INVALID arithmetic expression");
 				System.exit(4);

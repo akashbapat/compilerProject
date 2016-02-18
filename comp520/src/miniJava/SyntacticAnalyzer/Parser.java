@@ -68,8 +68,9 @@ public class Parser {
 	 * accept current token and advance to next token
 	 */
 	private Token acceptIt() throws SyntaxError {
+		Token t = token;
 		accept(token.kind);
-		return token;
+		return t;
 	}
 
 	/**
@@ -181,7 +182,7 @@ private Type parseT() throws SyntaxError {
 		 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 			 acceptIt();
 			 parseSpecificToken(TokenKind.BRACE,"]");
-			 return new ArrayType(new BaseType(TypeKind.CLASS, null),null);
+			 return new ArrayType(new ClassType(new Identifier(t),null),null);
 		 }
 		 return new ClassType(new Identifier(t),null);
 	case KEYWORD:
@@ -313,12 +314,8 @@ private Type parseT() throws SyntaxError {
 				parseSpecificToken(TokenKind.BRACE, "}");
 				
 			 
-				MethodDecl	md = new MethodDecl(null, pdl, sList,null);
-				md.isPrivate =isPrivate;
-				md.isStatic = isStatic;
-				md.name =idToken.spelling;
-				md.type = new BaseType(TypeKind.VOID,null);
-				
+				MethodDecl	md = new MethodDecl(new FieldDecl(isPrivate, isStatic, new BaseType(TypeKind.VOID,null), idToken.spelling, null), pdl, sList,null);
+			
 				mdList.add( md  );
 				
 				
@@ -350,11 +347,7 @@ private Type parseT() throws SyntaxError {
 						
 						parseSpecificToken(TokenKind.BRACE, "}");
 						
-						MethodDecl	md = new MethodDecl(null, pdl, sList,null);
-						md.isPrivate =isPrivate;
-						md.isStatic = isStatic;
-						md.name =idToken.spelling;
-						md.type = tType;
+						MethodDecl	md = new MethodDecl(new FieldDecl(isPrivate, isStatic, tType, idToken.spelling, null), pdl, sList,null);
 						
 						mdList.add( md  );
 						
@@ -409,7 +402,7 @@ private Type parseT() throws SyntaxError {
 	
 	//S ::= 
 	private Statement parseS() throws SyntaxError {
-		StatementList sl;
+		 
 		System.out.println("In S");	 
 			switch (token.kind) {
 			
@@ -509,17 +502,19 @@ private Type parseT() throws SyntaxError {
 					 
 					 else  if(token.spelling.equals("this")){
 						 acceptIt();
-						 Token id = new Token(null,"");
+						 Token id;
+						 Reference qr = new ThisRef(null);
 						 while(token.kind == TokenKind.DOT){
 							 acceptIt();
 							 id = parseSpecificToken(TokenKind.ID, token.spelling);
+							 qr = new QualifiedRef(qr,new Identifier (id),null);
 							 }
 							 
 								 if(token.kind == TokenKind.EQUAL){
 									 acceptIt();
 									 Expression e = parseE();
-									 
-									 return new AssignStmt(new ThisRef(null), e,null);								
+									 parseSpecificToken(TokenKind.SEMICOLON, ";");
+									 return new AssignStmt(qr, e,null);								
 								 }
 								 else if(token.kind == TokenKind.BRACE   && token.spelling.equals("(")) {
 									 ExprList el = new ExprList();	
@@ -528,13 +523,14 @@ private Type parseT() throws SyntaxError {
 									 		 el=parseAL();
 									 	
 									 	parseSpecificToken(TokenKind.BRACE, ")");
+									 	parseSpecificToken(TokenKind.SEMICOLON, ";");
 									 	return new CallStmt(new ThisRef(null), el, null);
 								 }
 								 
 								 else
 									 parseError("Invalid Term - expecting   = or ( but found" + token.spelling); 
 					
-								 	parseSpecificToken(TokenKind.SEMICOLON, ";");
+								 	
 								 	return null;
 					 }
 					 else
@@ -546,7 +542,7 @@ private Type parseT() throws SyntaxError {
 				 id = parseSpecificToken(TokenKind.ID, token.spelling);
 				 
 				 if(token.kind == TokenKind.DOT){
-					 QualifiedRef qr = new QualifiedRef(null,new Identifier (id),null);
+					 Reference qr = new IdRef(new Identifier (id), null);
 					 while(token.kind == TokenKind.DOT){
 						 Token id2 = new Token(null,"");
 						 acceptIt();
@@ -572,6 +568,7 @@ private Type parseT() throws SyntaxError {
 								 return new CallStmt(qr, el, null);
 							 } 	
 			 
+							 
 				 }
 				 
 				 else if (token.kind == TokenKind.BRACE && token.spelling.equals("[")){
@@ -967,6 +964,7 @@ private Type parseT() throws SyntaxError {
 						
 						// else is not there as it has epsilon in it.
 						
+						 return  new RefExpr(idRef, null);
 						 
 					case KEYWORD:
 						
@@ -1052,7 +1050,7 @@ private Type parseT() throws SyntaxError {
 						Token numToken=	acceptIt();
 						
 					 
-						return new LiteralExpr(new Identifier(numToken),null); 
+						return new LiteralExpr(new IntLiteral(numToken),null); 
 					default:
 						parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
 						
