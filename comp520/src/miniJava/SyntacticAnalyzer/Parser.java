@@ -421,7 +421,9 @@ private Type parseT() throws SyntaxError {
 					 if(token.spelling.equals("boolean") ){
 						 Token id = new Token(null,"");
 						 acceptIt();
-						 id = token;
+						  
+						id = parseSpecificToken(TokenKind.ID, token.spelling);
+						 parseSpecificToken(TokenKind.EQUAL, "=");
 						 Expression e = parseE();
 						 parseSpecificToken(TokenKind.SEMICOLON, ";");
 						 VarDecl vd = new VarDecl(new BaseType(TypeKind.BOOLEAN,null),id.spelling,null);
