@@ -322,10 +322,9 @@ public class Scanner{
 		}
 		else {  // single line comment
 			
-			while(! (currentChar=='\n' || currentChar=='\r')){
+			while(! (currentChar=='\n' || currentChar=='\r' || eot)){
 				nextChar();
-				if(eot)
-					return false;
+				 
 			}
 			nextChar();
 			if(currentChar=='\n')

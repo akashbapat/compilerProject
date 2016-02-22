@@ -78,15 +78,18 @@ public class Compiler {
 			System.out.println("Syntactic analysis ... ");
 			ast = parser.parse();
 			System.out.print("Syntactic analysis complete: \n ");
-			ASTDisplay display = new ASTDisplay();
-			display.showTree(ast);
-	        //String textRepr = ast.visit(display,null);
+			
+	     
 			if (reporter.hasErrors()) {
 				System.out.println("INVALID arithmetic expression");
 				System.exit(4);
 			}
 			else {
 				System.out.println("valid arithmetic expression");
+				ASTDisplay display = new ASTDisplay();
+				display.showTree(ast);
+				
+				
 				System.exit(0);
 			}
 
