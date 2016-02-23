@@ -419,7 +419,7 @@ private Type parseT() throws SyntaxError {
 			case KEYWORD:
 					
 					 if(token.spelling.equals("boolean") ){
-						 Token id = new Token(null,"");
+						 Token id;
 						 acceptIt();
 						  
 						id = parseSpecificToken(TokenKind.ID, token.spelling);
@@ -432,7 +432,7 @@ private Type parseT() throws SyntaxError {
 					 
 					 else  if(  token.spelling.equals("int") ){
 						 boolean isArray = false; 
-						 Token id = new Token(null,"");
+						 Token id;
 						 acceptIt();
 						 if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
 							 isArray = true;
@@ -526,7 +526,7 @@ private Type parseT() throws SyntaxError {
 									 	
 									 	parseSpecificToken(TokenKind.BRACE, ")");
 									 	parseSpecificToken(TokenKind.SEMICOLON, ";");
-									 	return new CallStmt(new ThisRef(null), el, null);
+									 	return new CallStmt(qr, el, null);
 								 }
 								 
 								 else
@@ -540,13 +540,13 @@ private Type parseT() throws SyntaxError {
 						 return null;
 						  
 			case ID:
-				 Token id = new Token(null,"");
+				 Token id;
 				 id = parseSpecificToken(TokenKind.ID, token.spelling);
 				 
 				 if(token.kind == TokenKind.DOT){
 					 Reference qr = new IdRef(new Identifier (id), null);
 					 while(token.kind == TokenKind.DOT){
-						 Token id2 = new Token(null,"");
+						 Token id2;
 						 acceptIt();
 						 id2 = parseSpecificToken(TokenKind.ID, token.spelling);
 						 qr = new QualifiedRef(qr,new Identifier (id2),null);
@@ -579,13 +579,13 @@ private Type parseT() throws SyntaxError {
 					 if(token.kind == TokenKind.BRACE && token.spelling.equals("]")){
 						 //Type id = Expression;
 						 //id[] id2 = Expression;
-						 Token id2 = new Token(null,"");
+						 Token id2;
 						 acceptIt();
 						 id2 = parseSpecificToken(TokenKind.ID, token.spelling);
 						 parseSpecificToken(TokenKind.EQUAL,  "=");
 						 Expression e = parseE();
 						 parseSpecificToken(TokenKind.SEMICOLON, ";");
-						 VarDecl vd = new VarDecl(new ClassType(new Identifier(id),null), id2.spelling, null);
+						 VarDecl vd = new VarDecl(new ArrayType(new ClassType(new Identifier(id),null),null), id2.spelling, null);
 						 return new VarDeclStmt(vd, e, null);
 					 }
 					 else{
@@ -627,7 +627,7 @@ private Type parseT() throws SyntaxError {
 				 else if(token.kind == TokenKind.ID){
 					 //Type id = Expr;
 					 //id id = Expr;
-					 Token id2 = new Token(null,"");
+					 Token id2 = token;
 					 acceptIt();
 					 
 					 parseSpecificToken(TokenKind.EQUAL, "=");
