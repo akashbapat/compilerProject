@@ -9,8 +9,25 @@ import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public abstract class Reference extends AST
 {
+	 private Declaration decl;
 	public Reference(SourcePosition posn){
 		super(posn);
 	}
+	
+	  //added by akash
+	  public Declaration  getDecl(){
+		  
+		  if(decl==null)
+			  System.out.println("Error: declaration accessed before setting");
+		  return decl;
+	  }
+
+	//added by akash
+	  public void setDecl(Declaration d){
+		  decl=d;
+	  }
+	  
+	
+	
 
 }

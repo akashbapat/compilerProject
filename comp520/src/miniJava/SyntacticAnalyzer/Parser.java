@@ -895,7 +895,8 @@ private Type parseT() throws SyntaxError {
 					e=	 parseUnary();
 					return new UnaryExpr(op,e, null);
 					 }
-					 else{
+					 
+					 else {
 						 e	= parseRest();
 						return e; 
 					 }

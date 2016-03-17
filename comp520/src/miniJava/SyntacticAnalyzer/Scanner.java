@@ -167,7 +167,7 @@ public class Scanner{
 				takeIt();
 				if(currentChar != '-')
 				{
-					if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID){
+					if (prevToken == TokenKind.NUM || prevToken == TokenKind.ID ){
 						prevToken = TokenKind.BINOP;
 						return (TokenKind.BINOP);
 					}
