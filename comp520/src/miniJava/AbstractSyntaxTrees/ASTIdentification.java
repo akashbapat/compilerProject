@@ -1,10 +1,10 @@
 package miniJava.AbstractSyntaxTrees;
-
+import miniJava.ContextAnalyzer.idTable;;
 public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public void showTree(AST ast){
 	    System.out.println("======= AST Identify =========================");
-	    idTable idTab;
+	    idTable idTab = new idTable();
 	    ast.visit(this, idTab);
 	    System.out.println("=============================================");
 	}
@@ -25,6 +25,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
         for (ClassDecl c: prog.classDeclList){
         	c.visit(this, idTab);
         }
+        idTab.printLevel(1);
         idTab.closeScope();
         return idTab;
     }
@@ -45,6 +46,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
         for (MethodDecl m: clas.methodDeclList){
         	idTab = m.visit(this, idTab);
         }
+        
+        idTab.printLevel(2);
         idTab.closeScope();
         return idTab;
     }
@@ -64,8 +67,11 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
         idTab.openScope();
         for (Statement s: sl) {
             idTab = s.visit(this, idTab);
+        
         }
+        idTab.printLevel(4);
         idTab.closeScope();
+        idTab.printLevel(3);
         idTab.closeScope();
         return idTab;
     }
@@ -113,6 +119,7 @@ public idTable visitBlockStmt(BlockStmt stmt, idTable idTab){
     for (Statement s: sl) {
     	idTab = s.visit(this, idTab);
     }
+    idTab.printRestLevel();
 	idTab.closeScope();
     return idTab;
 }
@@ -135,12 +142,18 @@ public idTable visitIxAssignStmt(IxAssignStmt stmt, idTable idTab){
     return idTab;
 }
 
-public idTable visitCallSt.mt(CallStmt stmt, idTable idTab){
-    idTab = stmt.methodRef.visit(this, idTab);
+public idTable visitCallStmt(CallStmt stmt, idTable idTab){
+ 
+    
+    idTab=  stmt.methodRef.visit(this, idTab );
+    ExprList al = stmt.argList;
+    
+     
     for (Expression e: al) {
-        idTab = e.visit(this, idTab);
+    	idTab=        e.visit(this, idTab);
     }
     return null;
+    
 }
 
 public idTable visitReturnStmt(ReturnStmt stmt, idTable idTab){
@@ -249,7 +262,10 @@ public idTable visitThisRef(ThisRef ref, idTable idTab) {
 ///////////////////////////////////////////////////////////////////////////////
 //Modify This 
 public idTable visitIdentifier(Identifier id, idTable idTab){
-    Declaration d = getDecl(id.spelling);
+    Declaration d = idTab.getDecl(id.spelling);
+   
+    id.setDecl(d);
+    System.out.println(id.spelling + " " + d.name + " " + d.type.typeKind);
     return idTab;
 }
 

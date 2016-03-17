@@ -89,6 +89,11 @@ public class Compiler {
 				ASTDisplay display = new ASTDisplay();
 				display.showTree(ast);
 				
+				ASTIdentification astIdentify = new ASTIdentification();
+				
+				astIdentify.showTree(ast);
+				
+				
 				
 				System.exit(0);
 			}
