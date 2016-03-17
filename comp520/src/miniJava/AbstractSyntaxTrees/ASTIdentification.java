@@ -1,7 +1,24 @@
 package miniJava.AbstractSyntaxTrees;
-import miniJava.ContextAnalyzer.idTable;;
-public class ASTIdentification implements Visitor<idTable,idTable>{
+import miniJava.ContextAnalyzer.idTable;
+import miniJava.ErrorReporter;
 
+
+/**
+ * SyntaxError is used to unwind parse stack when parse fails
+ *
+ */
+class IdentificationError extends Error {
+	private static final long serialVersionUID = 1L;	
+}
+
+public class ASTIdentification implements Visitor<idTable,idTable>{
+	private ErrorReporter reporter;
+	
+	private void identificationError(String e) throws IdentificationError {
+		reporter.reportError("*** Identification error: " + e);
+		throw new IdentificationError();
+	}
+	
 	public void showTree(AST ast){
 	    System.out.println("======= AST Identify =========================");
 	    idTable idTab = new idTable();
@@ -20,10 +37,14 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
     	ClassDeclList cl = prog.classDeclList;
     	idTab.openScope();
         for (ClassDecl c: prog.classDeclList){
-        	idTab.addDecl(c);
+        	int res = idTab.addDecl(c,idLevel.PREDEF_LEVEL,idLevel.CLASS_LEVEL);
+        	if(res != -1)
+        	{
+        		identificationError("***Class declaration failed - " + c.name + " already declared at level "+res + "***");
+        	}
         }
         for (ClassDecl c: prog.classDeclList){
-        	c.visit(this, idTab);
+        	idTab = c.visit(this, idTab);
         }
         idTab.printLevel(1);
         idTab.closeScope();
@@ -53,13 +74,19 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
     }
     
     public idTable visitFieldDecl(FieldDecl f, idTable idTab){
-    	idTab.addDecl(f);
+    	idTab = f.type.visit(this, idTab);
+    	int res = idTab.addDecl(f,idLevel.MEMBER_LEVEL,idLevel.MEMBER_LEVEL);
+    	if(res != -1)
+    	{
+    		identificationError("Member declaration failed - " + f.name + " already declared at level ");
+    	}
     	return idTab;
     }
     
     public idTable visitMethodDecl(MethodDecl m, idTable idTab){
     	idTab.openScope();
         ParameterDeclList pdl = m.parameterDeclList;
+        idTab = m.type.visit(this, idTab);
         for (ParameterDecl pd: pdl) {
         	idTab = pd.visit(this, idTab);
         }
@@ -67,7 +94,6 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
         idTab.openScope();
         for (Statement s: sl) {
             idTab = s.visit(this, idTab);
-        
         }
         idTab.printLevel(4);
         idTab.closeScope();
@@ -77,12 +103,18 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
     }
     
     public idTable visitParameterDecl(ParameterDecl pd, idTable idTab){
-    	idTab.addDecl(pd);
-        return idTab;
+    	idTab = pd.type.visit(this, idTab);
+    	int res = idTab.addDecl(pd,idLevel.PARAM_LEVEL,idLevel.PARAM_LEVEL);
+    	if(res != -1)
+    	{
+    		identificationError("Member declaration failed - " + f.name + " already declared at level " +res );
+    	}
+    	return idTab;
     } 
     
     public idTable visitVarDecl(VarDecl vd, idTable idTab){
-        idTab.addDecl(vd);
+    	idTab = vd.type.visit(this, idTab);
+        idTab.addDecl(vd,idTab.LOCAL_LEVEL);
         return idTab;
 
 
@@ -99,10 +131,16 @@ public idTable visitBaseType(BaseType type, idTable idTab){
 }
 
 public idTable visitClassType(ClassType type, idTable idTab){
-    return idTab;
+    Declaration d = idTab.getClass(type.className.spelling);
+    if(d == null)
+    {
+    	identificationError("Class "+type.className.spelling +" not found" );
+    }
+	return idTab;
 }
 
 public idTable visitArrayType(ArrayType type, idTable idTab){
+	idTab = type.eltType.visit(this, idTab);
     return idTab;
 }
 
