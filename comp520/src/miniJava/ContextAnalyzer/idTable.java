@@ -78,26 +78,63 @@ public void closeScope(){
 
 }
 
-public int  addDecl(Declaration decl){
+public int  addDecl(Declaration inDecl , idLevel startLevel  , idLevel stopLevel) {
 	
-	int n = levelList.size()-1;
 	
-	levelList.get(n ).put(decl.name, decl);
-
+	for (int i = startLevel.getValue(); i <= stopLevel.getValue(); i++){
 	
+	 
+	if( levelList.get(i ).containsKey(inDecl.name))
+		return i;
+	
+	}
+	
+	 levelList.get(levelList.size()-1 ).put(inDecl.name,inDecl);
 	
 	return -1;
 	
 	
 }
 
-public Declaration getDecl(String name ){
-
-int n = levelList.size()-1;
+public int  addDecl(Declaration inDecl , idLevel startLevel  ) {
 	
-	return levelList.get(n).get(name) ;
-
+	
+	for (int i = startLevel.getValue(); i< levelList.size(); i++){
+	
+	
+		if( levelList.get(i ).containsKey(inDecl.name))
+			return i;
+	
+	}
+	
+	 levelList.get(levelList.size()-1 ).put(inDecl.name,inDecl);
+	
+	return -1;
+	
+	
 }
+
+
+public Declaration getIdentifer(String name ){
+
+	Declaration d;
+
+for (int i=  levelList.size() -1; i >= idLevel.LOCAL_LEVEL.getValue() ;i-- ){
+		
+	d = levelList.get(i ).get( name) ;
+
+	if(d != null)
+		return d  ;
+
+	
+	
+}
+
+return null;
+	
+}
+
+
 
 public Declaration getClass(String name ){
 
@@ -105,8 +142,7 @@ int n =  1;
 	
 		if(levelList.size()>=2)
 	return levelList.get(n).get(name) ;
-
-		
+		else		
 		return null;
 }
 

@@ -240,12 +240,33 @@ public idTable visitQualifiedRef(QualifiedRef qr, idTable idTab) {
 }
 
 public idTable visitIndexedRef(IndexedRef ir, idTable idTab) {
+			
 	ir.indexExpr.visit(this, idTab);
+	
+	   Declaration d = idTab.getIdentifer(ir.idRef.id.spelling);
+		
+	   	if(d==null){
+	   			identificationError(" Indexed identifier " +ir.idRef.id.spelling+" not found ");
+	   	}
+	   	else
+	   		ir.idRef.id.setDecl(d);
+	
 	ir.idRef.visit(this, idTab);
 	return idTab;
+	
 }
 
 public idTable visitIdRef(IdRef ref, idTable idTab) {
+	   Declaration d = idTab.getIdentifer(ref.id.spelling);
+	
+	   	if(d==null){
+	   			identificationError("*** Refernce identifier " + ref.id.spelling +" not found ");
+	   	}
+	   	else
+	   		ref.id.setDecl(d);
+	   	
+	   	
+	   	
 	idTab = ref.id.visit(this, idTab);
 	return idTab;
 }
@@ -262,10 +283,10 @@ public idTable visitThisRef(ThisRef ref, idTable idTab) {
 ///////////////////////////////////////////////////////////////////////////////
 //Modify This 
 public idTable visitIdentifier(Identifier id, idTable idTab){
-    Declaration d = idTab.getDecl(id.spelling);
+ //   Declaration d = idTab.getIdentifer(id.spelling);
    
-    id.setDecl(d);
-    System.out.println(id.spelling + " " + d.name + " " + d.type.typeKind);
+   // id.setDecl(d);
+ //   System.out.println(id.spelling + " " + d.name + " " + d.type.typeKind);
     return idTab;
 }
 
