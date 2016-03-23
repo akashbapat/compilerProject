@@ -354,7 +354,7 @@ Type astType =null;
 					break;
 
 				case UNSUPPORTED:
-					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+"  or return statemet type " + stmtType + " is unsupported");
+					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+"  or return statement type " + stmtType + " is unsupported");
 
 
 					break;
@@ -416,7 +416,7 @@ Type astType =null;
 	}
 
 	public Type visitClassType(ClassType type, Object arg){
-
+		
 		return type;
 	}
 
@@ -461,12 +461,12 @@ Type astType =null;
 
 	public Type visitAssignStmt(AssignStmt stmt, Object arg){
 
-		Type	RefLHS= stmt.ref.visit(this, null);
-		Type	RefRHS =	stmt.val.visit(this, null);
+		
+		Type	refRHS =	stmt.val.visit(this, null);
+		Type	refLHS= stmt.ref.visit(this, null);
 
 
-
-		return typeCheckAssignment(RefLHS,RefRHS);
+		return typeCheckAssignment(refLHS,refRHS);
 
 
 

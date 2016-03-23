@@ -121,6 +121,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public idTable visitFieldDecl(FieldDecl f, idTable idTab){
 		idTab = f.type.visit(this, idTab);
+		 
+		
 		int res = idTab.addDecl(f,idLevel.MEMBER_LEVEL,idLevel.MEMBER_LEVEL);
 		if(res != -1)
 		{
@@ -183,7 +185,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			identificationError("Class "+type.className.spelling +" not found" );
 		}
 		type.className.setDecl(d);
-
+		type.typeKind =type.className.getDecl().type.typeKind;    // added to add support for unsupported string
 
 		return idTab;
 	}
@@ -260,7 +262,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		for (Expression e: al) {
 			idTab=        e.visit(this, idTab);
 		}
-		return null;
+		return idTab;
 
 	}
 
