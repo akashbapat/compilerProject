@@ -175,7 +175,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		{
 			identificationError("Class "+type.className.spelling +" not found" );
 		}
-
+		type.className.setDecl(d);
 
 
 		return idTab;
@@ -206,12 +206,22 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public idTable visitVardeclStmt(VarDeclStmt stmt, idTable idTab){
 
-
+		ClassType ct;
 
 		idTab = stmt.varDecl.visit(this, idTab);	
+		
+		
 		idTab = stmt.initExp.visit(this, idTab);
 
 		idTab = stmt.varDecl.type.visit(this, idTab);
+		
+		if(stmt.varDecl.type instanceof ClassType){
+			ct =(ClassType) stmt.varDecl.type;
+			stmt.varDecl.type.typeKind = ct.className.getDecl().type.typeKind; ///to support UNSUPPORTED
+		}
+		
+		
+		
 		int res = idTab.addDecl(stmt.varDecl,idLevel.PARAM_LEVEL);
 		if(res != -1)
 		{

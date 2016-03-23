@@ -177,7 +177,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			break;
 
 		case UNSUPPORTED:
-			typeCheckError("In  assignment, argument type of LHS " + l.typeKind + "or  argument type of RHS " + r.typeKind +"is unsupported");
+			typeCheckError("In  assignment, argument type of LHS " + l.typeKind + " or  argument type of RHS " + r.typeKind +" is unsupported");
 
 			break;
 

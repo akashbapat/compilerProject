@@ -28,6 +28,8 @@ public class idTable {
 
 
 	public idTable( ){
+		
+		ClassDecl cdSys,cdString,cd_printStream;
 		levelList = new ArrayList <HashMap<String,Declaration> > ();
 
 
@@ -39,10 +41,16 @@ public class idTable {
 
 		//sysMethodList.add( MethodDecl( new MemberDecl(false,   true , new Type(TypeKind.CLASS, null), "_PrintStream", null), ParameterDeclList pl, StatementList sl, SourcePosition posn));
 
-		level0.put("System", new ClassDecl("System", sysFDList, null , null) );
+		cdSys =new ClassDecl("System", sysFDList, null , null) ;
+		cdSys.type = new ClassType(new Identifier(new Token(TokenKind.ID, "System")), null);
+		level0.put("System", cdSys);
 
-
-		level0.put("String", new ClassDecl("String", null, null , null) );
+		cdString = new ClassDecl("String", null, null , null);
+		cdString.type = new ClassType(new Identifier(new Token(TokenKind.ID, "String")), null);
+		cdString.type.typeKind = TypeKind.UNSUPPORTED;
+		
+		level0.put("String", cdString );
+		
 
 
 		ParameterDeclList pdlPrintStream = new ParameterDeclList();
@@ -51,7 +59,11 @@ public class idTable {
 		MethodDeclList mdPrintStream = new MethodDeclList();
 		mdPrintStream.add( new MethodDecl( new FieldDecl(false, false, new BaseType(TypeKind.VOID,null) , "println", null) , pdlPrintStream, null, null));
 
-		level0.put("_printStream",  new ClassDecl("_printStream", null,   mdPrintStream, null) );
+		
+		cd_printStream =new ClassDecl("_printStream", null,   mdPrintStream, null) ;
+		cd_printStream.type= new ClassType(new Identifier(new Token(TokenKind.ID, "_printStream")), null);
+		
+		level0.put("_printStream",cd_printStream  );
 
 
 		levelList.add(level0);
