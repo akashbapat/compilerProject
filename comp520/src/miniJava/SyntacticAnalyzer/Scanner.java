@@ -27,6 +27,10 @@ public class Scanner{
 	private int currPosn;
 	private int currLinePosn;
 	private int currLine;
+	private int startPosn;
+	private int startLinePosn;
+	private int startLine;
+
 	private boolean eot = false; 
 
 	public Scanner(InputStream inputStream, ErrorReporter reporter) {
@@ -37,6 +41,9 @@ public class Scanner{
 		currPosn = 0;
 		currLinePosn = 0;
 		currLine = 0;
+		startPosn = 0;
+		startLinePosn = 0;
+		startLine = 0;
 		// initialize scanner state
 		readChar();
 	}
@@ -52,8 +59,10 @@ public class Scanner{
 		// collect spelling and identify token kind
 		currentSpelling = new StringBuilder();
 		TokenKind kind = scanToken();
+		
 		// return new token
-		return new Token(kind, currentSpelling.toString());
+		SourcePosition posn = new SourcePosition(startPosn,startPosn + currentSpelling.toString().length(), startLinePosn, startLine);
+		return new Token(kind, currentSpelling.toString(),posn);
 	}
 
 
@@ -62,6 +71,9 @@ public class Scanner{
 
 		while (!eot && (currentChar == ' ' ||  currentChar == '\r' || currentChar == '\n' || currentChar == '\t') )
 			skipIt();
+		startLine = currLine;
+		startLinePosn = currLinePosn;
+		startPosn = currPosn;
 		if (eot){
 			prevToken = TokenKind.EOT;
 			return (TokenKind.EOT);
@@ -284,6 +296,11 @@ public class Scanner{
 			{
 				currLinePosn = 0;
 				currLine++;
+			}
+			else if(currentChar == '\t')
+			{
+				currPosn += 3;
+				currLinePosn += 3;
 			}
 		}
 			

@@ -503,7 +503,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		Declaration d = idTab.getIdentifier("this",false);
 		if(d==null)
 			identificationError(" Identifier 'this' not found");
-		else{			 
+		//else{			 
 		
 		  if(d.type.typeKind==TypeKind.CLASS){
 		 		ct = (ClassType) d.type;
@@ -516,8 +516,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			 else
 			 identificationError(" 'this' doesnt point to a class");
 	  	
-			ref.setDecl(d);
-		}
+		//	ref.setDecl(d);
+		//}
 		return idTab;
 	}
 
