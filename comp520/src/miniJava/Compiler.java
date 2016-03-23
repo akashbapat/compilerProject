@@ -100,7 +100,7 @@ public class Compiler {
 				 
 			 
 				 typeChecker typeCheckerObj = new typeChecker(reporter);
-				 typeCheckerObj.typeCheckAST(ast);
+				// typeCheckerObj.typeCheckAST(ast);
 				}
 				System.exit(0);
 			}

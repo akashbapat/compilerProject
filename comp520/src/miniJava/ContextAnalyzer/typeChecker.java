@@ -162,9 +162,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 		typeEquality tEq;
 
-
-
-
+ 
 		tEq = isEqual(l,r);
 
 		switch(tEq){

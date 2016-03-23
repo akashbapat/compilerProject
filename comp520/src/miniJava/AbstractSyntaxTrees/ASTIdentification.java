@@ -63,10 +63,12 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	/////////////////////////////////////////////////////////////////////////////// 
 
 	public idTable visitPackage(Package prog, idTable idTab){
-		ClassDeclList cl = prog.classDeclList;
+	//	ClassDeclList cl = prog.classDeclList;
 		
 		idTab.openScope();
 		for (ClassDecl c: prog.classDeclList){
+			
+			c.type = new ClassType(new Identifier(new Token(TokenKind.ID, c.name)),null   );
 			int res = idTab.addDecl(c,idLevel.CLASS_LEVEL,idLevel.CLASS_LEVEL);
 			if(res != -1)
 			{
@@ -93,6 +95,11 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		idTab.openScope();
 		VarDecl thisVarDecl ;
 		 thisVarDecl	= new VarDecl( new ClassType( new Identifier(new Token( TokenKind.ID, clas.name )) ,null), "this", null);
+		 
+	//	 ClassType ct = (ClassType) thisVarDecl.type; //this is borderline ridiculous
+		 
+		// ct.className.setDecl(thisVarDecl);//this is borderline ridiculous
+		 
 		 idTab.addDecl( thisVarDecl, idLevel.MEMBER_LEVEL );
 		
 		
@@ -206,7 +213,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public idTable visitVardeclStmt(VarDeclStmt stmt, idTable idTab){
 
-		ClassType ct;
+	//	ClassType ct;
 
 		idTab = stmt.varDecl.visit(this, idTab);	
 		
@@ -215,10 +222,10 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 		idTab = stmt.varDecl.type.visit(this, idTab);
 		
-		if(stmt.varDecl.type instanceof ClassType){
-			ct =(ClassType) stmt.varDecl.type;
-			stmt.varDecl.type.typeKind = ct.className.getDecl().type.typeKind; ///to support UNSUPPORTED
-		}
+	//	if(stmt.varDecl.type instanceof ClassType){
+	//		ct =(ClassType) stmt.varDecl.type;
+	//		stmt.varDecl.type.typeKind = ct.className.getDecl().type.typeKind; ///to support UNSUPPORTED
+	//	}
 		
 		
 		
@@ -274,11 +281,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			idTab = stmt.thenStmt.visit(this, idTab);
 		}  
 
-
-
-
-
-
+ 
 
 		if (stmt.elseStmt != null){
 
@@ -309,7 +312,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	///////////////////////////////////////////////////////////////////////////////
 	//
-	// EXPRESSIONS
+	// EXPRESSIONS - no change, done
 	//
 	///////////////////////////////////////////////////////////////////////////////
 
@@ -364,18 +367,18 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	///////////////////////////////////////////////////////////////////////////////
 
 	public idTable visitQualifiedRef(QualifiedRef qr, idTable idTab) {
-
-		 
-		 
+ 
 		ClassDecl cd ;
 		Declaration  childD;
 		FieldDecl fd;
 		ClassType ct;
+		MethodDecl md;
 
 		idTab  = qr.id.visit(this, idTab);
 		idTab  = qr.ref.visit(this, idTab);
-
- 		 
+  
+		
+		if(qr.ref.getDecl() instanceof ClassDecl){
 					cd = (ClassDecl) qr.ref.getDecl();		
 					
 		 
@@ -392,11 +395,30 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 					qr.setDecl(idTab.getClass(ct.className.spelling));
 					}
 					
-					
-					 
 					break;
 				}
 			}
+			
+			
+			for(int i=0;i<cd.methodDeclList.size();i++){
+				md =     cd.methodDeclList.get(i);
+
+				if(!md.isPrivate && qr.id.spelling.equals(md.name) &&  (!qr.ref.isStatic || qr.ref.isStatic && md.isStatic) ){
+
+					childD =md;
+					qr.id.setDecl(childD);
+					
+					if(childD.type.typeKind==TypeKind.CLASS){
+						ct = (ClassType) childD.type;
+					qr.setDecl(idTab.getClass(ct.className.spelling));
+					
+					}
+					
+					break;
+				}
+			}
+			
+			
 
 			if(qr.id.getDecl()==null){
 				identificationError("Indentifier " + qr.id.spelling + " not found in class " + qr.ref.getDecl().name);
@@ -404,8 +426,16 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 //		}
 
+			
+		
+		}
+		
+		else{
+			identificationError("qualified reference is not applicable on non-class variables " );
+		 
+		}
+		
 		return idTab;
-
 
 	}
 
@@ -413,18 +443,25 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 		ir.indexExpr.visit(this, idTab);
 
-		Declaration d = idTab.getIdentifier(ir.idRef.id.spelling, isFuncStatic);
+	/*	 = idTab.getIdentifier(ir.idRef.id.spelling, isFuncStatic);
 
+		
+	*/
+		idTab =	ir.idRef.visit(this, idTab);
+		
+		Declaration d = ir.idRef.id.getDecl();
 		if(d==null){
 			identificationError(" Indexed identifier " +ir.idRef.id.spelling+" not found ");
 		}
 		else if (d.type.typeKind == TypeKind.ARRAY){
-			ir.idRef.id.setDecl(d);
+		
+			ir.setDecl(d);
+			ir.idRef.setDecl(d);
 		}
 		else
 			identificationError(" Indexed identifier " +ir.idRef.id.spelling+" is not declared as a array ");
-
-		idTab =	ir.idRef.visit(this, idTab);
+		
+		
 		return idTab;
 
 	}
@@ -432,21 +469,19 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public idTable visitIdRef(IdRef ref, idTable idTab) {
 
 
-		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic);
+		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static memeber access inside static functions
 		ClassType ct;
 		if(d==null){
 
-			d = idTab.getIdentifier(ref.id.spelling,true);
+	 		d = idTab.getStaticIdentifier(ref.id.spelling); // A.x , static access
 
-			if(d==null)
+		 if(d==null)
 				identificationError(" Identifier of type class "+ ref.id.spelling + " not declared  or is not a static declaration");
-			else			 
-				ref.isStatic = true;
+		 	else			 
+			 	ref.isStatic = true;
 
 		}
-
-
-
+		//ref.isStatic = isFuncStatic;
 		ref.id.setDecl(d);
 		
 		
@@ -464,19 +499,24 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	}
 
 	public idTable visitThisRef(ThisRef ref, idTable idTab) {
-		ClassType ct;
+	 	ClassType ct;
 		Declaration d = idTab.getIdentifier("this",false);
 		if(d==null)
 			identificationError(" Identifier 'this' not found");
 		else{			 
 		
-			 if(d.type.typeKind==TypeKind.CLASS){
-				ct = (ClassType) d.type;
-			ref.setDecl(idTab.getClass(ct.className.spelling));
-			}
+		  if(d.type.typeKind==TypeKind.CLASS){
+		 		ct = (ClassType) d.type;
+		 	ref.setDecl(idTab.getClass(ct.className.spelling));
+			
+		 	}
 
+			
+			
 			 else
-				 identificationError(" 'this' doesnt point to a class");
+			 identificationError(" 'this' doesnt point to a class");
+	  	
+			ref.setDecl(d);
 		}
 		return idTab;
 	}
@@ -489,10 +529,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	///////////////////////////////////////////////////////////////////////////////
 	//Modify This 
 	public idTable visitIdentifier(Identifier id, idTable idTab){
-
-
-		// id.setDecl(d);
-		//   System.out.println(id.spelling + " " + d.name + " " + d.type.typeKind);
+ 
 		return idTab;
 	}
 

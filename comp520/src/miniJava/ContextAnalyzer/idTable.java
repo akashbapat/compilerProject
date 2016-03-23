@@ -127,7 +127,7 @@ public class idTable {
 	}
 
 
-	public Declaration getIdentifier(String name , boolean isFuncStatic ){
+	public Declaration getIdentifier(String name , boolean isFuncStatic ){ //names of fields and methods 
 
 		Declaration d;
 		MemberDecl md;
@@ -138,12 +138,16 @@ public class idTable {
 			if(d != null  ){
 
 				if(isFuncStatic ){
-					md = (MemberDecl) d;
+					if(d instanceof MemberDecl){
+						md = (MemberDecl) d;
+					 
 
 					if(md.isStatic)
 						return d;
 					else 
 						return null;
+					
+					}
 				}
 				else
 					return d  ;
@@ -156,7 +160,7 @@ public class idTable {
 	}
 
 
-	public Declaration getStaticIdentifier(String name  ){
+	public Declaration getStaticIdentifier(String name  ){ //names of  classes for static access
 
 		Declaration d;
 
@@ -184,7 +188,7 @@ public class idTable {
 
 		Declaration d;
 
-		for (int i=idLevel.PREDEF_LEVEL.getValue();i <= idLevel.CLASS_LEVEL.getValue();i++){
+		for (int i=idLevel.CLASS_LEVEL.getValue();i >= idLevel.PREDEF_LEVEL.getValue();i--){
 			d=levelList.get(i).get(name) ;
 
 			if( d!=null)
