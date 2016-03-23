@@ -26,6 +26,7 @@ import miniJava.SyntacticAnalyzer.Scanner;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.AbstractSyntaxTrees.*;
+import miniJava.ContextAnalyzer.typeChecker;
 /**
  * Recognize whether input is an arithmetic expression as defined by
  * a simple context free grammar for expressions and a scanner grammar.
@@ -87,14 +88,20 @@ public class Compiler {
 			else {
 				System.out.println("valid arithmetic expression");
 				ASTDisplay display = new ASTDisplay();
+			
+				
+				
 				display.showTree(ast);
 				
-				ASTIdentification astIdentify = new ASTIdentification();
+				ASTIdentification astIdentify = new ASTIdentification(reporter);
 				
-				astIdentify.showTree(ast);
-				
-				
-				
+				 
+				if(	astIdentify.showTree(ast)){
+				 
+			 
+				 typeChecker typeCheckerObj = new typeChecker(reporter);
+				 typeCheckerObj.typeCheckAST(ast);
+				}
 				System.exit(0);
 			}
 

@@ -13,4 +13,14 @@ public abstract class Expression extends AST {
     super (posn);
   }
   
+  /*private Type t;
+  
+  public Type getType(){
+	  return t;
+  }
+  
+  public void setType(Type inType){
+	  t=inType;
+  }
+   commented by akash, edits removed from log*/
 }

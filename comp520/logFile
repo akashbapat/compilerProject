@@ -3,3 +3,11 @@
 3/16 - akash
 Identifier class: added a private member declaration called decl, added public methods to get/set it 
 Reference class: added a private member declaration called decl, added public methods to get/set it  
+
+3/17 - akash, rafay
+blockstmt : added for loop to check all varDecl
+statement : added boolean variable isVarDecl, defaults to false 
+
+ 
+
+

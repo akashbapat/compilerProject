@@ -403,7 +403,7 @@ private Type parseT() throws SyntaxError {
 	//S ::= 
 	private Statement parseS() throws SyntaxError {
 		 
-		System.out.println("In S");	 
+	//	System.out.println("In S");	 
 			switch (token.kind) {
 			
 			case BRACE:

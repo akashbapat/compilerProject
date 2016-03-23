@@ -10,7 +10,10 @@ import miniJava.SyntacticAnalyzer.SourcePosition;
 public abstract class Reference extends AST
 {
 	 private Declaration decl;
+	 public boolean isStatic = false;
+	 
 	public Reference(SourcePosition posn){
+		 
 		super(posn);
 	}
 	

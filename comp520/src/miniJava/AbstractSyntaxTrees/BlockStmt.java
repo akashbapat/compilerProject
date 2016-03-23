@@ -12,6 +12,14 @@ public class BlockStmt extends Statement
     public BlockStmt(StatementList sl, SourcePosition posn){
         super(posn);
         this.sl = sl;
+        isVarDecl=true;
+        
+        for (int i=0; i<sl.size();i++){
+        	
+            isVarDecl = isVarDecl & sl.get(i).isVarDecl;	
+        	
+        }
+        
     }
         
     public <A,R> R visit(Visitor<A,R> v, A o) {

@@ -13,6 +13,7 @@ public class VarDeclStmt extends Statement
         super(posn);
         varDecl = vd;
         initExp = e;
+       isVarDecl = true;
     }
         
     public <A,R> R visit(Visitor<A,R> v, A o) {
