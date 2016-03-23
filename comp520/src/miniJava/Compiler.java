@@ -89,19 +89,19 @@ public class Compiler {
 				System.out.println("valid arithmetic expression");
 				ASTDisplay display = new ASTDisplay();
 			
-				
-				
-				display.showTree(ast);
-				
-				ASTIdentification astIdentify = new ASTIdentification(reporter);
-				
-				 
-				if(	astIdentify.showTree(ast)){
-				 
-			 
-				 typeChecker typeCheckerObj = new typeChecker(reporter);
-				 typeCheckerObj.typeCheckAST(ast);
-				}
+//				
+//				
+     			display.showTree(ast);
+//				
+//				ASTIdentification astIdentify = new ASTIdentification(reporter);
+//				
+//				 
+//				if(	astIdentify.showTree(ast)){
+//				 
+//			 
+//				 typeChecker typeCheckerObj = new typeChecker(reporter);
+//				 typeCheckerObj.typeCheckAST(ast);
+//				}
 				System.exit(0);
 			}
 
