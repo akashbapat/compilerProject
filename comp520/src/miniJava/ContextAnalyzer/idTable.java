@@ -137,7 +137,7 @@ public class idTable {
 
 			if(d != null  ){
 
-				if(isFuncStatic ){
+				if(isFuncStatic && i == idLevel.MEMBER_LEVEL.getValue()){
 					if(d instanceof MemberDecl){
 						md = (MemberDecl) d;
 					 
@@ -148,6 +148,7 @@ public class idTable {
 						return null;
 					
 					}
+					 
 				}
 				else
 					return d  ;

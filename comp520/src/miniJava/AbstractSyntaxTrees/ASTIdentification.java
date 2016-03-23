@@ -479,7 +479,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			
 		
 		
-		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static memeber access inside static functions
+		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static member access inside static functions
 		
 		if(ref.id.spelling.equals("null"))
 			d = new VarDecl( new BaseType(TypeKind.NULL,null),"null",null);
@@ -490,7 +490,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	 		d = idTab.getStaticIdentifier(ref.id.spelling); // A.x , static access
 
 		 if(d==null)
-				identificationError(" Identifier of type class "+ ref.id.spelling + " not declared  or is not a static declaration");
+				identificationError(" Identifier of type class "+ ref.id + " named " + ref.id.spelling + " not declared  or is not a static declaration");
 		 	else			 
 			 	ref.isStatic = true;
 
@@ -506,6 +506,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			ct = (ClassType) d.type;
 		ref.setDecl(idTab.getClass(ct.className.spelling));
 		}
+		else if(d instanceof MethodDecl)  //weird logic, used as workaround
+			ref.setDecl(d);
 
 
 		idTab = ref.id.visit(this, idTab);

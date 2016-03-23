@@ -170,7 +170,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 		switch(tEq){
 		case UNEQUAL:
-			typeCheckError("In assignment, argument type of LHS " + l + " doesnt match  argument type of RHS " + r);
+			typeCheckError("In assignment, argument type of LHS " + l  +" of typeKind " + l.typeKind + " doesnt match  argument type of RHS " + r +" of typeKind " + r.typeKind);
 			errorFlag=true | errorFlag;
 			break;
 
@@ -180,7 +180,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			break;
 
 		case UNSUPPORTED:
-			typeCheckError("In  assignment, argument type of LHS " + l + " or  argument type of RHS " + r +" is unsupported");
+			typeCheckError("In  assignment, argument type of LHS " + l +" of typeKind " + l.typeKind + " or  argument type of RHS " + r + " of typeKind " + r.typeKind +" is unsupported");
 
 			break;
 
@@ -423,7 +423,7 @@ Type astType =null;
 	public Type visitArrayType(ArrayType type, Object arg){
 
 		type.eltType.visit(this, null);
-		return type.eltType; // confirm confirmed once
+		return type; // confirm confirmed once, confirmed
 	}
 
 
@@ -651,12 +651,12 @@ boolean errorFlag =false;
 			errorFlag =true;
 			break;
 		case UNEQUAL:
-			typeCheckError("Argument type in function definition is " + argDefType  +" and argument input type is " +argType  + " they dont match");
+			typeCheckError("Argument type in function definition " + md.name + " is " + argDefType + " of typekind " + argDefType.typeKind +" and argument input type is " +argType + " of typekind " + argType.typeKind + " they dont match");
 			errorFlag =true;
 			break;
 
 		case UNSUPPORTED:
-			typeCheckFatalError("Argument type in function definition is " +  argDefType+" and argument input type is " + argType  + " either of them is unsupported");
+			typeCheckFatalError("Argument type in function definition " + md.name + " is " +  argDefType  + " of typekind " + argDefType.typeKind +" and argument input type is " + argType  + " of typekind " + argType.typeKind   + " either of them is unsupported");
 			return new BaseType(TypeKind.UNSUPPORTED, null);
 			
 			
@@ -712,7 +712,7 @@ boolean errorFlag =false;
 		if(	errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
 		else
-			return 	 new ArrayType(eltType,null);
+			return 	 new ArrayType(eltType,expr.posn);
 
 	}
 
@@ -760,7 +760,8 @@ boolean errorFlag =false;
 		if(	errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
 		else
-			return 	ir.idRef.visit(this, null);
+			return exprType;
+			//return 	ir.idRef.visit(this, null);                          do we need to visit this?
 
 	}
 
@@ -786,7 +787,7 @@ boolean errorFlag =false;
 
 		Type idType =id.getDecl().type;
 		if(idType.typeKind == TypeKind.UNSUPPORTED)
-			typeCheckFatalError("Encountered UNSUPPORTED type for identifier " +   id.spelling);
+			typeCheckFatalError("Encountered UNSUPPORTED type for " + id + " of name " + id.spelling);
 		return id.getDecl().type;
 	}
 
