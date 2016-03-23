@@ -394,6 +394,9 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 						ct = (ClassType) childD.type;
 					qr.setDecl(idTab.getClass(ct.className.spelling));
 					}
+					else{
+						qr.setDecl(childD);
+					}
 					
 					break;
 				}
@@ -412,6 +415,9 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 						ct = (ClassType) childD.type;
 					qr.setDecl(idTab.getClass(ct.className.spelling));
 					
+					}
+					else{
+						qr.setDecl(childD);
 					}
 					
 					break;
@@ -468,8 +474,16 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public idTable visitIdRef(IdRef ref, idTable idTab) {
 
-
+		
+		
+			
+		
+		
 		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static memeber access inside static functions
+		
+		if(ref.id.spelling.equals("null"))
+			d = new VarDecl( new BaseType(TypeKind.NULL,null),"null",null);
+		
 		ClassType ct;
 		if(d==null){
 

@@ -8,6 +8,8 @@ Reference class: added a private member declaration called decl, added public me
 blockstmt : added for loop to check all varDecl
 statement : added boolean variable isVarDecl, defaults to false 
 
+3/23 akash added NULL type to typekind
+
  
 
 

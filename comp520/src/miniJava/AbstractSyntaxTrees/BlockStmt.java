@@ -12,13 +12,13 @@ public class BlockStmt extends Statement
     public BlockStmt(StatementList sl, SourcePosition posn){
         super(posn);
         this.sl = sl;
-        isVarDecl=true;
+        isVarDecl=false;
         
-        for (int i=0; i<sl.size();i++){
+   //     for (int i=0; i<sl.size();i++){
         	
-            isVarDecl = isVarDecl & sl.get(i).isVarDecl;	
+     //       isVarDecl = isVarDecl & sl.get(i).isVarDecl;	
         	
-        }
+       // }
         
     }
         

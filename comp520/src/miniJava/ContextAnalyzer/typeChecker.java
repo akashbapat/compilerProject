@@ -11,14 +11,16 @@ public class typeChecker implements Visitor<Object,Type> {
 	private typeEquality isEqual(Type el, Type er){
 
 
-
+		
 		if(el.typeKind == TypeKind.UNSUPPORTED || er.typeKind ==TypeKind.UNSUPPORTED)
 			return typeEquality.UNSUPPORTED;
 		else if (el.typeKind == TypeKind.ERROR )
 			return typeEquality.ERROR;
 		else if (er.typeKind == TypeKind.ERROR )
 			return typeEquality.ERROR;
-
+		else if(el.typeKind==TypeKind.NULL || er.typeKind==TypeKind.NULL)
+			return typeEquality.EQUAL;
+		 
 		else if(er.typeKind ==el.typeKind){
 
 			if(er.typeKind==TypeKind.CLASS ){
@@ -113,8 +115,9 @@ public class typeChecker implements Visitor<Object,Type> {
 	Type operatorAgreement(Type l,Type r, Operator o){
 		// if you enter this function, it means l/r are either equal or have error
 
-
-		if(o.spelling.equals("+") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
+	 
+			
+		  if(o.spelling.equals("+") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
 			return new BaseType(TypeKind.INT, null);
 
 		else if(o.spelling.equals("-") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
@@ -138,10 +141,10 @@ public class typeChecker implements Visitor<Object,Type> {
 		else if(o.spelling.equals(">=") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
 			return new BaseType(TypeKind.BOOLEAN, null);
 
-		else if(o.spelling.equals("==") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN))
+		else if(o.spelling.equals("==") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN || l.typeKind==TypeKind.NULL || r.typeKind==TypeKind.NULL))
 			return new BaseType(TypeKind.BOOLEAN, null);
 
-		else if(o.spelling.equals("!=") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN))
+		else if(o.spelling.equals("!=") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN || l.typeKind==TypeKind.NULL || r.typeKind==TypeKind.NULL))
 			return new BaseType(TypeKind.BOOLEAN, null);
 
 		else if(o.spelling.equals("&&") && (l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN))
@@ -167,20 +170,26 @@ public class typeChecker implements Visitor<Object,Type> {
 
 		switch(tEq){
 		case UNEQUAL:
-			typeCheckError("In assignment, argument type of LHS " + l.typeKind + " doesnt match  argument type of RHS " + r.typeKind);
+			typeCheckError("In assignment, argument type of LHS " + l + " doesnt match  argument type of RHS " + r);
 			errorFlag=true | errorFlag;
 			break;
 
 		case EQUAL:
+			
+			 
 			break;
 
 		case UNSUPPORTED:
-			typeCheckError("In  assignment, argument type of LHS " + l.typeKind + " or  argument type of RHS " + r.typeKind +" is unsupported");
+			typeCheckError("In  assignment, argument type of LHS " + l + " or  argument type of RHS " + r +" is unsupported");
 
 			break;
 
 		case ERROR:
+			errorFlag=true;
+			
 			break;
+	 
+			
 		default:
 			typeCheckFatalError("Shouldnt reach here");
 			break;
@@ -213,13 +222,13 @@ public class typeChecker implements Visitor<Object,Type> {
 
 	private void typeCheckError(String e)  {
 		reporter.reportError("*** Type check error: " + e);
-		throw new TypeCheckError();
+		//throw new TypeCheckError();
 
 	}
 
 
 	private void typeCheckFatalError(String e) throws TypeCheckError {
-		reporter.reportError("*** Type check error: " + e);
+		reporter.reportError("*** Type check Fatal error, stopping: " + e);
 		throw new TypeCheckError();
 
 	}
@@ -337,7 +346,7 @@ Type astType =null;
 
 				switch(tEq){
 				case UNEQUAL:
-					typeCheckError("In method declaration "+m.name + " return type " +methodRetType.typeKind+"  doesnt match return statemet type " + stmtType.typeKind);
+					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+"  doesnt match return statemet type " + stmtType);
 					errorFlag=true | errorFlag;
 					break;
 
@@ -345,7 +354,7 @@ Type astType =null;
 					break;
 
 				case UNSUPPORTED:
-					typeCheckError("In method declaration "+m.name + " return type " +methodRetType.typeKind+"  or return statemet type " + stmtType.typeKind + " is unsupported");
+					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+"  or return statemet type " + stmtType + " is unsupported");
 
 
 					break;
@@ -368,7 +377,7 @@ Type astType =null;
 			return new BaseType(TypeKind.ERROR,null);
 		else if(!hasRetStmt && methodRetType.typeKind!=TypeKind.VOID  ){
 			
-			typeCheckError("In method declaration "+m.name + " return type is " +methodRetType.typeKind+" but method doesnt contain return statement");
+			typeCheckError("In method declaration "+m.name + " return type is " +methodRetType+" but method doesnt contain return statement");
 			return new BaseType(TypeKind.ERROR,null);
 
 		}
@@ -491,7 +500,7 @@ Type astType =null;
 
 			switch(tEq){
 			case UNEQUAL:
-				typeCheckError("Argument " + i +" type " + expType.typeKind + " doesnt match method's argument type " + md.parameterDeclList.get(i).type.typeKind);
+				typeCheckError("Argument " + i +" type " + expType + " doesnt match method's argument type " + md.parameterDeclList.get(i).type);
 				errorFlag=true | errorFlag;
 				break;
 
@@ -499,10 +508,11 @@ Type astType =null;
 				break;
 
 			case UNSUPPORTED:
-				typeCheckFatalError("Argument " + i +" type " + expType.typeKind + " or  " + md.parameterDeclList.get(i).type.typeKind +" is unsupported");
+				typeCheckFatalError("Argument " + i +" type " + expType + " or  " + md.parameterDeclList.get(i).type +" is unsupported");
 				break;
 
 			case ERROR:
+				errorFlag = true;
 				break;
 			default:
 				typeCheckFatalError("Shouldnt reach here");
@@ -616,14 +626,61 @@ Type astType =null;
 	}
 
 	public Type visitCallExpr(CallExpr expr, Object arg){
-
-		expr.functionRef.visit(this, null);
+boolean errorFlag =false;
+	Type funcRetType =	expr.functionRef.visit(this, null);
 		ExprList al = expr.argList;
+		Type argType,argDefType;
+		typeEquality tEq;
+		MethodDecl md;
+		Expression e;
+		Declaration d =expr.functionRef.getDecl();
+		
+		
+		if(d instanceof MethodDecl){
+		md = (MethodDecl) d;
+		for (int i=0;i<al.size();i++ ) {
+			e = al.get(i);
+		argType =	e.visit(this, null);
+		argDefType =md.parameterDeclList.get(i).type;
+		
+		tEq = isEqual(argType,argDefType);
+		
+		switch(tEq){
 
-		for (Expression e: al) {
-			e.visit(this, null);
+		case ERROR:
+			errorFlag =true;
+			break;
+		case UNEQUAL:
+			typeCheckError("Argument type in function definition is " + argDefType  +" and argument input type is " +argType  + " they dont match");
+			errorFlag =true;
+			break;
+
+		case UNSUPPORTED:
+			typeCheckFatalError("Argument type in function definition is " +  argDefType+" and argument input type is " + argType  + " either of them is unsupported");
+			return new BaseType(TypeKind.UNSUPPORTED, null);
+			
+			
+		case EQUAL:
+			break;
+		default:
+			typeCheckFatalError("shouldnt reach here, left and right types are neither equal/unequal/error/unsupported");
+			return new BaseType(TypeKind.ERROR, null);
+		 
 		}
-		return null;
+		
+		
+		}
+		}
+		else{
+			typeCheckFatalError("Shouldnt reach here : reference to function doesnt have a declaration of type methodDecl");
+		}
+		
+		if(errorFlag)
+			return new BaseType(TypeKind.ERROR,null);
+		else
+			return funcRetType;
+		
+	 
 	}
 
 	public Type visitLiteralExpr(LiteralExpr expr, Object arg){
@@ -739,12 +796,12 @@ Type astType =null;
 	}
 
 	public Type visitIntLiteral(IntLiteral num, Object arg){
-
-		return new  BaseType(TypeKind.INT,null);
+		 
+		return new  BaseType(TypeKind.INT,num.posn);
 	}
 
 	public Type visitBooleanLiteral(BooleanLiteral bool, Object arg){
-		return new  BaseType(TypeKind.BOOLEAN,null);
+		return new  BaseType(TypeKind.BOOLEAN,bool.posn);
 	}
 }
 

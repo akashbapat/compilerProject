@@ -271,6 +271,7 @@ public class Scanner{
 		keywordHmap.put("false",1);
 		keywordHmap.put("int",1);
 		keywordHmap.put("boolean",1);
+		//keywordHmap.put("null",1);
 	}
 	private boolean isKeyword(String s){
 		return this.keywordHmap.containsKey(s);
