@@ -8,7 +8,7 @@ package miniJava.AbstractSyntaxTrees;
 import  miniJava.SyntacticAnalyzer.SourcePosition;
 
 public abstract class Statement extends AST {
-boolean  isVarDecl = false;
+public boolean  isVarDecl = false;
   public Statement(SourcePosition posn) {
     super (posn);
   }

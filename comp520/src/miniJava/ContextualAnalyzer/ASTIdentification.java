@@ -1,9 +1,10 @@
-package miniJava.AbstractSyntaxTrees;
-import miniJava.ContextAnalyzer.idTable;
+package miniJava.ContextualAnalyzer;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.ErrorReporter;
-import miniJava.ContextAnalyzer.idLevel;
+import miniJava.AbstractSyntaxTrees.*;
+import miniJava.AbstractSyntaxTrees.Package;
+ 
 
 /**
  * SyntaxError is used to unwind parse stack when parse fails

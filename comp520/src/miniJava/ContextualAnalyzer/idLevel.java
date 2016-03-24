@@ -1,4 +1,4 @@
-package miniJava.ContextAnalyzer;
+package miniJava.ContextualAnalyzer;
 
 public enum idLevel {
 

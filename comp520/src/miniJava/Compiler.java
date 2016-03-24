@@ -26,7 +26,8 @@ import miniJava.SyntacticAnalyzer.Scanner;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.AbstractSyntaxTrees.*;
-import miniJava.ContextAnalyzer.typeChecker;
+import miniJava.ContextualAnalyzer.ASTIdentification;
+import miniJava.ContextualAnalyzer.typeChecker;
 /**
  * Recognize whether input is an arithmetic expression as defined by
  * a simple context free grammar for expressions and a scanner grammar.
