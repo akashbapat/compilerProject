@@ -387,7 +387,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			for(int i=0;i<cd.fieldDeclList.size();i++){
 				fd =     cd.fieldDeclList.get(i);
 
-				if(!fd.isPrivate && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isStatic || qr.ref.isStatic && fd.isStatic) ){
+				if(    (!fd.isPrivate  || fd.isPrivate  && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isStatic || qr.ref.isStatic && fd.isStatic) ){
 
 					childD =fd;
 					qr.id.setDecl(childD);
@@ -408,7 +408,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			for(int i=0;i<cd.methodDeclList.size();i++){
 				md =     cd.methodDeclList.get(i);
 
-				if(!md.isPrivate && qr.id.spelling.equals(md.name) &&  (!qr.ref.isStatic || qr.ref.isStatic && md.isStatic) ){
+				if( (!md.isPrivate  || md.isPrivate  && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isStatic || qr.ref.isStatic && md.isStatic) ){
 
 					childD =md;
 					qr.id.setDecl(childD);
@@ -429,7 +429,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			
 
 			if(qr.id.getDecl()==null){
-				identificationError("Indentifier " + qr.id.spelling + " not found in class " + qr.ref.getDecl().name);
+				identificationError(qr.id +"  " + qr.id.spelling + " not found in class " + qr.ref.getDecl().name);
 			}
 
 //		}

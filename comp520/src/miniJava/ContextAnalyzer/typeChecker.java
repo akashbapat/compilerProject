@@ -348,7 +348,7 @@ Type astType =null;
 
 				switch(tEq){
 				case UNEQUAL:
-					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+"  doesnt match return statemet type " + stmtType);
+					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+" of typekind " + methodRetType.typeKind + "  doesnt match return statement type " + stmtType + " of typekind " + stmtType.typeKind);
 					errorFlag=true | errorFlag;
 					break;
 
@@ -356,7 +356,7 @@ Type astType =null;
 					break;
 
 				case UNSUPPORTED:
-					typeCheckError("In method declaration "+m.name + " return type " +methodRetType+"  or return statement type " + stmtType + " is unsupported");
+					typeCheckError("In method declaration "+m.name + " return type " +methodRetType +" of typekind " + methodRetType.typeKind +"  or return statement type " + stmtType + " of typekind " + stmtType.typeKind + " is unsupported");
 
 
 					break;
@@ -492,8 +492,12 @@ Type astType =null;
 
 		ExprList al = stmt.argList;
 		Type expType;	 
-		int i =0;
-		for (i =0;i<al.size();i++) {
+	 
+		if(al.size()!=md.parameterDeclList.size())
+			typeCheckFatalError("Number of arguments for declared function " + md + " of name " + md.name + " is " + md.parameterDeclList.size() + " but you provided " +al.size() + " arguments at " + stmt);
+		
+		
+		for (int i =0;i<al.size();i++) {
 
 			Expression e = al.get(i);
 			expType =	e.visit(this, null);
