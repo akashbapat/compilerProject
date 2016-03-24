@@ -477,10 +477,10 @@ Type astType =null;
 	public Type visitIxAssignStmt(IxAssignStmt stmt, Object arg){
 
 
-		Type	indexedRefLHS = stmt.ixRef.visit(this, null);
-		Type	indexedRefRHS = stmt.val.visit(this, null);
+		Type	refLHS = stmt.ixRef.visit(this, null);
+		Type	refRHS = stmt.val.visit(this, null);
 
-		return typeCheckAssignment(indexedRefLHS,indexedRefRHS);
+		return typeCheckAssignment(refLHS,refRHS);
 
 	}
 
@@ -745,6 +745,8 @@ boolean errorFlag =false;
 		boolean errorFlag=false; 
 		Type	exprType=	ir.indexExpr.visit(this, null);
 		BaseType exprBT;
+		Type idRefType;
+		ArrayType arrType;
 		if(exprType instanceof  BaseType){
 			exprBT = (BaseType) exprType;
 			if(exprBT.typeKind!=TypeKind.INT){
@@ -761,10 +763,23 @@ boolean errorFlag =false;
 
 		if(	errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
-		else
-			return exprType;
-			//return 	ir.idRef.visit(this, null);                          do we need to visit this?
-
+		else{
+			 
+			idRefType = 	ir.idRef.visit(this, null);   
+			if(idRefType instanceof ArrayType){
+				arrType= (ArrayType) idRefType;
+				
+				if(arrType.eltType.typeKind == TypeKind.UNSUPPORTED)
+					typeCheckFatalError("IndexedRef's  " + ir.idRef + " is of unsupported type");
+			return arrType.eltType;
+			}
+			else{
+				typeCheckFatalError("IndexedRef's  " + ir.idRef + " is not of type array");
+				return new BaseType(TypeKind.ERROR,null);
+			
+			
+			}
+		}
 	}
 
 	public Type visitIdRef(IdRef ref, Object arg) {
