@@ -202,7 +202,7 @@ public class idTable {
 
 	public  void printLevel(int n){
 
-
+/*
 
 		if(n>levelList.size()-1){
 			System.out.println("error") ;
@@ -218,12 +218,12 @@ public class idTable {
 
 
 		}
-
+*/
 	}
 
 	public void printRestLevel(   ){
 
-
+/*
 
 		for (int i=5 ;i<levelList.size();i++){
 
@@ -240,7 +240,7 @@ public class idTable {
 
 
 		}
-
+*/
 	}
 
 

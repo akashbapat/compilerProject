@@ -236,7 +236,7 @@ public class typeChecker implements Visitor<Object,Type> {
 	}
 
 
-	public void typeCheckAST(AST ast){
+	public boolean typeCheckAST(AST ast){
 		System.out.println("======= AST  Type Checker =========================");
 Type astType =null;
 
@@ -247,12 +247,20 @@ Type astType =null;
 		}
 		catch (TypeCheckError ie) {
 			System.out.println("Type check error occurred");
+			return false;
 		}
 		if(astType!=null){
-			if(astType.typeKind==TypeKind.VOID)
+			if(astType.typeKind==TypeKind.VOID){
 			System.out.println("Type checking successfully completed");
+			return true;
+			}
+			else 
+				return false;
+			
 		}
-		System.out.println("=============================================");
+		else
+			return false;
+		 
 	}
 
 
@@ -644,6 +652,12 @@ boolean errorFlag =false;
 		
 		if(d instanceof MethodDecl){
 		md = (MethodDecl) d;
+		
+		if(al.size()!=md.parameterDeclList.size())
+			typeCheckFatalError("Number of arguments for declared function " + md + " of name " + md.name + " is " + md.parameterDeclList.size() + " but you provided " +al.size() + " arguments at function call in expression " + expr);
+		
+		
+		
 		for (int i=0;i<al.size();i++ ) {
 			e = al.get(i);
 		argType =	e.visit(this, null);

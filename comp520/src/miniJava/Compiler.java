@@ -91,7 +91,7 @@ public class Compiler {
 			
 //				
 //				
-     			display.showTree(ast);
+     		//	display.showTree(ast);
  				
  			ASTIdentification astIdentify = new ASTIdentification(reporter);
 //				
@@ -100,8 +100,17 @@ public class Compiler {
  			 
  			 
  				 typeChecker typeCheckerObj = new typeChecker(reporter);
- 	 		 typeCheckerObj.typeCheckAST(ast);
+ 	 		if( typeCheckerObj.typeCheckAST(ast))
+ 	 			System.exit(0);
+ 	 		else
+ 	 			System.exit(4);
  			}
+ 				else{
+ 					System.exit(4);
+ 				}
+ 				
+ 				
+ 				
 				System.exit(0);
 			}
 
