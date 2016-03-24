@@ -18,7 +18,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			return typeEquality.ERROR;
 		else if (er.typeKind == TypeKind.ERROR )
 			return typeEquality.ERROR;
-		else if(el.typeKind==TypeKind.NULL || er.typeKind==TypeKind.NULL)
+		else if((el.typeKind==TypeKind.NULL && er.typeKind!=TypeKind.VOID) || (er.typeKind==TypeKind.NULL  && el.typeKind!=TypeKind.VOID))
 			return typeEquality.EQUAL;
 		 
 		else if(er.typeKind ==el.typeKind){

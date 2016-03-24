@@ -1,4 +1,5 @@
 package miniJava.ContextualAnalyzer;
+import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.ErrorReporter;
@@ -485,7 +486,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static member access inside static functions
 		
 		if(ref.id.spelling.equals("null"))
-			d = new VarDecl( new BaseType(TypeKind.NULL,null),"null",null);
+			d = new VarDecl( new BaseType(TypeKind.NULL, ref.id.posn),"null",ref.id.posn);
 		
 		ClassType ct;
 		if(d==null){
