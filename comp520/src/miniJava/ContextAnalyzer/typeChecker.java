@@ -46,7 +46,9 @@ public class typeChecker implements Visitor<Object,Type> {
 				 *   int [] a;
 				 *     a [] b;
 				 * in this case we  wont find a*/
-
+				if(atEr.eltType.typeKind==TypeKind.UNSUPPORTED && atEl.eltType.typeKind==TypeKind.UNSUPPORTED ) //added for case when both arrays are string UNSUPPORTED
+					return typeEquality.EQUAL;
+				else
 				return isEqual(atEl.eltType, atEr.eltType); 
 			}
 
