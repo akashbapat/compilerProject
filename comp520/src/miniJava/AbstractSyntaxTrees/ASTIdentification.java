@@ -50,8 +50,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			return false;
 		}
 
-		System.out.println("Identification complete");
-		System.out.println("=============================================");
+		System.out.println("Identification successfully completed");
+		System.out.println("==============================================");
 		return true;
 	}
 

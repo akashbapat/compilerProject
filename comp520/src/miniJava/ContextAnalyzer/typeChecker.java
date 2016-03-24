@@ -237,7 +237,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 
 	public boolean typeCheckAST(AST ast){
-		System.out.println("======= AST  Type Checker =========================");
+		System.out.println("======= AST  Type Checker ====================");
 Type astType =null;
 
 
