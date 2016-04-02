@@ -477,12 +477,6 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	}
 
 	public idTable visitIdRef(IdRef ref, idTable idTab) {
-
-		
-		
-			
-		
-		
 		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static member access inside static functions
 		
 		if(ref.id.spelling.equals("null"))
@@ -541,7 +535,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		return idTab;
 	}
 
-
+	
 	///////////////////////////////////////////////////////////////////////////////
 	//
 	// TERMINALS
@@ -563,5 +557,19 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public idTable visitBooleanLiteral(BooleanLiteral bool, idTable idTab){
 		return idTab;
+	}
+
+
+
+	public idTable visitNullDecl(NullDecl decl, idTable arg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+
+	public idTable visitNullRef(NullRef ref, idTable arg) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

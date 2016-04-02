@@ -20,7 +20,7 @@ public interface Visitor<ArgType,ResultType> {
     public ResultType visitMethodDecl(MethodDecl md, ArgType arg);
     public ResultType visitParameterDecl(ParameterDecl pd, ArgType arg);
     public ResultType visitVarDecl(VarDecl decl, ArgType arg);
- 
+    public ResultType visitNullDecl(NullDecl decl, ArgType arg); //Added for NullDecl
   // Types
     public ResultType visitBaseType(BaseType type, ArgType arg);
     public ResultType visitClassType(ClassType type, ArgType arg);
@@ -50,7 +50,7 @@ public interface Visitor<ArgType,ResultType> {
     public ResultType visitIndexedRef(IndexedRef ref, ArgType arg);
     public ResultType visitIdRef(IdRef ref, ArgType arg);
     public ResultType visitThisRef(ThisRef ref, ArgType arg);
-
+    public ResultType visitNullRef(NullRef ref, ArgType arg); //Added for NullRef
   // Terminals
     public ResultType visitIdentifier(Identifier id, ArgType arg);
     public ResultType visitOperator(Operator op, ArgType arg);

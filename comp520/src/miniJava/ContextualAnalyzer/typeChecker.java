@@ -839,6 +839,16 @@ boolean errorFlag =false;
 	public Type visitBooleanLiteral(BooleanLiteral bool, Object arg){
 		return new  BaseType(TypeKind.BOOLEAN,bool.posn);
 	}
+
+	public Type visitNullDecl(NullDecl decl, Object arg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Type visitNullRef(NullRef ref, Object arg) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 
 

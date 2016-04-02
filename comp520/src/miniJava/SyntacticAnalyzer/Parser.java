@@ -781,6 +781,10 @@ private Type parseT() throws SyntaxError {
 		
 		//E ::= OR (|| OR)*
 		private Expression parseE() throws SyntaxError { //parseE 's name can be kept as parseOR
+			if(token.kind == TokenKind.KEYWORD && token.spelling.equals("null")){
+				return new RefExpr(new NullRef(token.posn), token.posn) ;
+			}
+			
 			Expression e1,e2;
 			Token opToken;
 			Operator op;

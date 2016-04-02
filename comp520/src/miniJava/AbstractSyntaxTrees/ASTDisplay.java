@@ -145,6 +145,12 @@ public class ASTDisplay implements Visitor<String,Object> {
         show(indent(arg), quote(vd.name) + " varname");
         return null;
     }
+    
+    public Object visitNullDecl(NullDecl nd, String arg){
+        show(arg, nd);
+        nd.type.visit(this, indent(arg));
+        return null;
+    }
  
 	
 	///////////////////////////////////////////////////////////////////////////////
@@ -335,7 +341,13 @@ public class ASTDisplay implements Visitor<String,Object> {
     	return null;
     }
     
-    
+    public Object visitNullRef(NullRef ref, String arg) {
+    	ref.getDecl().visit(this, indent(arg));
+    	//show(arg, quote(id.spelling) + " " + id.toString());
+    	show(arg,ref);
+    	return null;
+    }
+   
 	///////////////////////////////////////////////////////////////////////////////
 	//
 	// TERMINALS

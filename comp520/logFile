@@ -10,6 +10,8 @@ statement : added boolean variable isVarDecl, defaults to false
 
 3/23 akash added NULL type to typekind
 
- 
+ 4/2/ rafay added NullRef to AST
+ 			added NullDecl to AST
+ 			added methods to visitor
 
 
