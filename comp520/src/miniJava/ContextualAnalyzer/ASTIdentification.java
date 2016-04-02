@@ -115,10 +115,11 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			isFuncStatic =m.isStatic;
 			idTab = m.visit(this, idTab);
 		}
-
+ 
 		idTab.printLevel(2);
 		idTab.closeScope();
 		return idTab;
+		
 	}
 
 	public idTable visitFieldDecl(FieldDecl f, idTable idTab){

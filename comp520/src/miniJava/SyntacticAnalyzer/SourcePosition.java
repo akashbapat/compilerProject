@@ -12,4 +12,13 @@ public class SourcePosition {
 		 this.linePosn = linePosn;
 		 this.line = line;
 	 }
+	 
+	 public SourcePosition(){
+		 
+		 posn = -1;
+		 endPosn = -1;
+		 linePosn = -1;
+		 line = -1;
+		 
+	 }
 }

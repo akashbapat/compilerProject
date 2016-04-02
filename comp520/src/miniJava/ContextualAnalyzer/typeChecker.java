@@ -156,7 +156,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			return new BaseType(TypeKind.BOOLEAN, null);
 
 		else{
-			typeCheckFatalError("shouldnt reach here, invalid binary operator encountered");
+			typeCheckFatalError("shouldnt reach here, left type is" + l +" of typekind " + l.typeKind + " right type is "+ r +" of typekind " + r.typeKind + " and operator is " + o + " of spelling "  + o.spelling );
 			return new BaseType(TypeKind.ERROR, null);
 		}
 	}
@@ -411,6 +411,12 @@ Type astType =null;
 		return vd.type.visit(this, null);
 
 
+	}
+	
+	
+	public Type visitNullDecl(NullDecl decl, Object arg) {
+		 typeCheckFatalError("Shouldnt reach here : visiting   null decl");
+		return null;
 	}
 
 
@@ -810,6 +816,12 @@ boolean errorFlag =false;
 
 		return ref.getDecl().type;
 	}
+	
+	
+	public Type visitNullRef(NullRef ref, Object arg) {
+		 
+		return ref.getDecl().type;
+	}
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -840,15 +852,8 @@ boolean errorFlag =false;
 		return new  BaseType(TypeKind.BOOLEAN,bool.posn);
 	}
 
-	public Type visitNullDecl(NullDecl decl, Object arg) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public Type visitNullRef(NullRef ref, Object arg) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+ 
+	
 }
 
 
