@@ -92,8 +92,7 @@ public class Compiler {
 			
 //				
 //				
-     			display.showTree(ast);
- 			System.exit(0);
+     			//display.showTree(ast);
  			ASTIdentification astIdentify = new ASTIdentification(reporter);
 //				
 //				 

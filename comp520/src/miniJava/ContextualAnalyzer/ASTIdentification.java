@@ -170,6 +170,9 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	}
 
+	public idTable visitNullDecl(NullDecl decl, idTable idTab) {
+		return idTab;
+	}
 	///////////////////////////////////////////////////////////////////////////////
 	//
 	// TYPES
@@ -479,8 +482,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public idTable visitIdRef(IdRef ref, idTable idTab) {
 		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic); //for static member access inside static functions
 		
-		if(ref.id.spelling.equals("null"))
-			d = new VarDecl( new BaseType(TypeKind.NULL, ref.id.posn),"null",ref.id.posn);
+//		if(ref.id.spelling.equals("null"))
+//			d = new VarDecl( new BaseType(TypeKind.NULL, ref.id.posn),"null",ref.id.posn);
 		
 		ClassType ct;
 		if(d==null){
@@ -535,7 +538,9 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		return idTab;
 	}
 
-	
+	public idTable visitNullRef(NullRef ref, idTable idTab) {
+		return idTab;
+	}
 	///////////////////////////////////////////////////////////////////////////////
 	//
 	// TERMINALS
@@ -561,15 +566,5 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 
 
-	public idTable visitNullDecl(NullDecl decl, idTable arg) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-
-
-	public idTable visitNullRef(NullRef ref, idTable arg) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

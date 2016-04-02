@@ -342,8 +342,6 @@ public class ASTDisplay implements Visitor<String,Object> {
     }
     
     public Object visitNullRef(NullRef ref, String arg) {
-    	ref.getDecl().visit(this, indent(arg));
-    	//show(arg, quote(id.spelling) + " " + id.toString());
     	show(arg,ref);
     	return null;
     }
