@@ -7,12 +7,12 @@ import mJAM.Machine.Reg;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
 import miniJava.AbstractSyntaxTrees.Package;
- 
- 
+
+import java.util.HashMap; 
 
 
 public class codeGenerator implements Visitor<String,Object> {
-	
+		private HashMap<String,Prim> opToPrimMap; 
 		
 		ErrorReporter reporter;
 	   
@@ -38,10 +38,10 @@ public class codeGenerator implements Visitor<String,Object> {
 		public codeGenerator(ErrorReporter er){
 		 
 			reporter =er;
-			 
+			opToPrimMap = new HashMap<String, Machine.Prim>(); 
 			
 			Machine.initCodeGen();
-
+			
 		}
 
 		 class CodeGenError extends Error {
@@ -53,7 +53,23 @@ public class codeGenerator implements Visitor<String,Object> {
 			throw new CodeGenError();
 
 		}
-	      
+	    
+		private void initializeHMap()
+		{
+			opToPrimMap.put("!",Prim.not);
+			opToPrimMap.put("&&",Prim.and);
+			opToPrimMap.put("||",Prim.or);
+			opToPrimMap.put("+",Prim.add);
+			opToPrimMap.put("*",Prim.mult);
+			opToPrimMap.put("/",Prim.div);
+			opToPrimMap.put("==",Prim.eq);
+			opToPrimMap.put("<=",Prim.le);
+			opToPrimMap.put(">=",Prim.ge);
+			opToPrimMap.put("!=",Prim.ne);
+			opToPrimMap.put("<",Prim.gt);
+			opToPrimMap.put(">",Prim.lt);
+		}
+
 	    
 		///////////////////////////////////////////////////////////////////////////////
 		//
@@ -243,17 +259,37 @@ public class codeGenerator implements Visitor<String,Object> {
 		///////////////////////////////////////////////////////////////////////////////
 
 	    public Object visitUnaryExpr(UnaryExpr expr, String arg){
-	        
-	        expr.operator.visit(this, null);
 	        expr.expr.visit(this, null);
+	    	Prim p;
+	    	String spelling = expr.operator.spelling;
+	    	if(opToPrimMap.containsKey(spelling))
+	    	{
+	    		p = opToPrimMap.get(spelling);
+	    	}
+	    	else if(spelling.equals("-"))
+	    	{
+	    		p = Prim.neg;
+	    	}
+	        expr.operator.visit(this, null);
+	        Machine.emit(p);
 	        return null;
 	    }
 	    
 	    public Object visitBinaryExpr(BinaryExpr expr, String arg){
-	         
-	        expr.operator.visit(this, null);
 	        expr.left.visit(this, null);
-	        expr.right.visit(this, null);
+	        expr.right.visit(this, null);	         
+	    	Prim p = null;
+	    	String spelling = expr.operator.spelling;
+	    	if(opToPrimMap.containsKey(spelling))
+	    	{
+	    		p = opToPrimMap.get(spelling);
+	    	}
+	    	else if(spelling.equals("-"))
+	    	{
+	    		p = Prim.sub;
+	    	}	    	
+	        expr.operator.visit(this, null);
+	        Machine.emit(p);
 	        return null;
 	    }
 	    
@@ -334,12 +370,11 @@ public class codeGenerator implements Visitor<String,Object> {
 		///////////////////////////////////////////////////////////////////////////////
 	    
 	    public Object visitIdentifier(Identifier id, String arg){
-	        
+	    	
 	        return null;
 	    }
 	    
 	    public Object visitOperator(Operator op, String arg){
-	    	
 	        return null;
 	    }
 	    
