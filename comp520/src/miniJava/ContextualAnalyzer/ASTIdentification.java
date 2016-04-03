@@ -70,7 +70,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		idTab.openScope();
 		for (ClassDecl c: prog.classDeclList){
 			
-			c.type = new ClassType(new Identifier(new Token(TokenKind.ID, c.name)),null   );
+			c.type = new ClassType(new Identifier(new Token(TokenKind.ID, c.name)),c.posn   );
 			int res = idTab.addDecl(c,idLevel.CLASS_LEVEL,idLevel.CLASS_LEVEL);
 			if(res != -1)
 			{
@@ -96,7 +96,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public idTable visitClassDecl(ClassDecl clas, idTable idTab){
 		idTab.openScope();
 		VarDecl thisVarDecl ;
-		 thisVarDecl	= new VarDecl( new ClassType( new Identifier(new Token( TokenKind.ID, clas.name )) ,null), "this", null);
+		 thisVarDecl	= new VarDecl( new ClassType( new Identifier(new Token( TokenKind.ID, clas.name )) ,clas.posn), "this", clas.posn);
 		 
 	//	 ClassType ct = (ClassType) thisVarDecl.type; //this is borderline ridiculous
 		 
@@ -247,6 +247,12 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	}
 
 	public idTable visitAssignStmt(AssignStmt stmt, idTable idTab){
+		
+		if(stmt.ref instanceof ThisRef){
+			identificationError("Cannot assign to this, lhs must be a variable, error at " + stmt.ref);
+		}
+		
+		
 		idTab = stmt.ref.visit(this, idTab);
 		idTab = stmt.val.visit(this, idTab);
 		return idTab;
@@ -518,6 +524,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public idTable visitThisRef(ThisRef ref, idTable idTab) {
 	 	ClassType ct;
+	 	Declaration dClass;
 		Declaration d = idTab.getIdentifier("this",false);
 		if(d==null)
 			identificationError(" Identifier 'this' not found");
@@ -525,8 +532,10 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		
 		  if(d.type.typeKind==TypeKind.CLASS){
 		 		ct = (ClassType) d.type;
-		 	ref.setDecl(idTab.getClass(ct.className.spelling));
-			
+		 		dClass = idTab.getClass(ct.className.spelling);
+		 		//dClass.type.posn 
+		 	ref.setDecl(dClass);
+			 
 		 	}
 
 			

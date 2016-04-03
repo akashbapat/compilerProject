@@ -117,7 +117,7 @@ public class typeChecker implements Visitor<Object,Type> {
 	Type operatorAgreement(Type l,Type r, Operator o){
 		// if you enter this function, it means l/r are either equal or have error
 
-	 
+		 
 			
 		  if(o.spelling.equals("+") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
 			return new BaseType(TypeKind.INT, null);
@@ -156,7 +156,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			return new BaseType(TypeKind.BOOLEAN, null);
 
 		else{
-			typeCheckFatalError("shouldnt reach here, left type is" + l +" of typekind " + l.typeKind + " right type is "+ r +" of typekind " + r.typeKind + " and operator is " + o + " of spelling "  + o.spelling );
+			typeCheckFatalError("shouldnt reach here, left type is " + l +" of typekind " + l.typeKind + " right type is "+ r +" of typekind " + r.typeKind + " and operator is " + o + " of spelling "  + o.spelling );
 			return new BaseType(TypeKind.ERROR, null);
 		}
 	}
