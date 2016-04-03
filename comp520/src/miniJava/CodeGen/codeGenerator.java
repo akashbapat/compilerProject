@@ -1,6 +1,9 @@
 package miniJava.CodeGen;
 
 import mJAM.*;
+import mJAM.Machine.Op;
+import mJAM.Machine.Prim;
+import mJAM.Machine.Reg;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
 import miniJava.AbstractSyntaxTrees.Package;
@@ -59,13 +62,20 @@ public class codeGenerator implements Visitor<String,Object> {
 		/////////////////////////////////////////////////////////////////////////////// 
 
 	    public Object visitPackage(Package prog, String arg){
-	      
+	
+			Machine.emit(Op.LOADL,0);            // array length 0
+			Machine.emit(Prim.newarr);           // empty String array argument
+			int patchAddr_Call_main = Machine.nextInstrAddr();  // record instr addr where
+			                                                    // "main" is called
+			Machine.emit(Op.CALL,Reg.CB,-1);     // static call main (address to be patched)
+			
 	        ClassDeclList cl = prog.classDeclList;
 	      
 	        String pfx = arg + "  . "; 
 	        for (ClassDecl c: prog.classDeclList){
 	            c.visit(this, pfx);
 	        }
+			Machine.emit(Op.HALT,0,0,0);         // end execution
 	        return null;
 	    }
 	    
@@ -329,17 +339,23 @@ public class codeGenerator implements Visitor<String,Object> {
 	    }
 	    
 	    public Object visitOperator(Operator op, String arg){
-	      
+	    	
 	        return null;
 	    }
 	    
 	    public Object visitIntLiteral(IntLiteral num, String arg){
-	       
+	    	int numInt = Integer.parseInt(num.spelling);
+	    	Machine.emit(Op.LOADL, numInt);
 	        return null;
 	    }
 	    
 	    public Object visitBooleanLiteral(BooleanLiteral bool, String arg){
-	    
+	    	if(bool.spelling.equals("true")){
+	    		Machine.emit(Op.LOADL, 0);
+	    	}
+	    	else{
+	    		Machine.emit(Op.LOADL, 1);
+	    	}
 	        return null;
 	    }
 
