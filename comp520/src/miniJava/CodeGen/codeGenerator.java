@@ -10,6 +10,8 @@ import miniJava.AbstractSyntaxTrees.Package;
 
 import java.util.HashMap; 
 
+import com.sun.xml.internal.ws.api.pipe.NextAction;
+
 
 public class codeGenerator implements Visitor<String,Object> {
 		private HashMap<String,Prim> opToPrimMap; 
@@ -31,9 +33,6 @@ public class codeGenerator implements Visitor<String,Object> {
 	        return true;
 	    }   
 	    
-	   
-
-
 
 		public codeGenerator(ErrorReporter er){
 		 
@@ -238,16 +237,29 @@ public class codeGenerator implements Visitor<String,Object> {
 	    public Object visitIfStmt(IfStmt stmt, String arg){
 	       
 	        stmt.cond.visit(this, null);
+	        int i = Machine.nextInstrAddr();
+	        Machine.emit(Op.JUMPIF, 0, Reg.CB, 0);
 	        stmt.thenStmt.visit(this, null);
-	        if (stmt.elseStmt != null)
+	        int j = Machine.nextInstrAddr();
+	        Machine.emit(Op.JUMP, 0, Reg.CB, 0);
+	        int g = Machine.nextInstrAddr();
+	        Machine.patch(i, g); 
+	        if(stmt.elseStmt != null)
 	            stmt.elseStmt.visit(this, null);
+	        int h = Machine.nextInstrAddr();
+	        Machine.patch(j, h);
 	        return null;
 	    }
 	    
 	    public Object visitWhileStmt(WhileStmt stmt, String arg){
-	        
-	        stmt.cond.visit(this, null);
+	        int j = Machine.nextInstrAddr();
+	        Machine.emit(Op.JUMP, 0, Reg.CB, 0);
+	        int g = Machine.nextInstrAddr();
 	        stmt.body.visit(this, null);
+	        int h = Machine.nextInstrAddr();
+	        Machine.patch(j, h);
+	        stmt.cond.visit(this, null);
+	        Machine.emit(Op.JUMPIF, 1, Reg.CB, g);
 	        return null;
 	    }
 	    
