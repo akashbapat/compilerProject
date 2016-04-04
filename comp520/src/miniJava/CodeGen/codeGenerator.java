@@ -260,7 +260,7 @@ public class codeGenerator implements Visitor<String,Object> {
 
 	    public Object visitUnaryExpr(UnaryExpr expr, String arg){
 	        expr.expr.visit(this, null);
-	    	Prim p;
+	    	Prim p =null;
 	    	String spelling = expr.operator.spelling;
 	    	if(opToPrimMap.containsKey(spelling))
 	    	{
