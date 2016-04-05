@@ -20,12 +20,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import mJAM.Disassembler;
+import mJAM.Interpreter;
+import mJAM.Machine;
+import mJAM.ObjectFile;
 import miniJava.SyntacticAnalyzer.Parser;
 import miniJava.SyntacticAnalyzer.Scanner;
 ////Remove later
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.AbstractSyntaxTrees.*;
+import miniJava.CodeGen.codeGenerator;
 import miniJava.ContextualAnalyzer.ASTIdentification;
 import miniJava.ContextualAnalyzer.typeChecker;
 /**
@@ -34,14 +39,14 @@ import miniJava.ContextualAnalyzer.typeChecker;
  * 
  */
 public class Compiler {
-
-
+	 
+ 
 	/**
 	 * @param args  if no args provided parse from keyboard input
 	 *              else args[0] is name of file containing input to be parsed  
 	 */
 	public static void main(String[] args) {
-
+	 
 		InputStream inputStream = null;
 		if (args.length == 0) {
 			System.out.println("Enter Expression");
@@ -100,8 +105,44 @@ public class Compiler {
  			 
  			 
  				 typeChecker typeCheckerObj = new typeChecker(reporter);
- 	 		if( typeCheckerObj.typeCheckAST(ast))
+ 		MethodDecl mainMethodDecl =		typeCheckerObj.typeCheckAST(ast);
+ 	 		if( mainMethodDecl!=null){
+ 	 			
+ 	 			codeGenerator cg = new codeGenerator(reporter,mainMethodDecl);
+ 	 			  cg.generate(ast);
+ 	 			 //
+ 	 			String objectCodeFileName = "Counter.mJAM";
+ 	 			ObjectFile objF = new ObjectFile(objectCodeFileName);
+ 	 			System.out.print("Writing object code file " + objectCodeFileName + " ... ");
+ 	 			if (objF.write()) {
+ 	 				System.out.println("FAILED!");
+ 	 				return;
+ 	 			}
+ 	 			else
+ 	 				System.out.println("SUCCEEDED writing obj file");	
+ 	 			
+ 	 			/* create asm file using disassembler */
+ 	 			String asmCodeFileName = "Counter.asm";
+ 	 			System.out.print("Writing assembly file ... ");
+ 	 			Disassembler d = new Disassembler(objectCodeFileName);
+ 	 			if (d.disassemble()) {
+ 	 				System.out.println("FAILED!");
+ 	 				return;
+ 	 			}
+ 	 			else
+ 	 				System.out.println("SUCCEEDED");
+ 	 			
+ 	 		/* 
+ 	 		 * run code using debugger
+ 	 		 * 
+ 	 		 */
+ 	 			System.out.println("Running code ... ");
+ 	 			Interpreter.debug(objectCodeFileName, asmCodeFileName);
+
+ 	 			System.out.println("*** mJAM execution completed");
+ 	 			  //
  	 			System.exit(0);
+ 	 			}
  	 		else
  	 			System.exit(4);
  			}

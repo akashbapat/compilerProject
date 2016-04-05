@@ -13,5 +13,9 @@ statement : added boolean variable isVarDecl, defaults to false
  4/2/ rafay added NullRef to AST
  			added NullDecl to AST
  			added methods to visitor
+ 			
+ 			
+ 4/3 akash: added expression field to arrayType to maintain length of array, added public get/set methods to access it
 
 
+4/4 akash: added runtime entiy to declaration and methods to get/set it

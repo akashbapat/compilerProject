@@ -18,7 +18,7 @@ import miniJava.AbstractSyntaxTrees.ParameterDeclList;
 
 
 import miniJava.AbstractSyntaxTrees.TypeKind;
-
+import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
 
@@ -37,16 +37,16 @@ public class idTable {
 
 		FieldDeclList   sysFDList = new FieldDeclList();
 
-		sysFDList.add(new FieldDecl(false, true, new ClassType(new Identifier(new Token( TokenKind.ID ,"_PrintStream")),null), "out" , null));
+		sysFDList.add(new FieldDecl(false, true, new ClassType(new Identifier(new Token( TokenKind.ID ,"_PrintStream")),new SourcePosition()), "out" , new SourcePosition()));
 
 		//sysMethodList.add( MethodDecl( new MemberDecl(false,   true , new Type(TypeKind.CLASS, null), "_PrintStream", null), ParameterDeclList pl, StatementList sl, SourcePosition posn));
 
-		cdSys =new ClassDecl("System", sysFDList, null , null) ;
-		cdSys.type = new ClassType(new Identifier(new Token(TokenKind.ID, "System")), null);
+		cdSys =new ClassDecl("System", sysFDList, null , new SourcePosition()) ;
+		cdSys.type = new ClassType(new Identifier(new Token(TokenKind.ID, "System")), new SourcePosition());
 		level0.put("System", cdSys);
 
-		cdString = new ClassDecl("String", null, null , null);
-		cdString.type = new ClassType(new Identifier(new Token(TokenKind.ID, "String")), null);
+		cdString = new ClassDecl("String", null, null , new SourcePosition());
+		cdString.type = new ClassType(new Identifier(new Token(TokenKind.ID, "String")), new SourcePosition());
 		cdString.type.typeKind = TypeKind.UNSUPPORTED;
 		
 		level0.put("String", cdString );
@@ -55,15 +55,15 @@ public class idTable {
 
 		ParameterDeclList pdlPrintStream = new ParameterDeclList();
 
-		pdlPrintStream.add( new ParameterDecl( new BaseType(TypeKind.INT,null), "n", null));
+		pdlPrintStream.add( new ParameterDecl( new BaseType(TypeKind.INT,new SourcePosition()), "n", new SourcePosition()));
 		MethodDeclList mdPrintStream = new MethodDeclList();
-		mdPrintStream.add( new MethodDecl( new FieldDecl(false, false, new BaseType(TypeKind.VOID,null) , "println", null) , pdlPrintStream, null, null));
+		mdPrintStream.add( new MethodDecl( new FieldDecl(false, false, new BaseType(TypeKind.VOID,new SourcePosition()) , "println", new SourcePosition()) , pdlPrintStream, null, new SourcePosition()));
 
 		
-		cd_printStream =new ClassDecl("_printStream", null,   mdPrintStream, null) ;
-		cd_printStream.type= new ClassType(new Identifier(new Token(TokenKind.ID, "_printStream")), null);
+		cd_printStream =new ClassDecl("_PrintStream", null,   mdPrintStream, new SourcePosition()) ;
+		cd_printStream.type= new ClassType(new Identifier(new Token(TokenKind.ID, "_PrintStream")), new SourcePosition());
 		
-		level0.put("_printStream",cd_printStream  );
+		level0.put("_PrintStream",cd_printStream  );
 
 
 		levelList.add(level0);

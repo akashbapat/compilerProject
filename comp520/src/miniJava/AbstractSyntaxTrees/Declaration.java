@@ -6,7 +6,7 @@
 package miniJava.AbstractSyntaxTrees;
 
 import miniJava.SyntacticAnalyzer.SourcePosition;
-
+import miniJava.CodeGen.RuntimeEntity;
 public abstract class Declaration extends AST {
 	
 	public Declaration(String name, Type type, SourcePosition posn) {
@@ -17,4 +17,19 @@ public abstract class Declaration extends AST {
 	
 	public String name;
 	public Type type;
+	
+	private RuntimeEntity re;
+	
+	public void setEntity(RuntimeEntity inRE){
+		re=inRE;
+		
+	}
+	
+	public RuntimeEntity getEntity(){
+		 if(re==null)
+			 System.out.println("Entity is null");
+		 
+		 return re;
+		
+	}
 }

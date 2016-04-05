@@ -17,7 +17,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	private ErrorReporter reporter;
 	private boolean isFuncStatic;
-
+	
 	class IdentificationError extends Error {
 		private static final long serialVersionUID = 1L;	
 	}
@@ -27,6 +27,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public ASTIdentification(ErrorReporter er){
 		isFuncStatic =false;
 		reporter =er;
+	
 
 	}
 
@@ -56,6 +57,16 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		System.out.println("==============================================");
 		return true;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -365,6 +376,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public idTable visitNewArrayExpr(NewArrayExpr expr, idTable idTab){
 		expr.eltType.visit(this, idTab);
 		expr.sizeExpr.visit(this, idTab);
+		
+		
 		return idTab;
 	}
 
@@ -395,7 +408,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		if(qr.ref.getDecl() instanceof ClassDecl){
 					cd = (ClassDecl) qr.ref.getDecl();		
 					
-		 
+		 if(cd.fieldDeclList!=null){
 			for(int i=0;i<cd.fieldDeclList.size();i++){
 				fd =     cd.fieldDeclList.get(i);
 
@@ -415,8 +428,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 					break;
 				}
 			}
-			
-			
+		 }
+			if(cd.methodDeclList!=null){
 			for(int i=0;i<cd.methodDeclList.size();i++){
 				md =     cd.methodDeclList.get(i);
 
@@ -437,7 +450,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 					break;
 				}
 			}
-			
+			}
 			
 
 			if(qr.id.getDecl()==null){

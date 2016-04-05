@@ -6,6 +6,38 @@ import miniJava.AbstractSyntaxTrees.*;
 public class typeChecker implements Visitor<Object,Type> {
 
 	private ErrorReporter reporter;
+	
+	private int numMainFunc;
+	MethodDecl mainMethodDecl;
+	private void checkForMain(MethodDecl md,Type retType){
+
+		ParameterDecl pd;
+		ArrayType arType;
+		ClassType cType;
+		if(!md.isPrivate && md.isStatic && md.name.equals("main") && md.parameterDeclList.size()==1 && retType.typeKind==TypeKind.VOID){	
+
+			pd = md.parameterDeclList.get(0);
+
+			if(pd.type instanceof ArrayType){
+				arType = (ArrayType) pd.type;
+
+				if(arType.eltType instanceof ClassType){
+
+					cType = (ClassType)	arType.eltType ;
+
+					if(cType.className.spelling.equals("String")){
+						mainMethodDecl =md;
+						numMainFunc++;
+					}
+				}
+
+
+			}
+
+
+		}
+	}
+	
 
 
 	private typeEquality isEqual(Type el, Type er){
@@ -206,7 +238,7 @@ public class typeChecker implements Visitor<Object,Type> {
 	}
 
 	public typeChecker(ErrorReporter er){
-
+		numMainFunc =0;
 		reporter =er;
 	}
 
@@ -236,7 +268,7 @@ public class typeChecker implements Visitor<Object,Type> {
 	}
 
 
-	public boolean typeCheckAST(AST ast){
+	public MethodDecl typeCheckAST(AST ast){
 		System.out.println("======= AST  Type Checker ====================");
 Type astType =null;
 
@@ -247,19 +279,19 @@ Type astType =null;
 		}
 		catch (TypeCheckError ie) {
 			System.out.println("Type check error occurred");
-			return false;
+			return null;
 		}
 		if(astType!=null){
-			if(astType.typeKind==TypeKind.VOID){
-			System.out.println("Type checking successfully completed");
-			return true;
+			if(astType.typeKind==TypeKind.VOID && numMainFunc==1){
+			System.out.println("Type checking successfully completed");			
+			return mainMethodDecl;
 			}
 			else 
-				return false;
+				return null;
 			
 		}
 		else
-			return false;
+			return null;
 		 
 	}
 
@@ -328,6 +360,8 @@ Type astType =null;
 	}
 
 	public Type visitMethodDecl(MethodDecl m, Object arg){
+		
+		
 
 		boolean errorFlag=false;	
 		boolean hasRetStmt=false;
@@ -337,7 +371,9 @@ Type astType =null;
 		Type stmtType;	 
 		ParameterDeclList pdl = m.parameterDeclList;
 
-
+		checkForMain(  m,  methodRetType);
+		
+		
 		for (ParameterDecl pd: pdl) {
 			pd.visit(this, null);
 		}
@@ -553,6 +589,8 @@ Type astType =null;
 		Type retType=null;	 
 		if (stmt.returnExpr != null)
 			retType = stmt.returnExpr.visit(this, null);
+		else 
+			retType= new  BaseType(TypeKind.VOID,stmt.posn);
 
 
 
@@ -716,6 +754,7 @@ boolean errorFlag =false;
 	}
 
 	public Type visitNewArrayExpr(NewArrayExpr expr, Object arg){
+		ArrayType arrType;
 		boolean errorFlag =false; 
 		Type eltType = expr.eltType.visit(this, null);
 		Type exprType = expr.sizeExpr.visit(this, null);
@@ -737,9 +776,13 @@ boolean errorFlag =false;
 
 		if(	errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
-		else
-			return 	 new ArrayType(eltType,expr.posn);
-
+		else{
+			  	arrType = new ArrayType(eltType,expr.posn);
+			  	
+			  	arrType.setLengthExpression( expr.sizeExpr);//added to maintain length
+			
+			  	return arrType;
+		}
 	}
 
 	public Type visitNewObjectExpr(NewObjectExpr expr, Object arg){

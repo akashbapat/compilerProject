@@ -8,16 +8,18 @@ import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
 import miniJava.AbstractSyntaxTrees.Package;
 
-import java.util.HashMap; 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List; 
 
-import com.sun.xml.internal.ws.api.pipe.NextAction;
+ 
 
 
 public class codeGenerator implements Visitor<String,Object> {
 		private HashMap<String,Prim> opToPrimMap; 
-		
+		functionPatcher fp;
 		ErrorReporter reporter;
-	   
+		MethodDecl mainMethodDecl;
 	   
 	    public boolean generate(AST ast){
 	        System.out.println("======= Generating code =====================");
@@ -33,14 +35,16 @@ public class codeGenerator implements Visitor<String,Object> {
 	        return true;
 	    }   
 	    
+	    
+	   
 
-		public codeGenerator(ErrorReporter er){
-		 
+		public codeGenerator(ErrorReporter er,MethodDecl md){
+			fp = new functionPatcher();
 			reporter =er;
 			opToPrimMap = new HashMap<String, Machine.Prim>(); 
-			
+			initializeHMap();
 			Machine.initCodeGen();
-			
+			mainMethodDecl=md;
 		}
 
 		 class CodeGenError extends Error {
@@ -53,6 +57,11 @@ public class codeGenerator implements Visitor<String,Object> {
 
 		}
 	    
+		
+		
+		
+		
+		
 		private void initializeHMap()
 		{
 			opToPrimMap.put("!",Prim.not);
@@ -68,7 +77,62 @@ public class codeGenerator implements Visitor<String,Object> {
 			opToPrimMap.put("<",Prim.gt);
 			opToPrimMap.put(">",Prim.lt);
 		}
+		
+		 
+		private void encodeAssign(Declaration d ){
+			
+			 if(d.type instanceof BaseType && d.type.typeKind==TypeKind.INT && d.getEntity()!=null){
+				
+			//	RuntimeEntity re =	 new UnknownValue(1, 1);
+				
+		//		Machine.emit(Op.STORE, Reg.LB, d.getEntity().address);
+				 Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
+					}
+		}
+		
+		
+		private void createEntity(Declaration d, int s){
 
+			if(d.type instanceof BaseType && d.type.typeKind==TypeKind.INT  ){
+						
+		RuntimeEntity re =	 new UnknownValue(s, 3);
+		
+		d.setEntity(re);
+	//	Machine.emit(Op.PUSH, 1);
+			}
+			else if(d instanceof MethodDecl ){
+				
+				RuntimeEntity re =	 new KnownAddress(1, s);
+				
+				d.setEntity(re);
+			//	Machine.emit(Op.PUSH, 1);
+					}
+		}
+		
+		
+		private void encodeFetch( Reference r){
+			
+			Declaration d = r.getDecl();
+			RuntimeEntity re = d.getEntity();
+			Machine.emit(Op.LOAD, Reg.LB, re.address);
+			
+	//		if(re instanceof UnknownValue){
+	//		Machine.emit(Op.LOADI,  );
+		//	}
+			
+		}
+		
+private void encodeFetch( Identifier id){
+			
+			Declaration d = id.getDecl();
+			RuntimeEntity re = d.getEntity();
+			Machine.emit(Op.LOAD, Reg.LB, re.address);
+			
+	//		if(re instanceof UnknownValue){
+	//		Machine.emit(Op.LOADI,  );
+		//	}
+			
+		}
 	    
 		///////////////////////////////////////////////////////////////////////////////
 		//
@@ -81,16 +145,16 @@ public class codeGenerator implements Visitor<String,Object> {
 			Machine.emit(Op.LOADL,0);            // array length 0
 			Machine.emit(Prim.newarr);           // empty String array argument
 			int patchAddr_Call_main = Machine.nextInstrAddr();  // record instr addr where
-			                                                    // "main" is called
+			            fp.addFunction(mainMethodDecl, patchAddr_Call_main);                                        // "main" is called
 			Machine.emit(Op.CALL,Reg.CB,-1);     // static call main (address to be patched)
-			
+			Machine.emit(Op.HALT,0,0,0);         // end execution
 	        ClassDeclList cl = prog.classDeclList;
 	      
 	        String pfx = arg + "  . "; 
 	        for (ClassDecl c: prog.classDeclList){
 	            c.visit(this, pfx);
 	        }
-			Machine.emit(Op.HALT,0,0,0);         // end execution
+		    fp.patchFunctions();
 	        return null;
 	    }
 	    
@@ -122,7 +186,9 @@ public class codeGenerator implements Visitor<String,Object> {
 	    }
 	    
 	    public Object visitMethodDecl(MethodDecl m, String arg){
-	        
+	    	int i = Machine.nextInstrAddr();
+	    	createEntity(m, i);
+	    	
 	    	m.type.visit(this, null);
 	    	 
 	        ParameterDeclList pdl = m.parameterDeclList;
@@ -136,7 +202,10 @@ public class codeGenerator implements Visitor<String,Object> {
 	        for (Statement s: sl) {
 	            s.visit(this, pfx);
 	        }
-	        return null;
+	        
+	        Machine.emit(Op.RETURN,0,0,1);  
+	        
+	        return null;	        
 	    }
 	    
 	    public Object visitParameterDecl(ParameterDecl pd, String arg){
@@ -147,7 +216,7 @@ public class codeGenerator implements Visitor<String,Object> {
 	    } 
 	    
 	    public Object visitVarDecl(VarDecl vd, String arg){
-	      
+	    	createEntity(  vd, 1);
 	        vd.type.visit(this, null);
 	        
 	        return null;
@@ -203,8 +272,13 @@ public class codeGenerator implements Visitor<String,Object> {
 	    
 	    public Object visitAssignStmt(AssignStmt stmt, String arg){
 	        
-	        stmt.ref.visit(this, null);
+	    //    stmt.ref.visit(this, null);
 	        stmt.val.visit(this, null);
+	        
+	        if(stmt.ref instanceof IdRef){
+	        	IdRef idr = (IdRef) stmt.ref;
+	        encodeAssign(idr.id.getDecl());
+	        }
 	        return null;
 	    }
 	    
@@ -364,7 +438,7 @@ public class codeGenerator implements Visitor<String,Object> {
 	    }
 	    
 	    public Object visitIdRef(IdRef ref, String arg) {
-	     
+	    
 	    	ref.id.visit(this, null);
 	    	return null;
 	    }
@@ -382,7 +456,7 @@ public class codeGenerator implements Visitor<String,Object> {
 		///////////////////////////////////////////////////////////////////////////////
 	    
 	    public Object visitIdentifier(Identifier id, String arg){
-	    	
+	    encodeFetch(id);
 	        return null;
 	    }
 	    
@@ -405,10 +479,7 @@ public class codeGenerator implements Visitor<String,Object> {
 	    	}
 	        return null;
 	    }
-
-
-
-
+ 
 
 		public Object visitNullDecl(NullDecl decl, String arg) {
 			// TODO Auto-generated method stub
@@ -423,7 +494,50 @@ public class codeGenerator implements Visitor<String,Object> {
 			// TODO Auto-generated method stub
 			return null;
 		}
+	
+ 
+
+
+private  class functionPatcher{
+	
+	private   MethodDeclList mdl;
+	private  ArrayList<Integer> patchAddressCallList;
+	
+	
+	public functionPatcher(){
+		mdl = new MethodDeclList();
+		patchAddressCallList = new ArrayList<Integer> ();
+		
 	}
+	
+	public void addFunction(MethodDecl md, int  patchAddCall){
+		mdl.add(md);
+		patchAddressCallList.add(patchAddCall);
+	}
+	
+	public void patchFunctions(){
+		
+	if(patchAddressCallList.size() == mdl.size()){
+		
+		for (int i=0;i<mdl.size();i++){
+			
+			Machine.patch(patchAddressCallList.get(i), mdl.get(i).getEntity().address);
+			
+		}
+		
+		
+	}
+	else
+		System.out.println("Size of function list and patch address is not same");
+		
+	}
+	
+}
+
+ 
+
+
+}
 	
 	
  
