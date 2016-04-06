@@ -10,7 +10,7 @@ import miniJava.AbstractSyntaxTrees.Package;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List; 
+ 
 
  
 
@@ -20,7 +20,7 @@ public class codeGenerator implements Visitor<String,Object> {
 		functionPatcher fp;
 		ErrorReporter reporter;
 		MethodDecl mainMethodDecl;
-	   
+	    int displacement;
 	    public boolean generate(AST ast){
 	        System.out.println("======= Generating code =====================");
 	    try{
@@ -45,6 +45,7 @@ public class codeGenerator implements Visitor<String,Object> {
 			initializeHMap();
 			Machine.initCodeGen();
 			mainMethodDecl=md;
+			displacement=3;
 		}
 
 		 class CodeGenError extends Error {
@@ -81,11 +82,7 @@ public class codeGenerator implements Visitor<String,Object> {
 		 
 		private void encodeAssign(Declaration d ){
 			
-			 if(d.type instanceof BaseType && d.type.typeKind==TypeKind.INT && d.getEntity()!=null){
-				
-			//	RuntimeEntity re =	 new UnknownValue(1, 1);
-				
-		//		Machine.emit(Op.STORE, Reg.LB, d.getEntity().address);
+			 if(d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN) && d.getEntity()!=null){			 
 				 Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
 					}
 		}
@@ -93,20 +90,23 @@ public class codeGenerator implements Visitor<String,Object> {
 		
 		private void createEntity(Declaration d, int s){
 
-			if(d.type instanceof BaseType && d.type.typeKind==TypeKind.INT  ){
+			if(d.type instanceof BaseType && d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN ){
 						
-		RuntimeEntity re =	 new UnknownValue(s, 3);
-		
+		RuntimeEntity re =	 new UnknownValue(s, displacement);
+		displacement +=s;
 		d.setEntity(re);
 	//	Machine.emit(Op.PUSH, 1);
 			}
 			else if(d instanceof MethodDecl ){
-				
+				displacement = 3;
 				RuntimeEntity re =	 new KnownAddress(1, s);
 				
 				d.setEntity(re);
 			//	Machine.emit(Op.PUSH, 1);
 					}
+			
+			
+			
 		}
 		
 		
