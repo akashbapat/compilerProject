@@ -25,8 +25,13 @@ import miniJava.SyntacticAnalyzer.TokenKind;
 
 public class idTable {
 	private ArrayList <HashMap<String,Declaration> > levelList;
+	private ClassDecl currentClass; //added to support calling of static functions from static functions in same class without using class name 
 
-
+	public void setCurrentClass(ClassDecl cd){ //added to support calling of static functions from static functions in same class without using class name 
+		currentClass =cd;
+	}
+	 
+	
 	public idTable( ){
 		
 		ClassDecl cdSys,cdString,cd_printStream;
@@ -200,6 +205,25 @@ public class idTable {
 		return null;
 	}
 
+	public Declaration getStaticFunctionSameClass(String name) {
+		
+		
+		Declaration d;
+
+		for ( MethodDecl fd : currentClass.methodDeclList){ //check in member level for function
+			 
+
+			if( fd.name.equals(name))
+				return fd;
+		}
+
+
+		return null;
+		
+		
+		
+	}
+	
 	public  void printLevel(int n){
 
 /*
