@@ -137,17 +137,13 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			
 		}
 		
-		
-		
 		private void encodeFetch( Reference r){
 			
 			Declaration d = r.getDecl();
 			RuntimeEntity re = d.getEntity();
 			
 				Machine.emit(Op.LOAD, Reg.LB, re.address);
-			
-			
-			
+				
 	//		if(re instanceof UnknownValue){
 	//		Machine.emit(Op.LOADI,  );
 		//	}
@@ -481,20 +477,30 @@ private void encodeFetch( Identifier id){
 		///////////////////////////////////////////////////////////////////////////////
 		
 	    public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
-	     
-	    	qr.id.visit(this, false);
-	    	int addr = Machine.nextInstrAddr();
-	    	Machine.emit(Op.LOADL,-1);
-	    	if(qr.id.getDecl() instanceof FieldDecl){
-	    		FieldDecl fd = (FieldDecl) qr.id.getDecl();
-	    		fp.addField(fd,addr);	
+	    	qr.ref.visit(this, isLHS);
+	    	if(isLHS)
+	    	{
+	    		
 	    	}
 	    	else
 	    	{
-	    		System.out.println("Identifier of qualified reference is not FieldDecl");
+	    		qr.id.visit(this, isLHS);
+	    		Machine.emit(Op.LOADI);
+	    		int addr = Machine.nextInstrAddr();
+	    		Machine.emit(Op.LOADL,-1);
+	    		if(qr.id.getDecl() instanceof FieldDecl){
+		    		FieldDecl fd = (FieldDecl) qr.id.getDecl();
+		    		fp.addField(fd,addr);
+		    		Machine.emit(Prim.fieldupd);
+		    	}
+		    	
+		    	else
+		    	{
+		    		System.out.println("Identifier of qualified reference is not FieldDecl");
+		    	}
+	    		
 	    	}
-	    	qr.ref.visit(this, false);
-		    return null;
+	    	return null;
 	    }
 	    
 	    public Object visitIndexedRef(IndexedRef ir, Boolean isLHS) {
@@ -506,23 +512,14 @@ private void encodeFetch( Identifier id){
 	    
 	    public Object visitIdRef(IdRef ref, Boolean isLHS) {
 	    
-	    	ref.id.visit(this, false);
+	    	ref.id.visit(this, isLHS);
 	    	return null;
 	    }
 	   
 	    public Object visitThisRef(ThisRef ref, Boolean isLHS) {
-	    	 
-	    	if(isLHS == null ){
-	    		
-	    	}
-	    	else if(isLHS ==true)  {
-	    		
-	    	}
-	    	else
-	    		System.out.println("In visitThisRef, isLHS is false, shouldnt happen. isLHS=true/null");
-	    		
+	    	Machine.emit(Op.LOAD,Machine.Reg.OB,0);	    	
 	    	
-	    	return null;
+	    		return null;
 	    }
 	    
 	    
@@ -537,7 +534,7 @@ private void encodeFetch( Identifier id){
 	    		encodeAssign(id.getDecl());
 	    	}
 	    	else{
-	    encodeFetch(id);
+	    		encodeFetch(id);
 	    	}
 	        return null;
 	    }
