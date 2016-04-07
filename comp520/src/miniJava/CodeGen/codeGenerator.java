@@ -21,6 +21,7 @@ public class codeGenerator implements Visitor<String,Object> {
 		ErrorReporter reporter;
 		MethodDecl mainMethodDecl;
 	    int displacement;
+	    int heap_displacement;
 	    public boolean generate(AST ast){
 	        System.out.println("======= Generating code =====================");
 	    try{
@@ -46,6 +47,7 @@ public class codeGenerator implements Visitor<String,Object> {
 			Machine.initCodeGen();
 			mainMethodDecl=md;
 			displacement=3;
+			int heap_displacement = 0;
 		}
 
 		 class CodeGenError extends Error {
@@ -78,13 +80,19 @@ public class codeGenerator implements Visitor<String,Object> {
 			opToPrimMap.put("<",Prim.gt);
 			opToPrimMap.put(">",Prim.lt);
 		}
-		
-		 
+		//private void encodeAssign(Declaration d1,Declaration d2)
+		//{
+			
+		//}
 		private void encodeAssign(Declaration d ){
 			
 			 if(d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN) && d.getEntity()!=null){			 
 				 Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
 					}
+			 else if(d.type instanceof ClassType){
+				 Machine.emit(Op.STORE, 1,Reg.HB, d.getEntity().address) ;
+			 }
+				 
 		}
 		
 		
@@ -104,7 +112,26 @@ public class codeGenerator implements Visitor<String,Object> {
 				d.setEntity(re);
 			//	Machine.emit(Op.PUSH, 1);
 					}
-			
+			else if(d.type instanceof ClassType ){
+				 ClassType ct = (ClassType) (d.type);
+				 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
+				 int sA = cd.fieldDeclList.size();
+				 Machine.emit(Op.LOADL,-1 );
+				 Machine.emit(Op.STORE,1 ,Reg.HB, heap_displacement);
+				 heap_displacement++;
+				 Machine.emit(Op.LOADL,sA );
+				 Machine.emit(Op.STORE, 1,Reg.HB, heap_displacement);
+				 heap_displacement++;
+				 int addr = heap_displacement;
+				 for(int i = 0;i < sA ;i++){
+					 Machine.emit(Op.LOADL,0 );
+				 }
+				 Machine.emit(Op.STORE, sA,Reg.HB, heap_displacement);
+				 heap_displacement += sA;
+				 RuntimeEntity re =	 new KnownAddress(sA,addr );
+				 d.setEntity(re);
+			//	Machine.emit(Op.PUSH, 1);
+					}
 			
 			
 		}
@@ -114,7 +141,13 @@ public class codeGenerator implements Visitor<String,Object> {
 			
 			Declaration d = r.getDecl();
 			RuntimeEntity re = d.getEntity();
-			Machine.emit(Op.LOAD, Reg.LB, re.address);
+			if(d.type instanceof ClassType){
+				Machine.emit(Op.LOAD, Reg.HB, re.address);
+			}
+			else{
+				Machine.emit(Op.LOAD, Reg.LB, re.address);
+			}
+			
 			
 	//		if(re instanceof UnknownValue){
 	//		Machine.emit(Op.LOADI,  );
@@ -126,7 +159,12 @@ private void encodeFetch( Identifier id){
 			
 			Declaration d = id.getDecl();
 			RuntimeEntity re = d.getEntity();
-			Machine.emit(Op.LOAD, Reg.LB, re.address);
+			if(d.type instanceof ClassType){
+				Machine.emit(Op.LOAD, Reg.HB, re.address);
+			}
+			else{
+				Machine.emit(Op.LOAD, Reg.LB, re.address);
+			}
 			
 	//		if(re instanceof UnknownValue){
 	//		Machine.emit(Op.LOADI,  );
@@ -167,8 +205,6 @@ private void encodeFetch( Identifier id){
 	    
 	    public Object visitClassDecl(ClassDecl clas, String arg){
 	        
-	       
-	    
 	        String pfx = arg + "  . "; 
 	        for (FieldDecl f: clas.fieldDeclList)
 	        	f.visit(this, pfx);
@@ -272,12 +308,21 @@ private void encodeFetch( Identifier id){
 	    
 	    public Object visitAssignStmt(AssignStmt stmt, String arg){
 	        
-	    //    stmt.ref.visit(this, null);
+	    	boolean newStatement = false;
 	        stmt.val.visit(this, null);
-	        
+	        if(stmt.val instanceof NewExpr){
+	        	newStatement = true;
+	        }
+
 	        if(stmt.ref instanceof IdRef){
 	        	IdRef idr = (IdRef) stmt.ref;
-	        encodeAssign(idr.id.getDecl());
+	        	if(newStatement && idr.id.getDecl().type instanceof ClassType){
+	    	    	createEntity(idr.id.getDecl(), -1);
+	        	}
+	        	else
+	        	{
+	        		encodeAssign(idr.id.getDecl());
+	        	}
 	        }
 	        return null;
 	    }
@@ -411,7 +456,6 @@ private void encodeFetch( Identifier id){
 	    }
 	    
 	    public Object visitNewObjectExpr(NewObjectExpr expr, String arg){
-	        
 	        expr.classtype.visit(this, null);
 	        return null;
 	    }
