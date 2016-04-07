@@ -370,7 +370,7 @@ Type astType =null;
 		Type methodRetType = 	m.type.visit(this, null);
 		Type stmtType;	 
 		ParameterDeclList pdl = m.parameterDeclList;
-
+		Statement s;
 		checkForMain(  m,  methodRetType);
 		
 		
@@ -379,11 +379,15 @@ Type astType =null;
 		}
 		StatementList sl = m.statementList;
 
-		for (Statement s: sl) {
+		for (int i=0; i<sl.size();i++) {
+			s =sl.get(i);
 			stmtType	= s.visit(this, null);
 
 			if(stmtType.typeKind==TypeKind.ERROR)
-				errorFlag = errorFlag | true;
+				errorFlag =   true;
+			
+			if( methodRetType.typeKind!=TypeKind.VOID && i==sl.size()-1 && !(s instanceof ReturnStmt)) // asserts that nonvoid functions have last line as return statement
+				errorFlag= true;
 
 			if(s instanceof ReturnStmt){
 				hasRetStmt=true;
@@ -684,8 +688,9 @@ Type astType =null;
 	}
 
 	public Type visitCallExpr(CallExpr expr, Object arg){
-boolean errorFlag =false;
-	Type funcRetType =	expr.functionRef.visit(this, null);
+	
+		boolean errorFlag =false;
+		Type funcRetType =	expr.functionRef.visit(this, null);
 		ExprList al = expr.argList;
 		Type argType,argDefType;
 		typeEquality tEq;
@@ -697,7 +702,7 @@ boolean errorFlag =false;
 		if(d instanceof MethodDecl){
 		md = (MethodDecl) d;
 		
-		if(al.size()!=md.parameterDeclList.size())
+		if(al.size() != md.parameterDeclList.size())
 			typeCheckFatalError("Number of arguments for declared function " + md + " of name " + md.name + " is " + md.parameterDeclList.size() + " but you provided " +al.size() + " arguments at function call in expression " + expr);
 		
 		

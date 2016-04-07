@@ -186,11 +186,14 @@ private void encodeFetch( Identifier id){
 	    }
 	    
 	    public Object visitMethodDecl(MethodDecl m, String arg){
-	    	int i = Machine.nextInstrAddr();
-	    	createEntity(m, i);
-	    	
-	    	m.type.visit(this, null);
-	    	 
+	    	int address = Machine.nextInstrAddr();
+	    	createEntity(m, address);
+	    	Statement s;
+	     	m.type.visit(this, null);
+	     	Type retType =m.type;
+	     	boolean voidLastReturn =false;
+	     	 
+	     	
 	        ParameterDeclList pdl = m.parameterDeclList;
 	       
 	        String pfx = ((String) arg) + "  . ";
@@ -199,11 +202,25 @@ private void encodeFetch( Identifier id){
 	        }
 	        StatementList sl = m.statementList;
 	       
-	        for (Statement s: sl) {
+	        for (int i = 0;i<sl.size(); i++) {
+	        		s=sl.get(i);
+	        		        	
 	            s.visit(this, pfx);
+	            
+	            if(s instanceof ReturnStmt && retType.typeKind!=TypeKind.VOID ){
+	            	Machine.emit(Op.RETURN,1,0,m.parameterDeclList.size());  
+	        	}
+	            else if (s instanceof ReturnStmt && retType.typeKind==TypeKind.VOID){
+	            	Machine.emit(Op.RETURN,0,0,m.parameterDeclList.size());  
+	            	if(i==sl.size()-1 ){
+	            		voidLastReturn = true; // if void function has last statement as return, turn on the flag
+	            	}
+	        	}
+	            
+	            
 	        }
-	        
-	        Machine.emit(Op.RETURN,0,0,1);  
+	        if(!voidLastReturn &&  retType.typeKind==TypeKind.VOID )
+	        Machine.emit(Op.RETURN,0,0,m.parameterDeclList.size()); // if   void function DOES NOT have last statement as return
 	        
 	        return null;	        
 	    }
