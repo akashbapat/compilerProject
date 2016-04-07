@@ -15,7 +15,7 @@ import java.util.HashMap;
  
 
 
-public class codeGenerator implements Visitor<String,Object> {
+public class codeGenerator implements Visitor<Boolean,Object> {
 		private HashMap<String,Prim> opToPrimMap; 
 		functionPatcher fp;
 		ErrorReporter reporter;
@@ -25,7 +25,7 @@ public class codeGenerator implements Visitor<String,Object> {
 	    public boolean generate(AST ast){
 	        System.out.println("======= Generating code =====================");
 	    try{
-	    	ast.visit(this, "");
+	    	ast.visit(this, false);
 	    }
 	    catch (CodeGenError cge) {
 			System.out.println("Code generator error occurred");
@@ -84,21 +84,33 @@ public class codeGenerator implements Visitor<String,Object> {
 		//{
 			
 		//}
+		
+		private void allocateOnHeap(ClassDecl d){
+			
+		//	RuntimeEntity re = d.getEntity();
+			 Machine.emit(Op.LOADL,-1 );  // inheritance flag indicating no superclass		 	
+			 Machine.emit(Op.LOADL,d.fieldDeclList.size() );	
+			 Machine.emit(Prim.newobj);
+			 heap_displacement += d.fieldDeclList.size();   
+	
+		}
+		
+		
+		
+		
 		private void encodeAssign(Declaration d ){
 			
-			 if(d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN) && d.getEntity()!=null){			 
+			 if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
 				 Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
 					}
-			 else if(d.type instanceof ClassType){
-				 Machine.emit(Op.STORE, 1,Reg.HB, d.getEntity().address) ;
-			 }
+			 
 				 
 		}
 		
 		
 		private void createEntity(Declaration d, int s){
 
-			if(d.type instanceof BaseType && d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN ){
+			if(d instanceof VarDecl ){ /*d.type instanceof BaseType && d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN*/ 
 						
 		RuntimeEntity re =	 new UnknownValue(s, displacement);
 		displacement +=s;
@@ -112,41 +124,28 @@ public class codeGenerator implements Visitor<String,Object> {
 				d.setEntity(re);
 			//	Machine.emit(Op.PUSH, 1);
 					}
-			else if(d.type instanceof ClassType ){
+			else if(d.type instanceof ClassType && d instanceof FieldDecl ){
 				 ClassType ct = (ClassType) (d.type);
 				 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
 				 int sA = cd.fieldDeclList.size();
-				 Machine.emit(Op.LOADL,-1 );
-				 Machine.emit(Op.STORE,1 ,Reg.HB, heap_displacement);
-				 heap_displacement++;
-				 Machine.emit(Op.LOADL,sA );
-				 Machine.emit(Op.STORE, 1,Reg.HB, heap_displacement);
-				 heap_displacement++;
-				 int addr = heap_displacement;
-				 for(int i = 0;i < sA ;i++){
-					 Machine.emit(Op.LOADL,0 );
-				 }
-				 Machine.emit(Op.STORE, sA,Reg.HB, heap_displacement);
-				 heap_displacement += sA;
-				 RuntimeEntity re =	 new KnownAddress(sA,addr );
+				
+				 RuntimeEntity re =	 new UnkownAddress(sA );
 				 d.setEntity(re);
-			//	Machine.emit(Op.PUSH, 1);
+		 
 					}
 			
 			
 		}
 		
 		
+		
 		private void encodeFetch( Reference r){
 			
 			Declaration d = r.getDecl();
 			RuntimeEntity re = d.getEntity();
-			if(d.type instanceof ClassType){
-				Machine.emit(Op.LOAD, Reg.HB, re.address);
-			}
-			else{
+			
 				Machine.emit(Op.LOAD, Reg.LB, re.address);
-			}
+			
 			
 			
 	//		if(re instanceof UnknownValue){
@@ -159,16 +158,11 @@ private void encodeFetch( Identifier id){
 			
 			Declaration d = id.getDecl();
 			RuntimeEntity re = d.getEntity();
-			if(d.type instanceof ClassType){
-				Machine.emit(Op.LOAD, Reg.HB, re.address);
-			}
-			else{
-				Machine.emit(Op.LOAD, Reg.LB, re.address);
-			}
 			
-	//		if(re instanceof UnknownValue){
-	//		Machine.emit(Op.LOADI,  );
-		//	}
+				Machine.emit(Op.LOAD, Reg.LB, re.address);
+			
+			
+	 
 			
 		}
 	    
@@ -178,7 +172,7 @@ private void encodeFetch( Identifier id){
 		//
 		/////////////////////////////////////////////////////////////////////////////// 
 
-	    public Object visitPackage(Package prog, String arg){
+	    public Object visitPackage(Package prog, Boolean isLHS){
 	
 			Machine.emit(Op.LOADL,0);            // array length 0
 			Machine.emit(Prim.newarr);           // empty String array argument
@@ -188,11 +182,11 @@ private void encodeFetch( Identifier id){
 			Machine.emit(Op.HALT,0,0,0);         // end execution
 	        ClassDeclList cl = prog.classDeclList;
 	      
-	        String pfx = arg + "  . "; 
+	        
 	        for (ClassDecl c: prog.classDeclList){
-	            c.visit(this, pfx);
+	            c.visit(this, false);
 	        }
-		    fp.patchFunctions();
+		    fp.patchMembers();
 	        return null;
 	    }
 	    
@@ -203,45 +197,48 @@ private void encodeFetch( Identifier id){
 		//
 		///////////////////////////////////////////////////////////////////////////////
 	    
-	    public Object visitClassDecl(ClassDecl clas, String arg){
+	    public Object visitClassDecl(ClassDecl clas, Boolean isLHS){
 	        
-	        String pfx = arg + "  . "; 
-	        for (FieldDecl f: clas.fieldDeclList)
-	        	f.visit(this, pfx);
-	       
+	    
+	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
+	        	FieldDecl f = clas.fieldDeclList.get(i);
+	        	createEntity(f,i);
+	        	f.visit(this, false);
+	        	
+	        }
 	        for (MethodDecl m: clas.methodDeclList)
-	        	m.visit(this, pfx);
+	        	m.visit(this, false);
 	        return null;
 	    }
 	    
-	    public Object visitFieldDecl(FieldDecl f, String arg){
-	        
-	    	f.type.visit(this, null);
+	    public Object visitFieldDecl(FieldDecl f, Boolean isLHS){
+	    	
+	    	f.type.visit(this, false);
 	     
 	        return null;
 	    }
 	    
-	    public Object visitMethodDecl(MethodDecl m, String arg){
+	    public Object visitMethodDecl(MethodDecl m, Boolean isLHS){
 	    	int address = Machine.nextInstrAddr();
 	    	createEntity(m, address);
 	    	Statement s;
-	     	m.type.visit(this, null);
+	     	m.type.visit(this, false);
 	     	Type retType =m.type;
 	     	boolean voidLastReturn =false;
 	     	 
 	     	
 	        ParameterDeclList pdl = m.parameterDeclList;
 	       
-	        String pfx = ((String) arg) + "  . ";
+	       
 	        for (ParameterDecl pd: pdl) {
-	            pd.visit(this, pfx);
+	            pd.visit(this, false);
 	        }
 	        StatementList sl = m.statementList;
 	       
 	        for (int i = 0;i<sl.size(); i++) {
 	        		s=sl.get(i);
 	        		        	
-	            s.visit(this, pfx);
+	            s.visit(this, false);
 	            
 	            if(s instanceof ReturnStmt && retType.typeKind!=TypeKind.VOID ){
 	            	Machine.emit(Op.RETURN,1,0,m.parameterDeclList.size());  
@@ -261,16 +258,16 @@ private void encodeFetch( Identifier id){
 	        return null;	        
 	    }
 	    
-	    public Object visitParameterDecl(ParameterDecl pd, String arg){
+	    public Object visitParameterDecl(ParameterDecl pd, Boolean isLHS){
 	      
-	        pd.type.visit(this, null);
+	        pd.type.visit(this, false);
 	       
 	        return null;
 	    } 
 	    
-	    public Object visitVarDecl(VarDecl vd, String arg){
+	    public Object visitVarDecl(VarDecl vd, Boolean isLHS){
 	    	createEntity(  vd, 1);
-	        vd.type.visit(this, null);
+	        vd.type.visit(this, false);
 	        
 	        return null;
 	    }
@@ -282,19 +279,19 @@ private void encodeFetch( Identifier id){
 		//
 		///////////////////////////////////////////////////////////////////////////////
 	    
-	    public Object visitBaseType(BaseType type, String arg){
+	    public Object visitBaseType(BaseType type, Boolean isLHS){
 	   
 	        return null;
 	    }
 	    
-	    public Object visitClassType(ClassType type, String arg){
+	    public Object visitClassType(ClassType type, Boolean isLHS){
 	       
 	        return null;
 	    }
 	    
-	    public Object visitArrayType(ArrayType type, String arg){
+	    public Object visitArrayType(ArrayType type, Boolean isLHS){
 	         
-	        type.eltType.visit(this, null);
+	        type.eltType.visit(this, false);
 	        return null;
 	    }
 	    
@@ -305,96 +302,85 @@ private void encodeFetch( Identifier id){
 		//
 		///////////////////////////////////////////////////////////////////////////////
 
-	    public Object visitBlockStmt(BlockStmt stmt, String arg){
+	    public Object visitBlockStmt(BlockStmt stmt, Boolean isLHS){
 	       
 	        StatementList sl = stmt.sl;
 	        
-	        String pfx = arg + "  . ";
-	        for (Statement s: sl) {
-	        	s.visit(this, pfx);
-	        }
-	        return null;
-	    }
-	    
-	    public Object visitVardeclStmt(VarDeclStmt stmt, String arg){
 	     
-	        stmt.varDecl.visit(this, null);	
-	        stmt.initExp.visit(this, null);
-	        return null;
-	    }
-	    
-	    public Object visitAssignStmt(AssignStmt stmt, String arg){
-	        
-	    	boolean newStatement = false;
-	        stmt.val.visit(this, null);
-	        if(stmt.val instanceof NewExpr){
-	        	newStatement = true;
-	        }
-
-	        if(stmt.ref instanceof IdRef){
-	        	IdRef idr = (IdRef) stmt.ref;
-	        	if(newStatement && idr.id.getDecl().type instanceof ClassType){
-	    	    	createEntity(idr.id.getDecl(), -1);
-	        	}
-	        	else
-	        	{
-	        		encodeAssign(idr.id.getDecl());
-	        	}
+	        for (Statement s: sl) {
+	        	s.visit(this, false);
 	        }
 	        return null;
 	    }
 	    
-	    public Object visitIxAssignStmt(IxAssignStmt stmt, String arg){
-	        
-	        stmt.ixRef.visit(this, null);
-	        stmt.val.visit(this, null);
+	    public Object visitVardeclStmt(VarDeclStmt stmt, Boolean isLHS){
+	    	     
+	        stmt.varDecl.visit(this, false);	
+	        stmt.initExp.visit(this, false);
+	       
+	       
 	        return null;
 	    }
 	    
-	    public Object visitCallStmt(CallStmt stmt, String arg){
+	    public Object visitAssignStmt(AssignStmt stmt, Boolean isLHS){
+	        
+	    	 
+	        stmt.val.visit(this, false);
+	        stmt.ref.visit(this, true);
+            return null;
+	    }
+	    
+	    public Object visitIxAssignStmt(IxAssignStmt stmt, Boolean isLHS){
+	        
+	        stmt.ixRef.visit(this, false);
+	        stmt.val.visit(this, false);
+	        return null;
+	    }
+	    
+	    public Object visitCallStmt(CallStmt stmt, Boolean isLHS){
 	      
-	        stmt.methodRef.visit(this, null);
+	        stmt.methodRef.visit(this, false);
 	        ExprList al = stmt.argList;
  
-	        String pfx = arg + "  . ";
+	       
 	        for (Expression e: al) {
-	            e.visit(this, pfx);
+	            e.visit(this, false);
 	        }
 	        return null;
 	    }
 	    
-	    public Object visitReturnStmt(ReturnStmt stmt, String arg){
+	    public Object visitReturnStmt(ReturnStmt stmt, Boolean isLHS){
 	       
 	         if (stmt.returnExpr != null)
-	            stmt.returnExpr.visit(this, null);
+	            stmt.returnExpr.visit(this, false);
 	        return null;
 	    }
 	    
-	    public Object visitIfStmt(IfStmt stmt, String arg){
+	    public Object visitIfStmt(IfStmt stmt, Boolean isLHS){
 	       
-	        stmt.cond.visit(this, null);
+	        stmt.cond.visit(this, false);
 	        int i = Machine.nextInstrAddr();
 	        Machine.emit(Op.JUMPIF, 0, Reg.CB, 0);
-	        stmt.thenStmt.visit(this, null);
+	        stmt.thenStmt.visit(this, false);
 	        int j = Machine.nextInstrAddr();
 	        Machine.emit(Op.JUMP, 0, Reg.CB, 0);
 	        int g = Machine.nextInstrAddr();
 	        Machine.patch(i, g); 
 	        if(stmt.elseStmt != null)
-	            stmt.elseStmt.visit(this, null);
+	            stmt.elseStmt.visit(this, false);
 	        int h = Machine.nextInstrAddr();
 	        Machine.patch(j, h);
 	        return null;
 	    }
 	    
-	    public Object visitWhileStmt(WhileStmt stmt, String arg){
+	    public Object visitWhileStmt(WhileStmt stmt, Boolean isLHS){
 	        int j = Machine.nextInstrAddr();
 	        Machine.emit(Op.JUMP, 0, Reg.CB, 0);
 	        int g = Machine.nextInstrAddr();
-	        stmt.body.visit(this, null);
+	        stmt.body.visit(this, false);
 	        int h = Machine.nextInstrAddr();
 	        Machine.patch(j, h);
-	        stmt.cond.visit(this, null);
+	        stmt.cond.visit(this, false);
 	        Machine.emit(Op.JUMPIF, 1, Reg.CB, g);
 	        return null;
 	    }
@@ -406,8 +392,8 @@ private void encodeFetch( Identifier id){
 		//
 		///////////////////////////////////////////////////////////////////////////////
 
-	    public Object visitUnaryExpr(UnaryExpr expr, String arg){
-	        expr.expr.visit(this, null);
+	    public Object visitUnaryExpr(UnaryExpr expr, Boolean isLHS){
+	        expr.expr.visit(this, false);
 	    	Prim p =null;
 	    	String spelling = expr.operator.spelling;
 	    	if(opToPrimMap.containsKey(spelling))
@@ -418,14 +404,14 @@ private void encodeFetch( Identifier id){
 	    	{
 	    		p = Prim.neg;
 	    	}
-	        expr.operator.visit(this, null);
+	        expr.operator.visit(this, false);
 	        Machine.emit(p);
 	        return null;
 	    }
 	    
-	    public Object visitBinaryExpr(BinaryExpr expr, String arg){
-	        expr.left.visit(this, null);
-	        expr.right.visit(this, null);	         
+	    public Object visitBinaryExpr(BinaryExpr expr, Boolean isLHS){
+	        expr.left.visit(this, false);
+	        expr.right.visit(this, false);	         
 	    	Prim p = null;
 	    	String spelling = expr.operator.spelling;
 	    	if(opToPrimMap.containsKey(spelling))
@@ -436,44 +422,54 @@ private void encodeFetch( Identifier id){
 	    	{
 	    		p = Prim.sub;
 	    	}	    	
-	        expr.operator.visit(this, null);
+	        expr.operator.visit(this, false);
 	        Machine.emit(p);
 	        return null;
 	    }
 	    
-	    public Object visitRefExpr(RefExpr expr, String arg){
+	    public Object visitRefExpr(RefExpr expr, Boolean isLHS){
 	       
-	        expr.ref.visit(this, null);
+	        expr.ref.visit(this, false);
 	        return null;
 	    }
 	    
-	    public Object visitCallExpr(CallExpr expr, String arg){
+	    public Object visitCallExpr(CallExpr expr, Boolean isLHS){
 	        
-	        expr.functionRef.visit(this, null);
+	        expr.functionRef.visit(this, false);
 	        ExprList al = expr.argList;
 	        
-	        String pfx = arg + "  . ";
+	        
 	        for (Expression e: al) {
-	            e.visit(this, pfx);
+	            e.visit(this, false);
 	        }
 	        return null;
 	    }
 	    
-	    public Object visitLiteralExpr(LiteralExpr expr, String arg){
+	    public Object visitLiteralExpr(LiteralExpr expr, Boolean isLHS){
 	        
-	        expr.lit.visit(this, null);
+	        expr.lit.visit(this, false);
 	        return null;
 	    }
 	 
-	    public Object visitNewArrayExpr(NewArrayExpr expr, String arg){
+	    public Object visitNewArrayExpr(NewArrayExpr expr, Boolean isLHS){
 	       
-	        expr.eltType.visit(this, null);
-	        expr.sizeExpr.visit(this, null);
+	        expr.eltType.visit(this, false);
+	        expr.sizeExpr.visit(this, false);
 	        return null;
 	    }
 	    
-	    public Object visitNewObjectExpr(NewObjectExpr expr, String arg){
-	        expr.classtype.visit(this, null);
+	    public Object visitNewObjectExpr(NewObjectExpr expr, Boolean isLHS){
+	        expr.classtype.visit(this, false);
+	        
+	       if( expr.classtype.className.getDecl() instanceof ClassDecl){
+	    	   ClassDecl cd=  (ClassDecl) expr.classtype.className.getDecl() ;
+	    	   allocateOnHeap(cd);
+	       }
+	       else
+	    	   System.out.println("New obj in visitNewObjectExpr is not classDecl ");
+	    	   
+	        	 
+	        
 	        return null;
 	    }
 	    
@@ -484,28 +480,48 @@ private void encodeFetch( Identifier id){
 		//
 		///////////////////////////////////////////////////////////////////////////////
 		
-	    public Object visitQualifiedRef(QualifiedRef qr, String arg) {
+	    public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
 	     
-	    	qr.id.visit(this, null);
-	    	qr.ref.visit(this, null);
+	    	qr.id.visit(this, false);
+	    	int addr = Machine.nextInstrAddr();
+	    	Machine.emit(Op.LOADL,-1);
+	    	if(qr.id.getDecl() instanceof FieldDecl){
+	    		FieldDecl fd = (FieldDecl) qr.id.getDecl();
+	    		fp.addField(fd,addr);	
+	    	}
+	    	else
+	    	{
+	    		System.out.println("Identifier of qualified reference is not FieldDecl");
+	    	}
+	    	qr.ref.visit(this, false);
 		    return null;
 	    }
 	    
-	    public Object visitIndexedRef(IndexedRef ir, String arg) {
+	    public Object visitIndexedRef(IndexedRef ir, Boolean isLHS) {
 	     
-	    	ir.indexExpr.visit(this, null);
-	    	ir.idRef.visit(this, null);
+	    	ir.indexExpr.visit(this, false);
+	    	ir.idRef.visit(this, false);
 	    	return null;
 	    }
 	    
-	    public Object visitIdRef(IdRef ref, String arg) {
+	    public Object visitIdRef(IdRef ref, Boolean isLHS) {
 	    
-	    	ref.id.visit(this, null);
+	    	ref.id.visit(this, false);
 	    	return null;
 	    }
 	   
-	    public Object visitThisRef(ThisRef ref, String arg) {
+	    public Object visitThisRef(ThisRef ref, Boolean isLHS) {
 	    	 
+	    	if(isLHS == null ){
+	    		
+	    	}
+	    	else if(isLHS ==true)  {
+	    		
+	    	}
+	    	else
+	    		System.out.println("In visitThisRef, isLHS is false, shouldnt happen. isLHS=true/null");
+	    		
+	    	
 	    	return null;
 	    }
 	    
@@ -516,22 +532,27 @@ private void encodeFetch( Identifier id){
 		//
 		///////////////////////////////////////////////////////////////////////////////
 	    
-	    public Object visitIdentifier(Identifier id, String arg){
+	    public Object visitIdentifier(Identifier id, Boolean isLHS){
+	    	if(isLHS){
+	    		encodeAssign(id.getDecl());
+	    	}
+	    	else{
 	    encodeFetch(id);
+	    	}
 	        return null;
 	    }
 	    
-	    public Object visitOperator(Operator op, String arg){
+	    public Object visitOperator(Operator op, Boolean isLHS){
 	        return null;
 	    }
 	    
-	    public Object visitIntLiteral(IntLiteral num, String arg){
+	    public Object visitIntLiteral(IntLiteral num, Boolean isLHS){
 	    	int numInt = Integer.parseInt(num.spelling);
 	    	Machine.emit(Op.LOADL, numInt);
 	        return null;
 	    }
 	    
-	    public Object visitBooleanLiteral(BooleanLiteral bool, String arg){
+	    public Object visitBooleanLiteral(BooleanLiteral bool, Boolean isLHS){
 	    	if(bool.spelling.equals("true")){
 	    		Machine.emit(Op.LOADL, 0);
 	    	}
@@ -542,7 +563,7 @@ private void encodeFetch( Identifier id){
 	    }
  
 
-		public Object visitNullDecl(NullDecl decl, String arg) {
+		public Object visitNullDecl(NullDecl decl, Boolean isLHS) {
 			// TODO Auto-generated method stub
 			return null;
 		}
@@ -551,7 +572,7 @@ private void encodeFetch( Identifier id){
 
 
 
-		public Object visitNullRef(NullRef ref, String arg) {
+		public Object visitNullRef(NullRef ref, Boolean isLHS) {
 			// TODO Auto-generated method stub
 			return null;
 		}
@@ -561,28 +582,33 @@ private void encodeFetch( Identifier id){
 
 private  class functionPatcher{
 	
-	private   MethodDeclList mdl;
+	private   ArrayList< MemberDecl> memdl;
 	private  ArrayList<Integer> patchAddressCallList;
 	
 	
 	public functionPatcher(){
-		mdl = new MethodDeclList();
+		memdl = new  ArrayList< MemberDecl>() ;
 		patchAddressCallList = new ArrayList<Integer> ();
 		
 	}
 	
 	public void addFunction(MethodDecl md, int  patchAddCall){
-		mdl.add(md);
+		memdl.add(md);
 		patchAddressCallList.add(patchAddCall);
 	}
 	
-	public void patchFunctions(){
+	public void addField(FieldDecl fd, int  patchAddCall){
+		memdl.add(fd);
+		patchAddressCallList.add(patchAddCall);
+	}
+	
+	public void patchMembers(){
 		
-	if(patchAddressCallList.size() == mdl.size()){
+	if(patchAddressCallList.size() == memdl.size()){
 		
-		for (int i=0;i<mdl.size();i++){
+		for (int i=0;i<memdl.size();i++){
 			
-			Machine.patch(patchAddressCallList.get(i), mdl.get(i).getEntity().address);
+			Machine.patch(patchAddressCallList.get(i), memdl.get(i).getEntity().address);
 			
 		}
 		
