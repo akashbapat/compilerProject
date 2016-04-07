@@ -17,7 +17,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	private ErrorReporter reporter;
 	private boolean isFuncStatic;
-	
+
 	class IdentificationError extends Error {
 		private static final long serialVersionUID = 1L;	
 	}
@@ -105,6 +105,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	///////////////////////////////////////////////////////////////////////////////
 
 	public idTable visitClassDecl(ClassDecl clas, idTable idTab){
+		idTab.setCurrentClass(clas); //added to support calling of static functions from static functions in same class without using class name 
 		idTab.openScope();
 		VarDecl thisVarDecl ;
 		 thisVarDecl	= new VarDecl( new ClassType( new Identifier(new Token( TokenKind.ID, clas.name )) ,clas.posn), "this", clas.posn);
@@ -510,8 +511,19 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	 		d = idTab.getStaticIdentifier(ref.id.spelling); // A.x , static access
 
-		 if(d==null)
-				identificationError(" Identifier of type class "+ ref.id + " named " + ref.id.spelling + " not declared  or is not a static declaration");
+		 if(d==null && isFuncStatic==true){ // foo() , Inside static function, access another static func of same class. eg classA has foo1 and foo2, foo1{ int a= foo2();}
+			 
+			 d= idTab.getStaticFunctionSameClass(ref.id.spelling); 
+			 
+			 
+			 if(d==null ){
+				 identificationError(" Identifier of type class "+ ref.id + " named " + ref.id.spelling + " not declared  or is not a static declaration");
+			 }
+			 else
+				 ref.isStatic = true;
+			 
+		 }
+				
 		 	else			 
 			 	ref.isStatic = true;
 
