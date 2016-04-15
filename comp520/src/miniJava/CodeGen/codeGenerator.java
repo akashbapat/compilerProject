@@ -124,39 +124,50 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				d.setEntity(re);
 			//	Machine.emit(Op.PUSH, 1);
 					}
-			else if(d.type instanceof ClassType && d instanceof FieldDecl ){
+			else if( d instanceof FieldDecl ){
+				
+				if(d.type instanceof ClassType){
 				 ClassType ct = (ClassType) (d.type);
 				 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
-				 int sA = cd.fieldDeclList.size();
+				 int n = cd.fieldDeclList.size();
 				
-				 RuntimeEntity re =	 new UnkownAddress(sA );
+				 RuntimeEntity re =	 new KnownAddress(n,s);
 				 d.setEntity(re);
+				}
+				else if(d.type instanceof BaseType || d.type instanceof ArrayType){ //arraytype and basetype
+					
+					
+					 RuntimeEntity re =	 new KnownAddress(1 , s);
+					 d.setEntity(re);
+					
+				}
+				else{
+					System.out.println("Create Entity failed:FieldDecl is not of type class , or array, or base ");
+				}
 		 
 					}
 			
 			
-		}
-		
-		private void encodeFetch( Reference r){
-			
-			Declaration d = r.getDecl();
-			RuntimeEntity re = d.getEntity();
-			
-				Machine.emit(Op.LOAD, Reg.LB, re.address);
-				
-	//		if(re instanceof UnknownValue){
-	//		Machine.emit(Op.LOADI,  );
-		//	}
 			
 		}
 		
-private void encodeFetch( Identifier id){
+		 
+		
+private void encodeFetch( Declaration d){
 			
-			Declaration d = id.getDecl();
+		 
 			RuntimeEntity re = d.getEntity();
 			
-				Machine.emit(Op.LOAD, Reg.LB, re.address);
 			
+			if( d instanceof FieldDecl ){
+				Machine.emit(Op.LOADL, re.address);
+			}
+			else if(d instanceof VarDecl){
+				Machine.emit(Op.LOAD, Reg.LB, re.address);
+			}
+			else{
+				System.out.println("Failed to encode");
+			}
 			
 	 
 			
@@ -485,19 +496,19 @@ private void encodeFetch( Identifier id){
 	    	else
 	    	{
 	    		qr.id.visit(this, isLHS);
-	    		Machine.emit(Op.LOADI);
-	    		int addr = Machine.nextInstrAddr();
-	    		Machine.emit(Op.LOADL,-1);
-	    		if(qr.id.getDecl() instanceof FieldDecl){
-		    		FieldDecl fd = (FieldDecl) qr.id.getDecl();
-		    		fp.addField(fd,addr);
-		    		Machine.emit(Prim.fieldupd);
-		    	}
-		    	
-		    	else
-		    	{
-		    		System.out.println("Identifier of qualified reference is not FieldDecl");
-		    	}
+	    	//	Machine.emit(Op.LOADI);
+	    	//	int addr = Machine.nextInstrAddr();
+	    	//	Machine.emit(Op.LOADL,-1);
+	    //		if(qr.id.getDecl() instanceof FieldDecl){
+		   // 		FieldDecl fd = (FieldDecl) qr.id.getDecl();
+		   // 		fp.addField(fd,addr);
+		    		Machine.emit(Prim.fieldref);
+		   // 	}
+		  // / 	
+		   // 	else
+		    //	{
+		    //		System.out.println("Identifier of qualified reference is not FieldDecl");
+		    //	}
 	    		
 	    	}
 	    	return null;
@@ -534,7 +545,7 @@ private void encodeFetch( Identifier id){
 	    		encodeAssign(id.getDecl());
 	    	}
 	    	else{
-	    		encodeFetch(id);
+	    		encodeFetch(id.getDecl());
 	    	}
 	        return null;
 	    }
