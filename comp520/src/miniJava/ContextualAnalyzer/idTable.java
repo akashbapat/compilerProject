@@ -18,6 +18,7 @@ import miniJava.AbstractSyntaxTrees.ParameterDeclList;
 
 
 import miniJava.AbstractSyntaxTrees.TypeKind;
+import miniJava.AbstractSyntaxTrees.VarDecl;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 import miniJava.SyntacticAnalyzer.Token;
 import miniJava.SyntacticAnalyzer.TokenKind;
@@ -29,6 +30,14 @@ public class idTable {
 
 	public void setCurrentClass(ClassDecl cd){ //added to support calling of static functions from static functions in same class without using class name 
 		currentClass =cd;
+	}
+	
+	public ClassDecl getCurrentClass(){ //added to support calling of static functions from static functions in same class without using class name 
+	
+		if(currentClass==null)
+			System.out.println("Current class is null, accessed before setting ");
+		
+		return 	currentClass ;
 	}
 	 
 	
@@ -132,7 +141,7 @@ public class idTable {
 	}
 
 
-	public Declaration getIdentifier(String name , boolean isFuncStatic ){ //names of fields and methods 
+	public Declaration getIdentifier(String name , boolean isFuncStatic,boolean isCall ){ //names of fields and methods 
 
 		Declaration d;
 		MemberDecl md;
@@ -141,9 +150,59 @@ public class idTable {
 			d = levelList.get(i ).get( name) ;
 
 			if(d != null  ){
+				
+			if(i == idLevel.MEMBER_LEVEL.getValue()){
+				
+				 
+				  if(isFuncStatic){  //function is   static
+					 if(isCall){  // call inside   static func 
+						 if(d instanceof MethodDecl && ((MethodDecl) d).isStatic)
+						 return d;
+						 else 
+							 return null;
+						 
+					 }
+					 else{	 // field inside   static func 
+						 if(d instanceof FieldDecl &&  ((FieldDecl) d).isStatic)
+							 return d;
+							 else 
+								 return null;
+					 }
+					 
+				 }
+				 else{//function is   NOT static
+					 
+					 
+						if (d instanceof VarDecl && name.equals("this"))
+							return d;
+					 
+					 
+						else if(isCall){   // call inside non static func 
+					 		 if(d instanceof MethodDecl)
+								 return d;
+								 else 
+									 return null;
+					 }
+					 else{// field inside non static func 
+						 if(d instanceof FieldDecl)
+							 return d;
+							 else 
+								 return null;
+					 }
+					 
+					 
+					 
+					 
+				 }
+				
+			}
+			else{ // its not a member decl, is its either paramdecl or local decl
+				return d;
+			}
+				
 
-				if(isFuncStatic && i == idLevel.MEMBER_LEVEL.getValue()){
-					if(d instanceof MemberDecl){
+			/*	if(isFuncStatic && i == idLevel.MEMBER_LEVEL.getValue()){
+					if((d instanceof FieldDecl ) || (d instanceof MethodDecl  && isCall)){
 						md = (MemberDecl) d;
 					 
 
@@ -156,7 +215,7 @@ public class idTable {
 					 
 				}
 				else
-					return d  ;
+					return d  ; */
 			}
 
 		}
@@ -205,7 +264,7 @@ public class idTable {
 		return null;
 	}
 
-	public Declaration getStaticFunctionSameClass(String name) {
+	/*public Declaration getStaticFunctionSameClass(String name) {
 		
 		
 		Declaration d;
@@ -223,10 +282,11 @@ public class idTable {
 		
 		
 	}
+	*/
 	
 	public  void printLevel(int n){
 
-/*
+
 
 		if(n>levelList.size()-1){
 			System.out.println("error") ;
@@ -242,13 +302,13 @@ public class idTable {
 
 
 		}
-*/
+
 		 
 	}
 
 	public void printRestLevel(   ){
 
-/*
+
 
 		for (int i=5 ;i<levelList.size();i++){
 
@@ -265,7 +325,7 @@ public class idTable {
 
 
 		}
-*/
+
 	}
 
 

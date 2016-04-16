@@ -18,8 +18,12 @@ public abstract class AST {
       String cn = fullClassName.substring(1 + fullClassName.lastIndexOf('.'));
       if (ASTDisplay.showPosition){
     	 // cn = cn + " " + posn.toString();
-    	 
-    	  cn = cn + " Line no: " + Integer.toString(posn.line) +" position: " + Integer.toString(posn.linePosn) ;
+    	 if(posn==null)
+    		 System.out.println("Warning: no resolvable position, possibly a statement");
+    	
+    	 else
+    		  cn = cn + " Line no: " + Integer.toString(posn.line) +" position: " + Integer.toString(posn.linePosn) ;
+    		 
       }
       return cn;
   }

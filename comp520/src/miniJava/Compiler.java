@@ -36,16 +36,16 @@ import miniJava.ContextualAnalyzer.ASTIdentification;
 import miniJava.ContextualAnalyzer.typeChecker;
 /**
  * Recognize whether input is an arithmetic expression as defined by
- * a simple context free grammar for expressions and a scanner grammar.
- * 
- */
-public class Compiler {
-	 
- 
 	/**
 	 * @param args  if no args provided parse from keyboard input
 	 *              else args[0] is name of file containing input to be parsed  
 	 */  
+
+
+ 
+public class Compiler {
+	 
+	 
 	public static void main(String[] args) {
 	 
 		InputStream inputStream = null;
@@ -101,47 +101,51 @@ public class Compiler {
      			//display.showTree(ast);
  			ASTIdentification astIdentify = new ASTIdentification(reporter);
 //				
-//				 
+ 			
  				if(	astIdentify.showTree(ast)){
  			 
- 			 
+ 					 if(reporter.hasErrors())
+ 		 				System.exit(4);
  				 typeChecker typeCheckerObj = new typeChecker(reporter);
+ 				
  		MethodDecl mainMethodDecl =		typeCheckerObj.typeCheckAST(ast);
+   
  	 		if( mainMethodDecl!=null){
- 	 				codeGenerator cg = new codeGenerator(reporter,mainMethodDecl);
- 	 	 			  cg.generate(ast);
- 	 	 			 //
- 	 	 			String objectCodeFileName = "Counter.mJAM";
- 	 	 			ObjectFile objF = new ObjectFile(objectCodeFileName);
- 	 	 			System.out.print("Writing object code file " + objectCodeFileName + " ... ");
- 	 	 			if (objF.write()) {
- 	 	 				System.out.println("FAILED!");
- 	 	 				return;
- 	 	 			}
- 	 	 			else
- 	 	 				System.out.println("SUCCEEDED writing obj file");	
- 	 	 			
- 	 	 			/* create asm file using disassembler */
- 	 	 			String asmCodeFileName = "Counter.asm";
- 	 	 			System.out.print("Writing assembly file ... ");
- 	 	 			Disassembler d = new Disassembler(objectCodeFileName);
- 	 	 			if (d.disassemble()) {
- 	 	 				System.out.println("FAILED!");
- 	 	 				return;
- 	 	 			}
- 	 	 			else
- 	 	 				System.out.println("SUCCEEDED");
- 	 	 			
- 	 	 		/* 
- 	 	 		 * run code using debugger
- 	 	 		 * 
- 	 	 		 */
- 	 	 			System.out.println("Running code ... ");
- 	 	 			Interpreter.debug(objectCodeFileName, asmCodeFileName);
 
- 	 	 			System.out.println("*** mJAM execution completed");
- 	 	 			  //
- 	 	 			System.exit(0);
+ 	 			codeGenerator cg = new codeGenerator(reporter,mainMethodDecl);
+ 	 			  cg.generate(ast);
+ 	 			 //
+ 	 			String objectCodeFileName = "Counter.mJAM";
+ 	 			ObjectFile objF = new ObjectFile(objectCodeFileName);
+ 	 			System.out.print("Writing object code file " + objectCodeFileName + " ... ");
+ 	 			if (objF.write()) {
+ 	 				System.out.println("FAILED!");
+ 	 				return;
+ 	 			}
+ 	 			else
+ 	 				System.out.println("SUCCEEDED writing obj file");	
+ 	 			
+ 	 			/* create asm file using disassembler */
+ 	 			String asmCodeFileName = "Counter.asm";
+ 	 			System.out.print("Writing assembly file ... ");
+ 	 			Disassembler d = new Disassembler(objectCodeFileName);
+ 	 			if (d.disassemble()) {
+ 	 				System.out.println("FAILED!");
+ 	 				return;
+ 	 			}
+ 	 			else
+ 	 				System.out.println("SUCCEEDED");
+ 	 			
+ 	 		/* 
+ 	 		 * run code using debugger
+ 	 		 * 
+ 	 		 */
+ 	 			System.out.println("Running code ... ");
+ 	 			Interpreter.debug(objectCodeFileName, asmCodeFileName);
+ 	 			
+ 	 	 	 	 System.out.println("*** mJAM execution completed");
+ 	 	 			
+ 	 	 		System.exit(0);
 
  	 			
  	 		}
@@ -152,7 +156,7 @@ public class Compiler {
  					System.exit(4);
  				}
  				
- 				
+ 				 
  				
 				System.exit(0);
 				 
@@ -161,7 +165,7 @@ public class Compiler {
 		}
 	}
 	
-	
+ 
 	 
 	
 }

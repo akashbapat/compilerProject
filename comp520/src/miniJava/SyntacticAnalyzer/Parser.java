@@ -1065,7 +1065,7 @@ public class Parser {
 			Token numToken=	acceptIt();
 
 
-			return new LiteralExpr(new IntLiteral(numToken),null); 
+			return new LiteralExpr(new IntLiteral(numToken),numToken.GetSourcePosn()); 
 		default:
 			parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
 
