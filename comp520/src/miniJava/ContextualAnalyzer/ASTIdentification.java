@@ -427,9 +427,19 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	 		staticClassAccessPossible = false;
 		
 	 	
-		 
-		idTab  = qr.ref.visit(this, idTab);
-		idTab  = qr.id.visit(this, idTab);
+		 idTab  = qr.ref.visit(this, idTab);
+		
+		
+		if(qr.ref.getDecl().type instanceof ArrayType && qr.id.spelling.equals("length")){ //added to support array.length
+			qr.setDecl(qr.ref.getDecl());
+			qr.id.setDecl(new VarDecl(new BaseType(TypeKind.INT,new SourcePosition()),"length",new SourcePosition()));
+			return idTab;
+		}
+		else{
+			idTab  = qr.id.visit(this, idTab);
+			
+		}
+		
 		
 		
 		if(qr.ref instanceof QualifiedRef){
