@@ -171,7 +171,7 @@ private void encodeFetch( Declaration d){
 			
 			if( d instanceof FieldDecl ){
 				if(((FieldDecl) d).isStatic){
-					Machine.emit(Op.LOAD, Reg.SB, re.address);
+					Machine.emit(Op.LOADL, re.address);
 				}
 				else{
 					Machine.emit(Op.LOADL, re.address);
@@ -181,7 +181,7 @@ private void encodeFetch( Declaration d){
 				Machine.emit(Op.LOAD, Reg.LB, re.address);
 			}
 			else if(d instanceof ClassDecl){
-				
+				Machine.emit(Op.LOADL, 0);
 			}
 			else{
 				System.out.println("Failed to encode");
@@ -525,6 +525,8 @@ private void encodeFetch( Declaration d){
 	    		if(qr.id.getDecl() instanceof FieldDecl){
 	    			FieldDecl fd = (FieldDecl)qr.id.getDecl();
 	    			if(fd.isStatic){
+	    				Machine.emit(Prim.add);
+	    				//Machine.emit(Op.LOADI);
 	    				//Dont call primitive operation
 	    			}
 	    			else{
