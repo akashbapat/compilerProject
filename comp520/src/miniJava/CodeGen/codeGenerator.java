@@ -10,6 +10,7 @@ import miniJava.AbstractSyntaxTrees.Package;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
  
 
  
@@ -22,6 +23,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		MethodDecl mainMethodDecl;
 		CodeGenEntityCreator cgec;
 	    int displacement;
+	    Boolean inArray;
 	    public boolean generate(AST ast){
 	        System.out.println("======= Generating code =====================");
 	    try{
@@ -49,6 +51,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			mainMethodDecl=md;
 			displacement=3;
 			cgec = new CodeGenEntityCreator(er);
+			//Initializing flags for println
+		    inSystem = false;
+		    inOut = false;
+		    inPrintln = false;
+		    inArray = false;
 		}
 
 		 class CodeGenError extends Error {
@@ -61,10 +68,6 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		}
 	    
-		
-		
-		
-		
 		
 		private void initializeHMap()
 		{
@@ -191,6 +194,101 @@ private void encodeFetch( Declaration d){
 			
 		}
 	    
+		private Boolean checkIdentifierForPrintln(QualifiedRef qr){
+			Stack<Identifier> unRolledRef = new Stack<Identifier>();
+			Reference ref = qr; 
+			while(ref instanceof QualifiedRef){
+				QualifiedRef qqr = (QualifiedRef)ref;
+				unRolledRef.push(qqr.id);
+				ref = qqr.ref;
+			}
+			if(unRolledRef.size() == 3){
+				
+			}
+			else{
+				return false;
+			}
+	    	Declaration d = id.getDecl();
+	    	if(d instanceof ClassDecl){
+	    		ClassDecl cd = (ClassDecl)d;
+	    		if(cd.name.equals("System")){
+	    			inSystem = true;
+	    			return true;
+	    		}
+	    		else
+	    		{
+	    			return false;
+	    		}
+	    	}
+	    	else if(d instanceof FieldDecl){
+	    		FieldDecl fd = (FieldDecl)d;
+	    		if (fd.type.typeKind == TypeKind.CLASS){
+	    			ClassType ct = (ClassType)fd.type;
+	    			if(fd.name.equals("out") && ct.className.spelling.equals("_PrintStream") && inSystem){
+	    				inOut = true;
+	    				return true;
+	    			}
+	    			else{
+	    				if(inSystem){
+	    					inSystem = false;
+	    				}
+	    				return false;
+	    			}
+	    		}
+	    		else{
+	    			if(inSystem){
+	    				inSystem = false;
+	    			}
+	    			return false;
+	    		}
+	    	}
+	    	else if(d instanceof MethodDecl){
+	    		MethodDecl md = (MethodDecl) d;
+	    		if(md.name.equals("println") && md.parameterDeclList.size() == 1 && inSystem && inOut){
+	    			md.parameterDeclList.get(0).visit(this, false);
+	    			Machine.emit(Prim.putintnl);
+	    			inSystem =false;
+	    			inOut = false;
+	    			return true;
+	    		}
+	    		else if(md.name.equals("Println") && md.parameterDeclList.size() != 1 && inSystem && inOut){
+	    			codeGenError("Incorrect number of arguments in println at line: "+md.posn.line);
+	    			return false;
+	    		}
+	    		else{
+	    			return false;
+	    		}
+	    	}
+	    	else{
+	    		return false;
+	    	}
+
+		}
+		
+		private void isIdentArray(Identifier id){
+			Declaration d = id.getDecl();
+			if(d instanceof VarDecl){
+				if(d.type.typeKind == TypeKind.ARRAY){
+					inArray = true;
+				}
+				else{
+					inArray = false;
+				}
+			}
+			else{
+				inArray = false;
+			}
+		}
+		private Boolean isIdentLength(Identifier id){
+			if(id.spelling.equals("length") && inArray){
+				Machine.emit(Prim.arraylen);
+				inArray = false;
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
 		///////////////////////////////////////////////////////////////////////////////
 		//
 		// PACKAGE
@@ -293,7 +391,6 @@ private void encodeFetch( Declaration d){
 	    public Object visitVarDecl(VarDecl vd, Boolean isLHS){
 	    	createEntity(  vd, 1);
 	       // vd.type.visit(this, false);
-	        
 	        return null;
 	    }
 	 
@@ -338,11 +435,9 @@ private void encodeFetch( Declaration d){
 	        return null;
 	    }
 	    
-	    public Object visitVardeclStmt(VarDeclStmt stmt, Boolean isLHS){
-	    	     
-	        stmt.varDecl.visit(this, false);	
+	    public Object visitVardeclStmt(VarDeclStmt stmt, Boolean isLHS){   	
 	        stmt.initExp.visit(this, false);
-	       
+	        stmt.varDecl.visit(this, false);
 	       
 	        return null;
 	    }
@@ -476,9 +571,8 @@ private void encodeFetch( Declaration d){
 	    }
 	 
 	    public Object visitNewArrayExpr(NewArrayExpr expr, Boolean isLHS){
-	       
-	        expr.eltType.visit(this, false);
-	        expr.sizeExpr.visit(this, false);
+	    	expr.sizeExpr.visit(this, false);
+	    	Machine.emit(Prim.newarr);
 	        return null;
 	    }
 	    
@@ -505,6 +599,7 @@ private void encodeFetch( Declaration d){
 		///////////////////////////////////////////////////////////////////////////////
 		
 	    public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
+	    	
 	    	qr.ref.visit(this, isLHS);
 	    	if(isLHS)
 	    	{
@@ -522,20 +617,7 @@ private void encodeFetch( Declaration d){
 	    	else
 	    	{
 	    		qr.id.visit(this, isLHS);
-	    		if(qr.id.getDecl() instanceof FieldDecl){
-	    			FieldDecl fd = (FieldDecl)qr.id.getDecl();
-	    			if(fd.isStatic){
-	    				Machine.emit(Prim.add);
-	    				//Machine.emit(Op.LOADI);
-	    				//Dont call primitive operation
-	    			}
-	    			else{
-	    				Machine.emit(Prim.fieldref);
-	    			}
-	    		}
-	    		else{
-	    			Machine.emit(Prim.fieldref);
-	    		}
+    			//Machine.emit(Prim.fieldref);
 	    		
 	    	//	Machine.emit(Op.LOADI);
 	    	//	int addr = Machine.nextInstrAddr();
@@ -563,7 +645,6 @@ private void encodeFetch( Declaration d){
 	    }
 	    
 	    public Object visitIdRef(IdRef ref, Boolean isLHS) {
-	    
 	    	ref.id.visit(this, isLHS);
 	    	return null;
 	    }
@@ -582,12 +663,16 @@ private void encodeFetch( Declaration d){
 		///////////////////////////////////////////////////////////////////////////////
 	    
 	    public Object visitIdentifier(Identifier id, Boolean isLHS){
-	    	if(isLHS){
-	    		encodeAssign(id.getDecl());
+	    	isIdentArray(id);
+	    	if(!checkIdentifierForPrintln(id) && !isIdentLength(id)){
+	    		if(isLHS){
+		    		encodeAssign(id.getDecl());
+		    	}
+		    	else{
+		    		encodeFetch(id.getDecl());
+		    	}	
 	    	}
-	    	else{
-	    		encodeFetch(id.getDecl());
-	    	}
+	    	
 	        return null;
 	    }
 	    
