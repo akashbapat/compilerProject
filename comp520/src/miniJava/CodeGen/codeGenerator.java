@@ -253,6 +253,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		else if(d instanceof ClassDecl){
 			Machine.emit(Op.LOADL, 0);
 		}
+		else if(d instanceof MethodDecl){
+			int address = Machine.nextInstrAddr();
+			Machine.emit(Op.CALLI,Reg.CB,-1);
+			fp.addFunction((MethodDecl)d, address);
+		}
 		else{
 			System.out.println("Failed to encode");
 		}
@@ -275,7 +280,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			else{
 				return false;
 			}
-	    	Declaration d = id.getDecl();
+	    	Declaration d = qr.id.getDecl();
 	    	if(d instanceof ClassDecl){
 	    		ClassDecl cd = (ClassDecl)d;
 	    		if(cd.name.equals("System")){
@@ -629,13 +634,18 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitCallExpr(CallExpr expr, Boolean isLHS){
 
-		expr.functionRef.visit(this, false);
+		
 		ExprList al = expr.argList;
 
 
 		for (Expression e: al) {
 			e.visit(this, false);
 		}
+		
+		
+		expr.functionRef.visit(this, false);
+		 
+		
 		return null;
 	}
 
@@ -678,7 +688,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		 
 		qr.id.visit(this, false);
 	 	
-		if(!isLHS)
+		if(!isLHS && !( qr.id.getDecl() instanceof MethodDecl))
 		  Machine.emit(Prim.fieldref); //last call should not happen
   
 	 
