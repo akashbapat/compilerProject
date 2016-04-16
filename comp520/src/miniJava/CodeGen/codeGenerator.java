@@ -360,7 +360,7 @@ private void encodeFetch( Declaration d){
 	        stmt.val.visit(this, false);
 	        return null;
 	    }
-	    
+	    // This is a comment
 	    public Object visitCallStmt(CallStmt stmt, Boolean isLHS){
 	      
 	        stmt.methodRef.visit(this, false);
