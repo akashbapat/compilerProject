@@ -101,10 +101,10 @@ public class typeChecker implements Visitor<Object,Type> {
 
 
 		if(t.typeKind==TypeKind.INT && o.spelling.equals("-"))
-			return  new BaseType(TypeKind.INT, null) ;
+			return  new BaseType(TypeKind.INT, o.posn) ;//added position of output expr as position of operator
 
 		else if(t.typeKind==TypeKind.BOOLEAN && o.spelling.equals("!"))
-			return  new BaseType(TypeKind.BOOLEAN, null) ;
+			return  new BaseType(TypeKind.BOOLEAN, o.posn) ;//added position of output expr as position of operator
 		else{
 			typeCheckFatalError("Shouldnt reach here, invalid type of unary operator");
 			return new BaseType(TypeKind.ERROR, null);
@@ -126,12 +126,18 @@ public class typeChecker implements Visitor<Object,Type> {
 		switch(typeEq){
 
 		case ERROR:
+			 
+		 
 			return   operatorAgreement(l,r,o);
 		case UNEQUAL:
-			return new BaseType(TypeKind.ERROR, null);
+			typeCheckError("In binary expression,  LHS " + l  +" of typeKind " + l.typeKind + " and  RHS " + r +" of typeKind " + r.typeKind + " doesnt match with operator " + o + " of spelling  " + o.spelling);
+			  
+			return new BaseType(TypeKind.ERROR, o.posn);//added position of output expr as position of operator
 
 		case UNSUPPORTED:
-			return new BaseType(TypeKind.UNSUPPORTED, null);
+			typeCheckFatalError("Type check fatal error: In binary expression unsupported type occured,  LHS " + l  +" of typeKind " + l.typeKind + " and  RHS " + r +" of typeKind " + r.typeKind + " doesnt match with operator " + o + " of spelling  " + o.spelling);
+			
+			return new BaseType(TypeKind.UNSUPPORTED, o.posn);//added position of output expr as position of operator
 
 		case EQUAL:
 			return   operatorAgreement(l,r,o);
@@ -152,44 +158,44 @@ public class typeChecker implements Visitor<Object,Type> {
 		 
 			
 		  if(o.spelling.equals("+") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.INT, null);
+			return new BaseType(TypeKind.INT, o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("-") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.INT, null);
+			return new BaseType(TypeKind.INT,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("*") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.INT, null);
+			return new BaseType(TypeKind.INT,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("/") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.INT, null);
+			return new BaseType(TypeKind.INT,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("<=") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("<") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals(">") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals(">=") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("==") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN || l.typeKind==TypeKind.NULL || r.typeKind==TypeKind.NULL))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("!=") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN || l.typeKind==TypeKind.NULL || r.typeKind==TypeKind.NULL))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("&&") && (l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("||") && (l.typeKind==TypeKind.ERROR || l.typeKind==TypeKind.BOOLEAN))
-			return new BaseType(TypeKind.BOOLEAN, null);
+			return new BaseType(TypeKind.BOOLEAN,  o.posn);//added position of output expr as position of operator
 
 		else{
 			typeCheckFatalError("shouldnt reach here, left type is " + l +" of typekind " + l.typeKind + " right type is "+ r +" of typekind " + r.typeKind + " and operator is " + o + " of spelling "  + o.spelling );
-			return new BaseType(TypeKind.ERROR, null);
+			return new BaseType(TypeKind.ERROR, null);//added position of output expr as position of operator
 		}
 	}
 
@@ -205,7 +211,7 @@ public class typeChecker implements Visitor<Object,Type> {
 		switch(tEq){
 		case UNEQUAL:
 			typeCheckError("In assignment, argument type of LHS " + l  +" of typeKind " + l.typeKind + " doesnt match  argument type of RHS " + r +" of typeKind " + r.typeKind);
-			errorFlag=true | errorFlag;
+			errorFlag=true ;
 			break;
 
 		case EQUAL:
@@ -266,6 +272,7 @@ public class typeChecker implements Visitor<Object,Type> {
 		throw new TypeCheckError();
 
 	}
+
 
 
 	public MethodDecl typeCheckAST(AST ast){
@@ -542,8 +549,10 @@ Type astType =null;
 		boolean errorFlag =false; 
 		Type retTypeOfFunc = stmt.methodRef.visit(this, null);
 		typeEquality tEq;
-		MethodDecl md = (MethodDecl) stmt.methodRef.getDecl();
-
+		MethodDecl md;
+		 
+		 md = (MethodDecl) stmt.methodRef.getDecl();
+		  	
 		ExprList al = stmt.argList;
 		Type expType;	 
 	 
@@ -614,19 +623,19 @@ Type astType =null;
 
 		if(condType.typeKind == TypeKind.ERROR || thenType.typeKind == TypeKind.ERROR )
 			return new BaseType(TypeKind.ERROR,null);
-
-		else if(condType.typeKind == TypeKind.BOOLEAN )
-			return new BaseType(TypeKind.VOID,null) ;
-
+ 
 		else if(elseType!=null){
 			if(elseType.typeKind==TypeKind.ERROR)
 				return new BaseType(TypeKind.ERROR,null);
 		}
+		else if(condType.typeKind != TypeKind.BOOLEAN ){
+			typeCheckError("In if statement, conditon  "+stmt.cond + " doesn not evaluate to boolean but to "+ condType.typeKind);
+			return new BaseType(TypeKind.ERROR,null) ;
+
+		}
 
 
-
-
-		return new BaseType(TypeKind.ERROR,null) ;
+		return new BaseType(TypeKind.VOID,null) ;
 
 	}
 
@@ -660,7 +669,9 @@ Type astType =null;
 
 		Type retType = getTypeOfExpr(eType, expr.operator);
 
-		if(retType.typeKind==TypeKind.UNSUPPORTED)
+		if(retType.typeKind==TypeKind.ERROR)
+			typeCheckFatalError("Unsupported type encountered in unary expression");
+		else if(retType.typeKind==TypeKind.UNSUPPORTED)
 			typeCheckFatalError("Unsupported type encountered in unary expression");
 
 		return retType;
@@ -673,10 +684,7 @@ Type astType =null;
 		Type reType = 	expr.right.visit(this, null);
 
 		Type retType = getTypeOfExpr(leType,reType, expr.operator);
-
-		if(retType.typeKind==TypeKind.UNSUPPORTED)
-			typeCheckFatalError("Unsupported type encountered in binary expression");
-
+		
 		return retType;
 
 	}
@@ -697,7 +705,7 @@ Type astType =null;
 		MethodDecl md;
 		Expression e;
 		Declaration d =expr.functionRef.getDecl();
-		
+			
 		
 		if(d instanceof MethodDecl){
 		md = (MethodDecl) d;
