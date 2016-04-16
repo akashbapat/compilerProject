@@ -261,101 +261,114 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	}
 
-	private Boolean checkIdentifierForPrintln(QualifiedRef qr){
+	private Boolean checkQRForPrintln(QualifiedRef qr){
 			Stack<Identifier> unRolledRef = new Stack<Identifier>();
 			Reference ref = qr; 
-			while(ref instanceof QualifiedRef){
+			do{
 				QualifiedRef qqr = (QualifiedRef)ref;
 				unRolledRef.push(qqr.id);
 				ref = qqr.ref;
-			}
+			}while (ref instanceof QualifiedRef);
+			IdRef idr = (IdRef)ref;
+			unRolledRef.push(idr.id);
+			
 			if(unRolledRef.size() == 3){
-				
+				Identifier id = unRolledRef.pop();
+				Declaration d = id.getDecl();
+				if(d instanceof ClassDecl){
+		    		ClassDecl cd = (ClassDecl)d;
+		    		if(cd.name.equals("System")){
+		    			id = unRolledRef.pop();
+		    			d = id.getDecl();
+		    			FieldDecl fd = (FieldDecl)d;
+			    		if (fd.type.typeKind == TypeKind.CLASS){
+			    			ClassType ct = (ClassType)fd.type;
+			    			if(fd.name.equals("out") && ct.className.spelling.equals("_PrintStream") ){
+			    				id = unRolledRef.pop();
+			    				d = id.getDecl();
+			    				if(d instanceof MethodDecl){
+			    		    		MethodDecl md = (MethodDecl) d;
+			    		    		if(md.name.equals("println") && md.parameterDeclList.size() == 1){
+			    		    			md.parameterDeclList.get(0).visit(this, false);
+			    		    			Machine.emit(Prim.putintnl);
+			    		    			return true;
+			    		    		}
+			    		    		else if(md.name.equals("Println") && md.parameterDeclList.size() != 1 ){
+			    		    			codeGenError("Incorrect number of arguments in println at line: "+md.posn.line);
+			    		    			return false;
+			    		    		}
+			    		    		else{
+			    		    			return false;
+			    		    		}
+			    		    	}
+			    				else{
+			    					return false;
+			    				}
+			    				
+			    			}
+			    			else{
+			    				return false;
+			    			}
+			    		}
+			    		else{
+			    			return false;
+			    		}
+		    		}
+		    		else{
+		    			return false;
+		    		}
 			}
 			else{
 				return false;
 			}
-	    	Declaration d = id.getDecl();
-	    	if(d instanceof ClassDecl){
-	    		ClassDecl cd = (ClassDecl)d;
-	    		if(cd.name.equals("System")){
-	    			inSystem = true;
-	    			return true;
-	    		}
-	    		else
-	    		{
-	    			return false;
-	    		}
-	    	}
-	    	else if(d instanceof FieldDecl){
-	    		FieldDecl fd = (FieldDecl)d;
-	    		if (fd.type.typeKind == TypeKind.CLASS){
-	    			ClassType ct = (ClassType)fd.type;
-	    			if(fd.name.equals("out") && ct.className.spelling.equals("_PrintStream") && inSystem){
-	    				inOut = true;
-	    				return true;
-	    			}
-	    			else{
-	    				if(inSystem){
-	    					inSystem = false;
-	    				}
-	    				return false;
-	    			}
-	    		}
-	    		else{
-	    			if(inSystem){
-	    				inSystem = false;
-	    			}
-	    			return false;
-	    		}
-	    	}
-	    	else if(d instanceof MethodDecl){
-	    		MethodDecl md = (MethodDecl) d;
-	    		if(md.name.equals("println") && md.parameterDeclList.size() == 1 && inSystem && inOut){
-	    			md.parameterDeclList.get(0).visit(this, false);
-	    			Machine.emit(Prim.putintnl);
-	    			inSystem =false;
-	    			inOut = false;
-	    			return true;
-	    		}
-	    		else if(md.name.equals("Println") && md.parameterDeclList.size() != 1 && inSystem && inOut){
-	    			codeGenError("Incorrect number of arguments in println at line: "+md.posn.line);
-	    			return false;
-	    		}
-	    		else{
-	    			return false;
-	    		}
-	    	}
-	    	else{
-	    		return false;
-	    	}
-
+					
+			}
+			else
+			{
+				return false;
+			}
 		}
-	
-	private void isIdentArray(Identifier id){
-			Declaration d = id.getDecl();
+	private Boolean isQRlength(QualifiedRef qr){
+		Stack<Identifier> unRolledRef = new Stack<Identifier>();
+		Reference ref = qr; 
+		do{
+			QualifiedRef qqr = (QualifiedRef)ref;
+			unRolledRef.push(qqr.id);
+			ref = qqr.ref;
+		}while (ref instanceof QualifiedRef);
+		IdRef idr = (IdRef)ref;
+		unRolledRef.push(idr.id);
+		if(unRolledRef.size() == 2){
+			Identifier idArr = unRolledRef.pop();
+			Declaration d = idArr.getDecl();
 			if(d instanceof VarDecl){
-				if(d.type.typeKind == TypeKind.ARRAY){
-					inArray = true;
+				VarDecl vd = (VarDecl)d;
+				if(vd.type.typeKind == TypeKind.ARRAY){
+					Identifier id = unRolledRef.pop();
+					d = id.getDecl();
+					if(id.spelling.equals("length")){
+						idArr.visit(this, false);
+						Machine.emit(Prim.arraylen);
+						return true;
+					}
+					else
+					{
+						return false;
+					}
 				}
 				else{
-					inArray = false;
+					return false;
 				}
-			}
-			else{
-				inArray = false;
-			}
-		}
-		private Boolean isIdentLength(Identifier id){
-			if(id.spelling.equals("length") && inArray){
-				Machine.emit(Prim.arraylen);
-				inArray = false;
-				return true;
 			}
 			else{
 				return false;
 			}
 		}
+		else{
+			return false;
+		}
+	}
+
 	///////////////////////////////////////////////////////////////////////////////
 	//
 	// PACKAGE
@@ -674,14 +687,17 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	///////////////////////////////////////////////////////////////////////////////
 
 	public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
- 		qr.ref.visit(this, false); //even if qr is in lhs, we need to load addresses
-		 
-		qr.id.visit(this, false);
-	 	
-		if(!isLHS)
-		  Machine.emit(Prim.fieldref); //last call should not happen
-  
-	 
+		if(!checkQRForPrintln(qr) && !(isQRlength(qr))){
+			qr.ref.visit(this, false); //even if qr is in lhs, we need to load addresses
+			 
+			qr.id.visit(this, false);
+		 	
+			if(!isLHS && !(qr.id.getDecl() instanceof MethodDecl))
+			  Machine.emit(Prim.fieldref); //last call should not happen
+	  
+
+		}
+ 			 
 		return null;
 	}
 
