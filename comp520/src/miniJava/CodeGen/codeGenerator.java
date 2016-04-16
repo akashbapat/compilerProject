@@ -44,7 +44,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			reporter =er;
 			opToPrimMap = new HashMap<String, Machine.Prim>(); 
 			initializeHMap();
-			Machine.initCodeGen();
+			//Machine.initCodeGen();
 			mainMethodDecl=md;
 			displacement=3;
 			int heap_displacement = 0;
@@ -209,7 +209,7 @@ private void encodeFetch( Declaration d){
 	    
 	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
 	        	FieldDecl f = clas.fieldDeclList.get(i);
-	        	createEntity(f,i);
+	        	//createEntity(f,i);
 	        	f.visit(this, false);
 	        	
 	        }
@@ -274,7 +274,7 @@ private void encodeFetch( Declaration d){
 	    
 	    public Object visitVarDecl(VarDecl vd, Boolean isLHS){
 	    	createEntity(  vd, 1);
-	        vd.type.visit(this, false);
+	       // vd.type.visit(this, false);
 	        
 	        return null;
 	    }
@@ -331,7 +331,6 @@ private void encodeFetch( Declaration d){
 	    
 	    public Object visitAssignStmt(AssignStmt stmt, Boolean isLHS){
 	        
-	    	 
 	        stmt.val.visit(this, false);
 	        stmt.ref.visit(this, true);
             return null;
@@ -491,6 +490,15 @@ private void encodeFetch( Declaration d){
 	    	qr.ref.visit(this, isLHS);
 	    	if(isLHS)
 	    	{
+//	    		qr.id.visit(this, isLHS);
+//	    		if(qr.id.getDecl() instanceof FieldDecl)
+//	    		{
+//	    			Machine.emit(Op.LOADL,Machine.Reg.OB);
+//	    			FieldDecl fd = (FieldDecl) qr.id.getDecl();
+//	    			int addr = Machine.nextInstrAddr();
+//	    			Machine.emit(Op.LOADL,-1);
+//	    			fp.addField(fd,addr);
+//	    		}
 	    		
 	    	}
 	    	else
