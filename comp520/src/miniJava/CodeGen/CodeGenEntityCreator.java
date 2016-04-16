@@ -14,8 +14,8 @@ import miniJava.CodeGen.codeGenerator.CodeGenError;
 public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		ErrorReporter reporter;
 	    int displacement;
-	    int heap_displacement;
 	    int stack_displacement;
+	    int object_displacement;
 	    public Boolean generate(AST ast){
 	        System.out.println("======= Generating Enitities for Code and declaring static variables =====================");
 	    try{
@@ -33,7 +33,6 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		public CodeGenEntityCreator(ErrorReporter er){
 			reporter = er;
 			displacement=3;
-			heap_displacement = 0;
 			Machine.initCodeGen();
 		}
 		
@@ -52,7 +51,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			if(fd.type instanceof ClassType){
 				 ClassType ct = (ClassType) (fd.type);
 				 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
-				 int n = cd.fieldDeclList.size();
+				 int n = getClassDeclSize(cd);
 				 Machine.emit(Op.PUSH, n);
 				}
 				else if(fd.type instanceof BaseType || fd.type instanceof ArrayType){ //arraytype and basetype
@@ -62,7 +61,17 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 					System.out.println("allocateOnStack failed:FieldDecl is not of type class , or array, or base ");
 				}
 		}
-	
+		
+		public int getClassDeclSize(ClassDecl cd){
+			int size = 0;
+			for (int i= 0; i< cd.fieldDeclList.size(); i++){
+				FieldDecl fd = cd.fieldDeclList.get(i);
+				if(!fd.isStatic){
+					size++;
+				}
+			}
+			return size;
+		}
 		
 		private void createEntity(Declaration d, int s,Reg base){
 
@@ -83,7 +92,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 						if(d.type instanceof ClassType){
 						 ClassType ct = (ClassType) (d.type);
 						 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
-						 int n = cd.fieldDeclList.size();
+						 int n = getClassDeclSize(cd);
 						
 						 RuntimeEntity re =	 new KnownAddress(n,stack_displacement);
 						 re.base = base; 
@@ -152,7 +161,6 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		///////////////////////////////////////////////////////////////////////////////
 	    
 	    public Object visitClassDecl(ClassDecl clas, Object obj){
-	        
 	    	int k = 0;
 	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
 	        	FieldDecl f = clas.fieldDeclList.get(i);

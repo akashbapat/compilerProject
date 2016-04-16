@@ -26,7 +26,7 @@ public abstract class Declaration extends AST {
 	}
 	
 	public RuntimeEntity getEntity(){
-		 if(re==null)
+		 if(re==null && !(this instanceof ClassDecl))
 			 System.out.println("Entity is null");
 		 
 		 return re;

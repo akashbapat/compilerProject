@@ -20,11 +20,12 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		functionPatcher fp;
 		ErrorReporter reporter;
 		MethodDecl mainMethodDecl;
+		CodeGenEntityCreator cgec;
 	    int displacement;
-	    int heap_displacement;
 	    public boolean generate(AST ast){
 	        System.out.println("======= Generating code =====================");
 	    try{
+	    	cgec.generate(ast);
 	    	ast.visit(this, false);
 	    }
 	    catch (CodeGenError cge) {
@@ -47,7 +48,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			//Machine.initCodeGen();
 			mainMethodDecl=md;
 			displacement=3;
-			int heap_displacement = 0;
+			cgec = new CodeGenEntityCreator(er);
 		}
 
 		 class CodeGenError extends Error {
@@ -88,11 +89,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		private void allocateOnHeap(ClassDecl d){
 			
 		//	RuntimeEntity re = d.getEntity();
+			int classSize = cgec.getClassDeclSize(d);
 			 Machine.emit(Op.LOADL,-1 );  // inheritance flag indicating no superclass		 	
-			 Machine.emit(Op.LOADL,d.fieldDeclList.size() );	
-			 Machine.emit(Prim.newobj);
-			 heap_displacement += d.fieldDeclList.size();   
-	
+			 Machine.emit(Op.LOADL,classSize );	
+			 Machine.emit(Prim.newobj);	
 		}
 		
 		
@@ -101,12 +101,22 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		private void encodeAssign(Declaration d ){
 			
 			 if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
+				 if(d instanceof FieldDecl){
+					 if(((FieldDecl) d).isStatic)
+					 {
+							Machine.emit(Op.STORE, 1,Reg.SB, d.getEntity().address) ;
+					 }
+					 else
+					 {
+						 Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
+					 }
+				 }
+			 else{
 				 Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
-					}
-			 
+			 	}
 				 
+			 }
 		}
-		
 		
 		private void createEntity(Declaration d, int s){
 
@@ -160,10 +170,18 @@ private void encodeFetch( Declaration d){
 			
 			
 			if( d instanceof FieldDecl ){
-				Machine.emit(Op.LOADL, re.address);
+				if(((FieldDecl) d).isStatic){
+					Machine.emit(Op.LOAD, Reg.SB, re.address);
+				}
+				else{
+					Machine.emit(Op.LOADL, re.address);
+				}
 			}
 			else if(d instanceof VarDecl){
 				Machine.emit(Op.LOAD, Reg.LB, re.address);
+			}
+			else if(d instanceof ClassDecl){
+				
 			}
 			else{
 				System.out.println("Failed to encode");
@@ -504,13 +522,26 @@ private void encodeFetch( Declaration d){
 	    	else
 	    	{
 	    		qr.id.visit(this, isLHS);
+	    		if(qr.id.getDecl() instanceof FieldDecl){
+	    			FieldDecl fd = (FieldDecl)qr.id.getDecl();
+	    			if(fd.isStatic){
+	    				//Dont call primitive operation
+	    			}
+	    			else{
+	    				Machine.emit(Prim.fieldref);
+	    			}
+	    		}
+	    		else{
+	    			Machine.emit(Prim.fieldref);
+	    		}
+	    		
 	    	//	Machine.emit(Op.LOADI);
 	    	//	int addr = Machine.nextInstrAddr();
 	    	//	Machine.emit(Op.LOADL,-1);
 	    //		if(qr.id.getDecl() instanceof FieldDecl){
 		   // 		FieldDecl fd = (FieldDecl) qr.id.getDecl();
 		   // 		fp.addField(fd,addr);
-		    		Machine.emit(Prim.fieldref);
+		    		
 		   // 	}
 		  // / 	
 		   // 	else

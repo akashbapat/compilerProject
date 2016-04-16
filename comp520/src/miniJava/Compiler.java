@@ -108,8 +108,6 @@ public class Compiler {
  				 typeChecker typeCheckerObj = new typeChecker(reporter);
  		MethodDecl mainMethodDecl =		typeCheckerObj.typeCheckAST(ast);
  	 		if( mainMethodDecl!=null){
- 	 			CodeGenEntityCreator cgec = new CodeGenEntityCreator(reporter);
- 	 			if(cgec.generate(ast)){
  	 				codeGenerator cg = new codeGenerator(reporter,mainMethodDecl);
  	 	 			  cg.generate(ast);
  	 	 			 //
@@ -145,7 +143,7 @@ public class Compiler {
  	 	 			  //
  	 	 			System.exit(0);
 
- 	 			}
+ 	 			
  	 		}
  	 		else
  	 			System.exit(4);
