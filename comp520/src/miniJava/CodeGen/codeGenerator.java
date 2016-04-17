@@ -254,11 +254,17 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			Machine.emit(Op.LOAD, Reg.LB, re.address);
 		}
 		else if(d instanceof ClassDecl){
-			Machine.emit(Op.LOADL, 0);
+			//Machine.emit(Op.LOADL, 0);
 		}
 		else if(d instanceof MethodDecl){
+			 
 			int address = Machine.nextInstrAddr();
+			
+			if(((MethodDecl) d).isStatic)
+				Machine.emit(Op.CALL,Reg.CB,-1);
+			else
 			Machine.emit(Op.CALLI,Reg.CB,-1);
+			
 			fp.addFunction((MethodDecl)d, address);
 		}
 		else if(d instanceof ParameterDecl){
@@ -771,11 +777,21 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitIdRef(IdRef ref, Boolean isLHS) {
+	Declaration refD =	ref.id.getDecl();
+	MethodDecl refMd;
 		if(ref.id.getDecl() instanceof FieldDecl  )
 			Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
-		else if(ref.id.getDecl() instanceof MethodDecl ){
+		else if(refD instanceof MethodDecl  ){
+			refMd = (MethodDecl) refD;
+			if(refMd.isStatic){
+				ref.id.visit(this, isLHS);
+			}
+			else{				
 			Machine.emit(Op.LOADA,Machine.Reg.OB,0);
 			ref.id.visit(this, isLHS);
+			}
+			
+			
 		}
 	//	else if(ref.id.getDecl() instanceof FieldDecl && ref.getDecl().type instanceof BaseType){
 	//		Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
