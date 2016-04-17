@@ -66,7 +66,7 @@ public class Compiler {
 		Scanner scanner = new Scanner(inputStream, reporter);
 		Parser parser = new Parser(scanner, reporter);
 		AST ast;
-		int debug =1;
+		int debug =0;
 		//Code for testing scanner
 		
 			System.out.println("Syntactic analysis ... ");
@@ -136,7 +136,7 @@ public class Compiler {
  	 	 			
  	 	 			
  	 	 			
- 	 	 			System.out.println("*** mJAM execution completed");
+ 	 	 			System.out.println(" mJAM execution completed");
  	 	 			   
  	 	 			System.exit(0);
 
