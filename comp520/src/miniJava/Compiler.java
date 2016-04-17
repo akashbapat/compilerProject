@@ -66,23 +66,9 @@ public class Compiler {
 		Scanner scanner = new Scanner(inputStream, reporter);
 		Parser parser = new Parser(scanner, reporter);
 		AST ast;
-		int debug = 0;
+		int debug =0;
 		//Code for testing scanner
-		if(debug == 1)
-		{
-			Token t;
-			do
-			{
-				t = scanner.scan();
-				System.out.print(t.kind);
-				System.out.print(" ");
-				System.out.println(t.spelling);
-				
-			}while (t.kind != TokenKind.EOT);
-
-		}
-		else
-		{
+		
 			System.out.println("Syntactic analysis ... ");
 			ast = parser.parse();
 			System.out.print("Syntactic analysis complete: \n ");
@@ -113,36 +99,45 @@ public class Compiler {
  	 				codeGenerator cg = new codeGenerator(reporter,mainMethodDecl);
  	 	 			  cg.generate(ast);
  	 	 			 //
- 	 	 			String objectCodeFileName = "Counter.mJAM";
+ 	 	 			String objectCodeFileName = args[0].substring(0, args[0].length()-5) + ".mJAM";
  	 	 			ObjectFile objF = new ObjectFile(objectCodeFileName);
  	 	 			System.out.print("Writing object code file " + objectCodeFileName + " ... ");
  	 	 			if (objF.write()) {
- 	 	 				System.out.println("FAILED!");
- 	 	 				return;
+ 	 	 				System.out.println("FAILED to write file!");
+ 	 	 				System.exit(4);
  	 	 			}
- 	 	 			else
- 	 	 				System.out.println("SUCCEEDED writing obj file");	
+ 	 	 			else{
+ 	 	 				System.out.println("SUCCEEDED writing obj file");
+ 	 	 			}
  	 	 			
+ 	 	 			
+ 	 	 			
+ 	 	 			
+ 	 	 			if(debug==1){
  	 	 			/* create asm file using disassembler */
  	 	 			String asmCodeFileName = "Counter.asm";
  	 	 			System.out.print("Writing assembly file ... ");
  	 	 			Disassembler d = new Disassembler(objectCodeFileName);
  	 	 			if (d.disassemble()) {
- 	 	 				System.out.println("FAILED!");
- 	 	 				return;
+ 	 	 				System.out.println("FAILED to disassemble file!");
+ 	 	 				System.exit(4);
  	 	 			}
  	 	 			else
  	 	 				System.out.println("SUCCEEDED");
  	 	 			
- 	 	 		/* 
- 	 	 		 * run code using debugger
- 	 	 		 * 
- 	 	 		 */
+ 	 	 		
  	 	 			System.out.println("Running code ... ");
  	 	 			Interpreter.debug(objectCodeFileName, asmCodeFileName);
-
+ 	 	 			}
+ 	 	 			
+ 	 	 			
+ 	 	 			
+ 	 	 			
+ 	 	 			
+ 	 	 			
+ 	 	 			
  	 	 			System.out.println("*** mJAM execution completed");
- 	 	 			  //
+ 	 	 			   
  	 	 			System.exit(0);
 
  	 			}
@@ -161,7 +156,7 @@ public class Compiler {
 			}
 
 		}
-	}
+	
 	
 	
 	 
