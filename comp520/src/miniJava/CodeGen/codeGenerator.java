@@ -11,6 +11,7 @@ import miniJava.AbstractSyntaxTrees.Package;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
+
  
 public class codeGenerator implements Visitor<Boolean,Object> {
 	private HashMap<String,Prim> opToPrimMap; 
@@ -54,10 +55,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		displacement=3;
 		cgec = new CodeGenEntityCreator(er);
 		//Initializing flags for println
-		    inSystem = false;
-		    inOut = false;
-		    inPrintln = false;
-		    inArray = false;
+
 	}
 
 	class CodeGenError extends Error {
@@ -87,8 +85,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		opToPrimMap.put("<=",Prim.le);
 		opToPrimMap.put(">=",Prim.ge);
 		opToPrimMap.put("!=",Prim.ne);
-		opToPrimMap.put("<",Prim.gt);
-		opToPrimMap.put(">",Prim.lt);
+		opToPrimMap.put("<",Prim.lt);
+		opToPrimMap.put(">",Prim.gt);
 	}
 	//private void encodeAssign(Declaration d1,Declaration d2)
 	//{
@@ -549,8 +547,9 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitIxAssignStmt(IxAssignStmt stmt, Boolean isLHS){
 
-		stmt.ixRef.visit(this, false);
+		stmt.ixRef.visit(this, true);
 		stmt.val.visit(this, false);
+		Machine.emit(Prim.arrayupd);
 		return null;
 	}
 	// This is a comment
@@ -721,9 +720,12 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitIndexedRef(IndexedRef ir, Boolean isLHS) {
-
-		ir.indexExpr.visit(this, false);
 		ir.idRef.visit(this, false);
+		ir.indexExpr.visit(this, false);
+		if(!isLHS)
+		{
+			Machine.emit(Prim.arrayref);
+		}
 		return null;
 	}
 
