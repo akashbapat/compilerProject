@@ -137,6 +137,13 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 				
 		 
 			}
+			else if( d instanceof ParameterDecl ){
+				
+				 RuntimeEntity re =	 new KnownAddress(1,s );
+				 re.base = base; 
+				 d.setEntity(re);
+				
+			}
 		}
 		
 		
@@ -192,6 +199,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    }
 	    
 	    public Object visitMethodDecl(MethodDecl m, Object obj){
+	    	ParameterDecl pd;
 	    	createEntity(m, -1,Reg.CB); //creating entity
 	    	Statement s;
 	     	m.type.visit(this, false);
@@ -199,7 +207,9 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        ParameterDeclList pdl = m.parameterDeclList;
 	       
 	       
-	        for (ParameterDecl pd: pdl) {
+	        for (int i=0; i< pdl.size();i++) {
+	        	pd=pdl.get(i);
+	        	createEntity(pd, i - pdl.size() ,Reg.LB);
 	            pd.visit(this, false);
 	        }
 	        StatementList sl = m.statementList;
