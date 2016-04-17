@@ -750,7 +750,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitThisRef(ThisRef ref, Boolean isLHS) {
-		Machine.emit(Op.LOAD,Machine.Reg.OB,0);	    	
+		Machine.emit(Op.LOADA,Machine.Reg.OB,0);	    	
 
 		return null;
 	}
