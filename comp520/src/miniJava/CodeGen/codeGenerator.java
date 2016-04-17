@@ -104,7 +104,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		Machine.emit(Op.LOADL,classSize ); 	
 		Machine.emit(Prim.newobj);	
 		
-		for (int i=0;i<classSize;i++){
+	/*	for (int i=0;i<classSize;i++){ // this was for automatic child object creation
 			fd =d.fieldDeclList.get(i);
 			if(fd.type instanceof ClassType){
 				
@@ -132,7 +132,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			
 			
 			
-		}
+		}*/
 		
 		
 		
@@ -166,6 +166,12 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		//valid   access
 		
 		FieldDecl fd;
+		
+	//	if(d instanceof ClassDecl){
+		
+	//	}
+	 	
+		
 		if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
 		
 			if(d instanceof  LocalDecl)
@@ -176,7 +182,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				if(fd.isStatic)
 				Machine.emit(Op.STORE, 1,Reg.SB, d.getEntity().address) ;
 				else
-				Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
+				Machine.emit(Op.STORE, 1,Reg.OB, d.getEntity().address) ;
 			}
 			
 			
@@ -255,6 +261,9 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			int address = Machine.nextInstrAddr();
 			Machine.emit(Op.CALLI,Reg.CB,-1);
 			fp.addFunction((MethodDecl)d, address);
+		}
+		else if(d instanceof ParameterDecl){
+			Machine.emit(Op.LOAD, Reg.LB,re.address);
 		}
 		else{
 			System.out.println("Failed to encode");
@@ -440,7 +449,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		ParameterDeclList pdl = m.parameterDeclList;
 
-
+		 
 		for (ParameterDecl pd: pdl) {
 			pd.visit(this, false);
 		}
@@ -452,10 +461,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			s.visit(this, false);
 
 			if(s instanceof ReturnStmt && retType.typeKind!=TypeKind.VOID ){
-				Machine.emit(Op.RETURN,1,0,m.parameterDeclList.size());  
+				Machine.emit(Op.RETURN,1,Reg.LB,m.parameterDeclList.size());  
 			}
 			else if (s instanceof ReturnStmt && retType.typeKind==TypeKind.VOID){
-				Machine.emit(Op.RETURN,0,0,m.parameterDeclList.size());  
+				Machine.emit(Op.RETURN,0,Reg.LB,m.parameterDeclList.size());  
 				if(i==sl.size()-1 ){
 					voidLastReturn = true; // if void function has last statement as return, turn on the flag
 				}
@@ -464,7 +473,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		}
 		if(!voidLastReturn &&  retType.typeKind==TypeKind.VOID )
-			Machine.emit(Op.RETURN,0,0,m.parameterDeclList.size()); // if   void function DOES NOT have last statement as return
+			Machine.emit(Op.RETURN,0,Reg.LB,m.parameterDeclList.size()); // if   void function DOES NOT have last statement as return
 
 		return null;	        
 	}
@@ -534,10 +543,15 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitAssignStmt(AssignStmt stmt, Boolean isLHS){
+		IdRef idr;
 		stmt.ref.visit(this, true);
 		stmt.val.visit(this, false);
 		if(stmt.ref instanceof QualifiedRef){
 			Machine.emit(Prim.fieldupd);
+		}
+		else if(stmt.ref instanceof IdRef) {
+			idr = (IdRef) stmt.ref ;
+			encodeAssign(idr.id.getDecl() );
 		}
 		else
 		encodeAssign(stmt.ref.getDecl() );
@@ -571,6 +585,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		if (stmt.returnExpr != null)
 			stmt.returnExpr.visit(this, false);
+		
+	
 		return null;
 	}
 
@@ -736,7 +752,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitThisRef(ThisRef ref, Boolean isLHS) {
-		Machine.emit(Op.LOAD,Machine.Reg.OB,0);	    	
+		Machine.emit(Op.LOADA,Machine.Reg.OB,0);	    	
 
 		return null;
 	}
@@ -752,6 +768,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		 
 		if(!isLHS)
 			encodeFetch(id.getDecl());
+		 
+			
 		 
 		return null;
 	}
