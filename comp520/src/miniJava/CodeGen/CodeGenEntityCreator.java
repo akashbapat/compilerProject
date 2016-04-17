@@ -278,11 +278,8 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    }
 	    
 	    public Object visitVardeclStmt(VarDeclStmt stmt, Object obj){
-	    	     
-	        stmt.varDecl.visit(this, false);	
-	        stmt.initExp.visit(this, false);
-	       
-	       
+		        stmt.varDecl.visit(this, false);	
+		        stmt.initExp.visit(this, false);
 	        return null;
 	    }
 	    

@@ -20,9 +20,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	MethodDecl mainMethodDecl;
 	CodeGenEntityCreator cgec;
 	int displacement;
-	
-	
-	   boolean inSystem,inOut,inPrintln, inArray;
+	boolean inAssign = false;
 	
 	
 	
@@ -534,15 +532,16 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitVardeclStmt(VarDeclStmt stmt, Boolean isLHS){
-
-		stmt.varDecl.visit(this, false);	
-		stmt.initExp.visit(this, false);
-
-
+    	if(!stmt.hasVisited){
+	        stmt.varDecl.visit(this, false);	
+	        stmt.initExp.visit(this, false);
+	        stmt.hasVisited = true;
+    	}
 		return null;
 	}
 
 	public Object visitAssignStmt(AssignStmt stmt, Boolean isLHS){
+		inAssign = true;
 		IdRef idr;
 		stmt.ref.visit(this, true);
 		stmt.val.visit(this, false);
@@ -555,7 +554,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		}
 		else
 		encodeAssign(stmt.ref.getDecl() );
-		
+		inAssign = false;
 		return null;
 	}
 
@@ -578,6 +577,16 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		
 		
 		stmt.methodRef.visit(this, false);
+		Declaration d = stmt.methodRef.getDecl();
+		if(d instanceof MethodDecl){
+			MethodDecl md = (MethodDecl)d;
+			if(md.type.typeKind != TypeKind.VOID){
+				if(!inAssign){
+					Machine.emit(Op.POP,1);
+				}
+			}
+		}
+		
 		return null;
 	}
 
@@ -679,7 +688,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		
 		
 		expr.functionRef.visit(this, false);
-		 
+
 		
 		return null;
 	}
@@ -753,7 +762,6 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitThisRef(ThisRef ref, Boolean isLHS) {
 		Machine.emit(Op.LOADA,Machine.Reg.OB,0);	    	
-
 		return null;
 	}
 

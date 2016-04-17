@@ -9,11 +9,13 @@ import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public class VarDeclStmt extends Statement
 {
+	public boolean hasVisited = false;
     public VarDeclStmt(VarDecl vd, Expression e, SourcePosition posn){
         super(posn);
         varDecl = vd;
         initExp = e;
        isVarDecl = true;
+       hasVisited = false;
     }
         
     public <A,R> R visit(Visitor<A,R> v, A o) {
