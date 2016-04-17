@@ -246,7 +246,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Op.LOADL, re.address);
 			}
 			else{
-				Machine.emit(Op.LOADL, re.address);
+				Machine.emit(Op.LOADL, re.address);	
+			 //	Machine.emit(Op.LOAD, Reg.OB, re.address);
 			}
 		}
 		else if(d instanceof VarDecl){
@@ -279,6 +280,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
               unRolledRef.push(qqr.id);
               ref = qqr.ref;
           }while (ref instanceof QualifiedRef);
+         
+          if(!(ref instanceof IdRef) )  //handles thisref
+        	return false;  
+        	  
+        	  
           IdRef idr = (IdRef)ref;
           unRolledRef.push(idr.id);
           
@@ -351,6 +357,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			unRolledRef.push(qqr.id);
 			ref = qqr.ref;
 		}while (ref instanceof QualifiedRef);
+		
+		if(!(ref instanceof IdRef)) 	//handles thisref
+			return false;
+		
+		
 		IdRef idr = (IdRef)ref;
 		unRolledRef.push(idr.id);
 		if(unRolledRef.size() == 2){
@@ -729,6 +740,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
 		if(!checkQRForPrintln(qr) && !(isQRlength(qr))){
+			
+			
+			if(qr.ref.getDecl() instanceof FieldDecl)
+				Machine.emit(Op.LOADA,Machine.Reg.OB,0);
+			
  		qr.ref.visit(this, false); //even if qr is in lhs, we need to load addresses
 		 
 		qr.id.visit(this, false);
@@ -755,7 +771,16 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitIdRef(IdRef ref, Boolean isLHS) {
-
+		if(ref.id.getDecl() instanceof FieldDecl  )
+			Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
+		else if(ref.id.getDecl() instanceof MethodDecl ){
+			Machine.emit(Op.LOADA,Machine.Reg.OB,0);
+			ref.id.visit(this, isLHS);
+		}
+	//	else if(ref.id.getDecl() instanceof FieldDecl && ref.getDecl().type instanceof BaseType){
+	//		Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
+	//	}
+		else
 		ref.id.visit(this, isLHS);
 		return null;
 	}

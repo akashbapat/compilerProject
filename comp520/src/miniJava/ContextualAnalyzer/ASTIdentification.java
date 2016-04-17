@@ -418,7 +418,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		MethodDecl md;
 		QualifiedRef qrMiddle;
 		boolean sameClass  = false; 	//for private filed/method access from object instances of current class
-		
+		boolean isCallLocal =false;
 	 
 		
 	 	if(qr.id!=null && !(qr.ref instanceof QualifiedRef))
@@ -426,9 +426,11 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	 	else
 	 		staticClassAccessPossible = false;
 		
-	 	
+	 	 
 		 idTab  = qr.ref.visit(this, idTab);
 		
+		  
+		 
 		
 		if(qr.ref.getDecl().type instanceof ArrayType && qr.id.spelling.equals("length")){ //added to support array.length
 			qr.setDecl(qr.ref.getDecl());
@@ -560,13 +562,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 				identificationError(" Cannot use variable being declared in RHS of varDeclstmt in  " + ref + " of name " + ref.id.spelling );
 		}
 		
-		
-		
-		
-		
-		
-		
-		
+		 
 		
 		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic,isCall); //static func access static func/fields, non-static func can access all func/fields
 

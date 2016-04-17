@@ -156,7 +156,7 @@ public class idTable {
 				 
 				  if(isFuncStatic){  //function is   static
 					 if(isCall){  // call inside   static func 
-						 if(d instanceof MethodDecl && ((MethodDecl) d).isStatic)
+						 if(d instanceof MemberDecl && ((MemberDecl) d).isStatic)
 						 return d;
 						 else 
 							 return null;
@@ -178,7 +178,7 @@ public class idTable {
 					 
 					 
 						else if(isCall){   // call inside non static func 
-					 		 if(d instanceof MethodDecl)
+					 		 if(d instanceof MemberDecl)
 								 return d;
 								 else 
 									 return null;
