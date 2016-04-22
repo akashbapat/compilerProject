@@ -544,8 +544,40 @@ public class Parser {
 
 				return null;
 			}
+			else if(token.spelling.equals("for")) {//extra credit: for loops
+				
+				Statement init = null;
+				Statement inc = null;
+				Expression cond =null;
+ 
+				Token forToken = token;
+				acceptIt();
+
+				parseSpecificToken(TokenKind.BRACE, "(");
+				Token initToken =token;
+				if(!initToken.spelling.equals(";")){
+					init =parseForInit();
+				}
+				else
+				parseSpecificToken(TokenKind.SEMICOLON, ";");
+				
+				if(!token.spelling.equals(";")){
+				  cond =parseE();
+				}
+				
+	    		parseSpecificToken(TokenKind.SEMICOLON, ";");
+	    		Token incToken =token;
+	    		if(!incToken.spelling.equals(")")){
+				inc = parseForInc();	   		
+	    		}
+				parseSpecificToken(TokenKind.BRACE, ")");
+				Statement b =parseS();				 				
+				return new ForStmt( init, cond,inc,b,forToken.GetSourcePosn()); 
+				
+				
+			}
 			else
-				parseError("Invalid Term - expecting  this/while/return/boolean/int/if but found " + token.spelling); 
+				parseError("Invalid Term - expecting  this/while/return/boolean/int/if/for but found " + token.spelling); 
 			return null;
 
 		case ID:
@@ -650,7 +682,7 @@ public class Parser {
 				parseError("Invalid Term - expecting . or ID or = or ( or [ but found " + token.spelling); 
 			return null;
 		default:
-			parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
+			parseError("Invalid Term - expecting ID or KEYWORD or BRACE but found " + token.kind);
 			return null;
 		}
 
@@ -778,6 +810,216 @@ public class Parser {
 
 		}*/		
 
+	private Statement parseForInc() throws SyntaxError{ //parses increment statement of for loop
+		
+		//code copied from parseS and then modified to comply for loop specs
+		// inc cannot be of the following type, remove these types and also remove semicolon after the end of the statement
+		//	if(inc instanceof BlockStmt || inc instanceof IfStmt || inc instanceof ForStmt || inc instanceof ReturnStmt || inc instanceof WhileStmt )
+			//	parseError("inc statment cannot be a block/if/while/for/return statement at" +  incToken.posn);
+		  
+			switch (token.kind) {
+ 
+			case KEYWORD:
+
+				if(token.spelling.equals("boolean") ){
+					Token booleanToken = token;
+					Token id;
+					acceptIt();
+
+					id = parseSpecificToken(TokenKind.ID, token.spelling);
+					parseSpecificToken(TokenKind.EQUAL, "=");
+					Expression e = parseE();
+					 
+					VarDecl vd = new VarDecl(new BaseType(TypeKind.BOOLEAN,booleanToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+					return new  VarDeclStmt(vd,e,id.GetSourcePosn());
+				}
+
+				else  if(  token.spelling.equals("int") ){
+					Token intToken = token;
+					boolean isArray = false; 
+					Token id;
+					acceptIt();
+					if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
+						isArray = true;
+						acceptIt();
+						parseSpecificToken(TokenKind.BRACE,"]");
+					}
+
+					id = parseSpecificToken(TokenKind.ID, token.spelling);
+					parseSpecificToken(TokenKind.EQUAL,  "=");
+					Expression e = parseE();
+					 
+					if(isArray)
+					{
+						VarDecl vd = new VarDecl(new ArrayType(new BaseType(TypeKind.INT,intToken.GetSourcePosn()),intToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+						return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
+					}
+					else
+					{
+						VarDecl vd = new VarDecl(new BaseType(TypeKind.INT,intToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+						return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
+					}
+				}
+ 
+
+				else  if(token.spelling.equals("this")){
+					Token thisToken = token;
+					acceptIt();
+					Token id;
+					Reference qr = new ThisRef(thisToken.GetSourcePosn());
+					while(token.kind == TokenKind.DOT){
+						acceptIt();
+						id = parseSpecificToken(TokenKind.ID, token.spelling);
+						qr = new QualifiedRef(qr,new Identifier (id),id.GetSourcePosn());
+					}
+
+					if(token.kind == TokenKind.EQUAL){
+						acceptIt();
+						Expression e = parseE();
+						 
+						return new AssignStmt(qr, e,thisToken.GetSourcePosn());								
+					}
+					else if(token.kind == TokenKind.BRACE   && token.spelling.equals("(")) {
+						ExprList el = new ExprList();	
+						acceptIt();
+						if ( !token.spelling.equals(")"))
+							el=parseAL();
+
+						parseSpecificToken(TokenKind.BRACE, ")");
+					 
+						return new CallStmt(qr, el, thisToken.GetSourcePosn());
+					}
+
+					else
+						parseError("Invalid Term - expecting   = or ( but found" + token.spelling); 
+
+
+					return null;
+				}
+				 
+				else
+					parseError("Invalid Term - expecting  boolean/int/this but found  " + token.spelling); 
+				return null;
+
+			case ID:
+				Token id;
+				id = parseSpecificToken(TokenKind.ID, token.spelling);
+
+				if(token.kind == TokenKind.DOT){
+					Reference qr = new IdRef(new Identifier (id), id.GetSourcePosn());
+					while(token.kind == TokenKind.DOT){
+						Token id2;
+						acceptIt();
+						id2 = parseSpecificToken(TokenKind.ID, token.spelling);
+						qr = new QualifiedRef(qr,new Identifier (id2),id2.GetSourcePosn());
+					}
+					if(token.kind == TokenKind.EQUAL){
+						acceptIt();
+						Expression e = parseE();
+						 
+						return new AssignStmt(qr, e, id.GetSourcePosn());
+					}
+
+
+					else if(token.kind == TokenKind.BRACE && token.spelling.equals("(")){
+						acceptIt();
+						ExprList el = new ExprList();	
+						if(!token.spelling.equals(")"))
+							el = parseAL();
+
+						parseSpecificToken(TokenKind.BRACE,")"); 
+						 
+						return new CallStmt(qr, el, id.GetSourcePosn());
+					} 	
+
+
+				}
+
+				else if (token.kind == TokenKind.BRACE && token.spelling.equals("[")){
+					acceptIt();
+
+					if(token.kind == TokenKind.BRACE && token.spelling.equals("]")){
+					 
+						Token id2;
+						acceptIt();
+						id2 = parseSpecificToken(TokenKind.ID, token.spelling);
+						parseSpecificToken(TokenKind.EQUAL,  "=");
+						Expression e = parseE();
+						 
+						VarDecl vd = new VarDecl(new ArrayType(new ClassType(new Identifier(id),id.GetSourcePosn()),id.GetSourcePosn()), id2.spelling, id2.GetSourcePosn());
+						return new VarDeclStmt(vd, e, id2.GetSourcePosn());
+					}
+					else{
+						//Array Reference = Expression;
+						Expression e1 = parseE();
+						parseSpecificToken(TokenKind.BRACE, "]");
+						parseSpecificToken(TokenKind.EQUAL,  "=");
+						Expression e2 = parseE();
+						 
+						IdRef idr = new IdRef(new Identifier(id), id.GetSourcePosn());
+						IndexedRef idxref = new IndexedRef(idr, e1, id.GetSourcePosn());
+						return new IxAssignStmt (idxref,e2,id.GetSourcePosn());
+					}
+				}
+
+				else if(token.kind == TokenKind.EQUAL){
+					//Reference = expression;
+					acceptIt();
+					Expression e = parseE();
+					 
+					IdRef ir = new IdRef(new Identifier(id), id.GetSourcePosn());
+					return new AssignStmt(ir, e , id.GetSourcePosn());
+
+				}
+
+				else if(token.kind == TokenKind.BRACE && token.spelling.equals("(")){
+					//Reference (al?);
+					acceptIt();
+					ExprList el = new ExprList();
+					if(!token.spelling.equals(")"))
+						el = parseAL();
+
+					parseSpecificToken(TokenKind.BRACE,")"); 
+					 
+					IdRef ir = new IdRef(new Identifier(id), id.GetSourcePosn());
+					return new CallStmt(ir, el, id.GetSourcePosn());
+				}
+
+				else if(token.kind == TokenKind.ID){
+					//Type id = Expr;
+					//id id = Expr;
+					Token id2 = token;
+					acceptIt();
+
+					parseSpecificToken(TokenKind.EQUAL, "=");
+					Expression e = parseE();
+					 
+					VarDecl vd = new VarDecl(new ClassType(new Identifier(id),id.GetSourcePosn()), id2.spelling, id2.GetSourcePosn());
+					return new VarDeclStmt(vd,e, id2.GetSourcePosn());
+				}
+
+				else
+					parseError("Invalid Term - expecting . or ID or = or ( or [ but found " + token.spelling); 
+				return null;
+			default:
+				parseError("Invalid Term - expecting ID or KEYWORD or BRACE but found " + token.kind);
+				return null;
+			}
+			
+			
+			
+			
+			
+	}
+	
+private Statement parseForInit() throws SyntaxError{ //parses init statement of for loop
+		
+	Statement s = parseForInc();
+	
+	parseSpecificToken(TokenKind.SEMICOLON, ";");
+	return s;
+	}
+	
 
 	//E ::= OR (|| OR)*
 	private Expression parseE() throws SyntaxError { //parseE 's name can be kept as parseOR
@@ -1056,6 +1298,7 @@ public class Parser {
 				acceptIt();
 				return new RefExpr(new NullRef(token.GetSourcePosn()),token.GetSourcePosn());
 			}
+			
 			else{
 				parseError("Invalid Term - expecting Keyword true/false/new/this/null but found " + token.spelling);
 				return null;

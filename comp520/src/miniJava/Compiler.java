@@ -66,7 +66,7 @@ public class Compiler {
 		Scanner scanner = new Scanner(inputStream, reporter);
 		Parser parser = new Parser(scanner, reporter);
 		AST ast;
-		int debug =0;
+		boolean debug =true;
 		//Code for testing scanner
 		
 			System.out.println("Syntactic analysis ... ");
@@ -84,7 +84,9 @@ public class Compiler {
 			
 //				
 //				
-     			//display.showTree(ast);
+     			if(debug){
+     				display.showTree(ast);
+     				}
  			ASTIdentification astIdentify = new ASTIdentification(reporter);
 //				
 //				 
@@ -113,7 +115,7 @@ public class Compiler {
  	 	 			
  	 	 			
  	 	 			
- 	 	 			if(debug==1){
+ 	 	 			if(debug){
  	 	 			/* create asm file using disassembler */
  	 	 			String asmCodeFileName = "Counter.asm";
  	 	 			System.out.print("Writing assembly file ... ");

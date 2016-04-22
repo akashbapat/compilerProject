@@ -331,6 +331,24 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        return null;
 	    }
 	    
+	    public Object visitForStmt(ForStmt stmt, Object obj){
+	    	//always check for null in for stmt for init,cond and inc
+		 
+			if(stmt.init!=null)
+		 stmt.init.visit(this, null);
+			
+			if(stmt.cond!=null)
+				 stmt.cond.visit(this, null);
+			
+			if(stmt.increment!=null)
+				  stmt.increment.visit(this, null);
+			
+			stmt.body.visit(this,null);
+			 
+		 	 
+	        return null;
+	    }
+	    
 		///////////////////////////////////////////////////////////////////////////////
 		//
 		// EXPRESSIONS

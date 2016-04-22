@@ -345,6 +345,26 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 		return idTab;
 	}
+	
+	public idTable visitForStmt(ForStmt stmt, idTable idTab){
+		//always check for null in for stmt for init,cond and inc
+		idTab.openScope(); // to account for declaration eg. for(int i=0;i<n;i=i+1) 
+		 
+		if(stmt.init!=null)
+		idTab = stmt.init.visit(this, idTab);
+		
+		if(stmt.cond!=null)
+			idTab = stmt.cond.visit(this, idTab);
+		
+		if(stmt.increment!=null)
+			idTab = stmt.increment.visit(this, idTab);
+		
+		stmt.body.visit(this,idTab);
+		 
+		 
+		idTab.closeScope();
+		return idTab;
+	}
 
 
 	///////////////////////////////////////////////////////////////////////////////

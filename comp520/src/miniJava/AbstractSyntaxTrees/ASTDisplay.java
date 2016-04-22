@@ -5,6 +5,8 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import miniJava.ContextualAnalyzer.idTable;
+
 /*
  * Display AST in text form
  *   In-order traversal of AST, visiting each node with a method of the form  
@@ -249,6 +251,27 @@ public class ASTDisplay implements Visitor<String,Object> {
         stmt.body.visit(this, indent(arg));
         return null;
     }
+    
+    public Object visitForStmt(ForStmt stmt, String arg){
+		//always check for null in for stmt for init,cond and inc
+	 
+    	 show(arg, stmt);
+		if(stmt.init!=null)
+			stmt.init.visit(this,indent(arg));
+		
+		if(stmt.cond!=null)
+			 stmt.cond.visit(this, indent(arg));
+		
+		if(stmt.increment!=null)
+			stmt.increment.visit(this,indent(arg));
+			
+			
+		stmt.body.visit(this,indent(arg));
+		 
+		 
+		 
+		return null;
+	}
     
 
 	///////////////////////////////////////////////////////////////////////////////

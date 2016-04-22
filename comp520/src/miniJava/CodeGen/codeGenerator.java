@@ -7,6 +7,7 @@ import mJAM.Machine.Reg;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
 import miniJava.AbstractSyntaxTrees.Package;
+import miniJava.ContextualAnalyzer.idTable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -645,6 +646,38 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		return null;
 	}
 
+	public Object visitForStmt(ForStmt stmt, Boolean isLHS){ //TODO : add codegenerator
+		//always check for null in for stmt for init,cond and inc
+	 
+		 
+		if(stmt.init!=null)
+		  stmt.init.visit(this, false);
+		
+		int addrC = Machine.nextInstrAddr();
+		if(stmt.cond!=null){
+			  stmt.cond.visit(this, false);
+		}
+		else 
+			Machine.emit(Op.LOADL, 1);	   //loads true
+		
+		int jumpAdd = Machine.nextInstrAddr();
+		Machine.emit(Op.JUMPIF, 0, Reg.CB, -1);
+		
+		
+		if(stmt.increment!=null)
+			  stmt.increment.visit(this, false);
+		
+		stmt.body.visit(this,false);
+		Machine.emit(Op.JUMP, 0, Reg.CB, addrC);
+		
+		int addrAfterB = Machine.nextInstrAddr();
+		Machine.patch(jumpAdd, addrAfterB);
+		 
+		 
+		return null;
+	}
+
+	
 
 	///////////////////////////////////////////////////////////////////////////////
 	//

@@ -654,6 +654,52 @@ Type astType =null;
 		else 
 			return new BaseType(TypeKind.ERROR,null) ;
 	}
+	
+	
+	public Type visitForStmt(ForStmt stmt, Object arg){
+		//always check for null in for stmt for init,cond and inc
+		Type initT=null;
+		Type condT=null;
+		Type incT=null;
+		  boolean errorFlag =false;
+		 
+		if(stmt.init!=null)
+			initT  = stmt.init.visit(this, null);
+		
+		if(stmt.cond!=null)
+			condT  = stmt.cond.visit(this, null);
+		
+		if(stmt.increment!=null)
+			incT	  = stmt.increment.visit(this, null);
+		
+		
+		
+		Type bodyT =	stmt.body.visit(this,null);
+		 
+		 
+
+		  if(initT!=null && initT.typeKind == TypeKind.ERROR )//the first exp should be !=null, taking advantage of short-circuiting
+			  errorFlag =true;
+		
+		  else if(condT!=null && condT.typeKind != TypeKind.BOOLEAN) //the first exp should be !=null, taking advantage of short-circuiting
+			  errorFlag =true;
+		  
+		  else if(incT!=null && incT.typeKind == TypeKind.ERROR) //the first exp should be !=null, taking advantage of short-circuiting
+			  errorFlag =true;
+		  
+		  else if(bodyT!=null && bodyT.typeKind == TypeKind.ERROR) //the first exp should be !=null, taking advantage of short-circuiting
+			  errorFlag =true;
+
+		  if(errorFlag)
+			return    new BaseType(TypeKind.ERROR,null) ;
+		  else
+				return new BaseType(TypeKind.VOID,null) ;
+
+		 
+	 
+	}
+	
+	
 
 
 	///////////////////////////////////////////////////////////////////////////////
