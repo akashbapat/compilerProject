@@ -57,4 +57,6 @@ public interface Visitor<ArgType,ResultType> {
     public ResultType visitOperator(Operator op, ArgType arg);
     public ResultType visitIntLiteral(IntLiteral num, ArgType arg);
     public ResultType visitBooleanLiteral(BooleanLiteral bool, ArgType arg);
+    public ResultType visitStringLiteral(StringLiteral s, ArgType arg); //added to support string literal
+    
 }
