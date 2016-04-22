@@ -3,6 +3,7 @@ package miniJava.CodeGen;
 
 import mJAM.*;
 import mJAM.Machine.Op;
+import mJAM.Machine.Prim;
 import mJAM.Machine.Reg;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
@@ -51,8 +52,9 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			if(fd.type instanceof ClassType){
 				 ClassType ct = (ClassType) (fd.type);
 				 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
-				 int n = getClassDeclSize(cd);
-				 Machine.emit(Op.PUSH, n);
+				 allocateOnHeap(cd);
+				 //int n = getClassDeclSize(cd);
+				 //Machine.emit(Op.PUSH, 1);
 				}
 				else if(fd.type instanceof BaseType || fd.type instanceof ArrayType){ //arraytype and basetype
 					Machine.emit(Op.PUSH, 1);
@@ -73,6 +75,51 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			return size;
 		}
 		
+		private void allocateOnHeap(ClassDecl d){
+			FieldDecl fd;
+			 ClassDecl cdfd;
+			 ClassType ct;
+			 Declaration ctD;
+			 
+			int classSize =  getClassDeclSize(d) ;
+			Machine.emit(Op.LOADL,-1 );  // inheritance flag indicating no superclass		 	
+			Machine.emit(Op.LOADL,classSize ); 	
+			Machine.emit(Prim.newobj);	
+			
+			for (int i=0;i<classSize;i++){ // this was for automatic child object creation
+				fd =d.fieldDeclList.get(i);
+				if(fd.type instanceof ClassType){
+					
+					
+					
+					ct = (ClassType) fd.type ;
+					ctD = ct.className.getDecl();
+					if(ctD instanceof ClassDecl){
+						
+						Machine.emit(Op.LOAD, Reg.ST, -1);
+						Machine.emit(Op.LOADL, i);
+				 
+		  	allocateOnHeap( ( ClassDecl) ct.className.getDecl());
+		  				Machine.emit(Prim.fieldupd); // patching pointers of child classes
+		  	
+		  	
+		  	
+					}
+		  	
+		  	
+		  	
+				
+				}
+				
+				
+				
+				
+			}
+			
+			
+			
+		}
+
 		private void createEntity(Declaration d, int s,Reg base){
 
 		if(d instanceof VarDecl ){ /*d.type instanceof BaseType && d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN*/ 
@@ -97,7 +144,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 						 RuntimeEntity re =	 new KnownAddress(n,stack_displacement);
 						 re.base = base; 
 						 d.setEntity(re);
-						 stack_displacement+=n;
+						 stack_displacement++;
 						}
 						else if(d.type instanceof BaseType || d.type instanceof ArrayType){ //arraytype and basetype
 							
