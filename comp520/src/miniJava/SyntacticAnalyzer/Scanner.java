@@ -221,7 +221,19 @@ public class Scanner{
 				takeIt();
 				prevToken = TokenKind.SEMICOLON;
 				return (TokenKind.SEMICOLON);
-			
+			case '"':
+				skipIt();
+				if(scanString()){
+					prevToken = TokenKind.STRING;
+					return (TokenKind.STRING);
+				}
+				else
+				{
+					scanError("Unterminated multi-line comment");
+					prevToken = TokenKind.ERROR;
+					return (TokenKind.ERROR);
+				}
+				
 			default:
 				scanError("Unrecognized character '" + currentChar + "' in input");
 				prevToken = TokenKind.ERROR;
@@ -322,7 +334,15 @@ public class Scanner{
 		}
 	}
 
-
+	private boolean scanString(){
+		while(!(currentChar == '"')){
+			if(eot){
+				return false;
+			}
+			takeIt();
+		}
+		return true;
+	}
 
 	
 	private boolean ignoreComments(){
