@@ -244,7 +244,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		if( d instanceof FieldDecl ){
 			if(((FieldDecl) d).isStatic){
-				Machine.emit(Op.LOADL, re.address);
+				Machine.emit(Op.LOAD, Reg.SB, re.address);
 			}
 			else{
 				Machine.emit(Op.LOADL, re.address);	
@@ -255,7 +255,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			Machine.emit(Op.LOAD, Reg.LB, re.address);
 		}
 		else if(d instanceof ClassDecl){
-			//Machine.emit(Op.LOADL, 0);
+			Machine.emit(Op.LOADL, 0);
 		}
 		else if(d instanceof MethodDecl){
 			 
@@ -779,7 +779,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
 		if(!checkQRForPrintln(qr) && !(isQRlength(qr))){
-			
+			boolean isStatic = false;
 			
 			if(qr.ref.getDecl() instanceof FieldDecl)
 				Machine.emit(Op.LOADA,Machine.Reg.OB,0);
@@ -787,8 +787,14 @@ public class codeGenerator implements Visitor<Boolean,Object> {
  		qr.ref.visit(this, false); //even if qr is in lhs, we need to load addresses
 		 
 		qr.id.visit(this, false);
-	 	
-		if(!isLHS && !( qr.id.getDecl() instanceof MethodDecl))
+	 	if(qr.id.getDecl() instanceof FieldDecl){
+	 		FieldDecl fd = (FieldDecl)qr.id.getDecl();
+	 		if(fd.isStatic){
+	 			isStatic = true;
+	 		}
+	 	}
+		
+		if(!isLHS && !( qr.id.getDecl() instanceof MethodDecl) && !isStatic)
 		  Machine.emit(Prim.fieldref); //last call should not happen
   
 	  
@@ -812,8 +818,20 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	public Object visitIdRef(IdRef ref, Boolean isLHS) {
 	Declaration refD =	ref.id.getDecl();
 	MethodDecl refMd;
-		if(ref.id.getDecl() instanceof FieldDecl  )
-			Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
+	FieldDecl refFd;
+		if(ref.id.getDecl() instanceof FieldDecl  ){
+			refFd = (FieldDecl) refD;
+			if(refFd.isStatic){
+				if(!isLHS){
+					Machine.emit(Op.POP);
+					//Machine.emit(Op.LOAD, Reg.SB, ref.id.getDecl() .getEntity().address);
+				}
+			}
+			else{
+				Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
+			}
+		}
+			
 		else if(refD instanceof MethodDecl  ){
 			refMd = (MethodDecl) refD;
 			if(refMd.isStatic){
