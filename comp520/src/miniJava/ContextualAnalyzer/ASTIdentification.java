@@ -677,6 +677,10 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public idTable visitIntLiteral(IntLiteral num, idTable idTab){
 		return idTab;
 	}
+	
+	public idTable visitStringLiteral(StringLiteral s, idTable idTab){
+		return idTab;
+	}
 
 	public idTable visitBooleanLiteral(BooleanLiteral bool, idTable idTab){
 		return idTab;

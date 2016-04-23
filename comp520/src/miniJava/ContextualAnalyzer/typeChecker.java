@@ -954,6 +954,11 @@ Type astType =null;
 		return new  BaseType(TypeKind.BOOLEAN,bool.posn);
 	}
 
+	public Type visitStringLiteral(StringLiteral s, Object arg){
+		System.out.println("TODO: stirng in type checker");
+		//return new  BaseType(TypeKind.BOOLEAN,bool.posn);
+		return null;
+	}
  
 	
 }
