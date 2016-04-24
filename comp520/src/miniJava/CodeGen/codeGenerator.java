@@ -53,8 +53,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		mainMethodDecl=md;
 		displacement=3;
 		cgec = new CodeGenEntityCreator(er);
-		//Initializing flags for println
-
+		//Flags
+		boolean isStaticLast = false;
 	}
 
 	class CodeGenError extends Error {
@@ -564,7 +564,12 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		stmt.ref.visit(this, true);
 		stmt.val.visit(this, false);
 		if(stmt.ref instanceof QualifiedRef){
-			Machine.emit(Prim.fieldupd);
+			if(!isLastStatic){
+				Machine.emit(Prim.fieldupd);
+			}
+			else{
+				//Pop
+			}	
 		}
 		else if(stmt.ref instanceof IdRef) {
 			idr = (IdRef) stmt.ref ;
