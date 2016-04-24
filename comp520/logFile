@@ -25,3 +25,5 @@ statement : added boolean variable isVarDecl, defaults to false
 
 4/21 akash: added ForStmt class to support for loops
 			changed visitor to provide visit function for forStmt
+			
+4/22 akash: added string literal, added string typekind 

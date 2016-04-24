@@ -500,6 +500,10 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    public Object visitBooleanLiteral(BooleanLiteral bool, Object obj){
 	        return null;
 	    }
+	    
+	    public Object visitStringLiteral(StringLiteral s, Object obj){
+	        return null;
+	    }
  
 
 		public Object visitNullDecl(NullDecl decl, Object obj) {

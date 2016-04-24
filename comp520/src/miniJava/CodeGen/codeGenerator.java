@@ -888,6 +888,13 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		Machine.emit(Op.LOADL, numInt);
 		return null;
 	}
+	
+	public Object visitStringLiteral(StringLiteral num, Boolean isLHS){//TODO
+		//int numInt = Integer.parseInt(num.spelling);
+		//Machine.emit(Op.LOADL, numInt);
+		System.out.println("TODO: stirng in code generator");
+		return null;
+	}
 
 	public Object visitBooleanLiteral(BooleanLiteral bool, Boolean isLHS){
 		if(bool.spelling.equals("true")){

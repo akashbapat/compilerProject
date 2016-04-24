@@ -394,4 +394,9 @@ public class ASTDisplay implements Visitor<String,Object> {
         show(arg, quote(bool.spelling) + " " + bool.toString());
         return null;
     }
+    
+    public Object visitStringLiteral(StringLiteral s, String arg){
+        show(arg, quote(s.spelling) + " " + s.toString());     
+        return null;
+    }
 }
