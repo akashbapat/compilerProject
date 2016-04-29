@@ -21,6 +21,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	private boolean isCall;
 	private boolean isVarDeclStmt;
 	private String  varName;
+	private idTable idTabVar ; //added to support overloading of println
 	class IdentificationError extends Error {
 		private static final long serialVersionUID = 1L;	
 	}
@@ -42,10 +43,12 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	}
 
-	public boolean showTree(AST ast){
+	public MethodDecl showTree(AST ast){
 		System.out.println("======= AST Identify =========================");
+		
 		idTable idTab = new idTable();
-
+		
+		idTabVar = idTab;
 
 
 		try {
@@ -53,16 +56,18 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		}
 		catch (IdentificationError ie) {
 			System.out.println("Identification error occurred");
-			return false;
+			return null;
 		}
 
 		System.out.println("Identification successfully completed");
 		System.out.println("==============================================");
-		return true;
+		return idTab.getPrintlnDecl();
 	}
 
 
-
+public MethodDecl getPrintlnStringMdDecl(){
+	return idTabVar.getPrintlnStringDecl();
+}
 
 
 
