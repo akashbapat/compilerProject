@@ -22,13 +22,9 @@ import java.io.InputStream;
 
 import mJAM.Disassembler;
 import mJAM.Interpreter;
-import mJAM.Machine;
 import mJAM.ObjectFile;
 import miniJava.SyntacticAnalyzer.Parser;
 import miniJava.SyntacticAnalyzer.Scanner;
-////Remove later
-import miniJava.SyntacticAnalyzer.Token;
-import miniJava.SyntacticAnalyzer.TokenKind;
 import miniJava.AbstractSyntaxTrees.*;
 import miniJava.CodeGen.CodeGenEntityCreator;
 import miniJava.CodeGen.codeGenerator;
@@ -88,12 +84,12 @@ public class Compiler {
      				display.showTree(ast);
      				}
  			ASTIdentification astIdentify = new ASTIdentification(reporter);
-//				
+  				MethodDecl printlnDecl  = astIdentify.showTree(ast);
 //				 
- 				if(	astIdentify.showTree(ast)){
+ 				if(	printlnDecl !=null){
  			 
- 			 
- 				 typeChecker typeCheckerObj = new typeChecker(reporter);
+ 					MethodDecl	printlnStringDecl = 	astIdentify.getPrintlnStringMdDecl();
+ 				 typeChecker typeCheckerObj = new typeChecker(reporter,printlnDecl,printlnStringDecl);
  		MethodDecl mainMethodDecl =		typeCheckerObj.typeCheckAST(ast);
  	 		if( mainMethodDecl!=null){
  	 			CodeGenEntityCreator cgec = new CodeGenEntityCreator(reporter);

@@ -49,11 +49,15 @@ public class Parser {
 
 	//    P ::= (CD)*$
 	private miniJava.AbstractSyntaxTrees.Package parseP() throws SyntaxError {
-
+		
 		ClassDeclList	cdl = new ClassDeclList();
-
-		while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class"))
-			cdl.add(parseCD());
+		ClassDecl cd;
+		while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class")){
+		cd =	parseCD();
+		 
+		cdl.add(cd);
+		
+		}
 		accept(TokenKind.EOT);
 		return new miniJava.AbstractSyntaxTrees.Package( cdl, new SourcePosition(0,0,0,0));
 	}
@@ -190,6 +194,16 @@ public class Parser {
 				t = acceptIt();
 				return new BaseType(TypeKind.BOOLEAN,token.GetSourcePosn());
 			}
+			if(token.spelling.equals("String")){ //added to support string as classtype
+				Token stringToken = token;
+				t = acceptIt();
+				if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
+					acceptIt();
+					parseSpecificToken(TokenKind.BRACE,"]");
+					return new ArrayType(new ClassType(new Identifier(stringToken),stringToken.GetSourcePosn()),stringToken.GetSourcePosn());
+				}
+				return   new ClassType(new Identifier(stringToken),stringToken.GetSourcePosn());
+			}
 			else if (token.spelling.equals("int")){
 				Token intToken = token;
 				t = acceptIt();
@@ -266,13 +280,30 @@ public class Parser {
 		String visiblityStr,accessStr;
 		boolean isPrivate, isStatic;
 		Token idToken;
-
+		boolean isBaseClass = false;
+		String parentClassName ="";
 
 		parseSpecificToken(TokenKind.KEYWORD,"class");
 
 		cn=token.spelling;
 		Token classNameToken = token;
 		parseSpecificToken(TokenKind.ID, token.spelling);
+		
+		
+
+		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("extends")){
+			acceptIt();
+			 
+			 
+			parentClassName = token.spelling;
+			parseSpecificToken(TokenKind.ID, token.spelling);
+		 
+		}
+		else{
+			isBaseClass = true;
+			 
+		}
+		
 
 		parseSpecificToken(TokenKind.BRACE, "{");
 
@@ -302,7 +333,7 @@ public class Parser {
 				acceptIt();
 				idToken= 	parseSpecificToken(TokenKind.ID, token.spelling);
 				parseSpecificToken(TokenKind.BRACE, "(");
-				if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.kind ==TokenKind.ID)
+				if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.spelling.equals("String") || token.kind ==TokenKind.ID) //added to support string basetype
 					pdl=	 parsePL();
 
 				parseSpecificToken(TokenKind.BRACE, ")");
@@ -338,7 +369,7 @@ public class Parser {
 
 
 					parseSpecificToken(TokenKind.BRACE, "(");
-					if(token.spelling.equals("boolean") || token.spelling.equals("int")  || token.kind ==TokenKind.ID)
+					if(token.spelling.equals("boolean") || token.spelling.equals("int") || token.spelling.equals("String") || token.kind ==TokenKind.ID) //added to support string basetype
 						pdl = parsePL();
 
 					parseSpecificToken(TokenKind.BRACE, ")");
@@ -363,7 +394,12 @@ public class Parser {
 
 		parseSpecificToken(TokenKind.BRACE, "}");
 
-		return new ClassDecl(cn, fdList, mdList, classNameToken.GetSourcePosn());
+		
+		ClassDecl cd =new ClassDecl(cn, fdList, mdList, classNameToken.GetSourcePosn());
+		cd.isBaseClass =isBaseClass;
+	 
+		cd.parentClassName = parentClassName;
+		return cd ;
 	}	
 
 
@@ -457,6 +493,32 @@ public class Parser {
 				else
 				{
 					VarDecl vd = new VarDecl(new BaseType(TypeKind.INT,intToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+					return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
+				}
+			}
+			else  if(  token.spelling.equals("String") ){ //added to support string basetype
+				Token strToken = token;
+				boolean isArray = false; 
+				Token id;
+				acceptIt();
+				if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
+					isArray = true;
+					acceptIt();
+					parseSpecificToken(TokenKind.BRACE,"]");
+				}
+
+				id = parseSpecificToken(TokenKind.ID, token.spelling);
+				parseSpecificToken(TokenKind.EQUAL,  "=");
+				Expression e = parseE();
+				parseSpecificToken(TokenKind.SEMICOLON, ";");
+				if(isArray)
+				{
+					VarDecl vd = new VarDecl(new ArrayType(new ClassType(new Identifier(strToken),strToken.GetSourcePosn()),strToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+					return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
+				}
+				else
+				{
+					VarDecl vd = new VarDecl(new ClassType(new Identifier(strToken),strToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
 					return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
 				}
 			}
@@ -860,7 +922,32 @@ public class Parser {
 						return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
 					}
 				}
- 
+				else  if(  token.spelling.equals("String") ){ //added to support string basetype
+					Token strToken = token;
+					boolean isArray = false; 
+					Token id;
+					acceptIt();
+					if(token.kind==TokenKind.BRACE && token.spelling.equals("[")){
+						isArray = true;
+						acceptIt();
+						parseSpecificToken(TokenKind.BRACE,"]");
+					}
+
+					id = parseSpecificToken(TokenKind.ID, token.spelling);
+					parseSpecificToken(TokenKind.EQUAL,  "=");
+					Expression e = parseE();
+					 
+					if(isArray)
+					{
+						VarDecl vd = new VarDecl(new ArrayType(new ClassType(new Identifier(strToken),strToken.GetSourcePosn()),strToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+						return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
+					}
+					else
+					{
+						VarDecl vd = new VarDecl(new ClassType(new Identifier(strToken),strToken.GetSourcePosn()),id.spelling,id.GetSourcePosn());
+						return new  VarDeclStmt(vd,e,id.GetSourcePosn()); 
+					}
+				}
 
 				else  if(token.spelling.equals("this")){
 					Token thisToken = token;
@@ -1237,6 +1324,35 @@ private Statement parseForInit() throws SyntaxError{ //parses init statement of 
 
 					return new NewArrayExpr(new BaseType(TypeKind.INT,intToken.GetSourcePosn()), e, intToken.GetSourcePosn());
 				}
+				if(token.spelling.equals("String") && token.kind == TokenKind.KEYWORD ){ //added to support string classtype 
+					// this support s String s = new String(); and String s = new("abc");, String [] s = new String[4]; but doesnt support string array init
+					Token strToken = acceptIt();
+					if(token.spelling.equals("[") && token.kind == TokenKind.BRACE){
+					parseSpecificToken(TokenKind.BRACE, "[");
+					e=	parseE();
+					parseSpecificToken(TokenKind.BRACE, "]");
+					 
+					return new NewArrayExpr( new ClassType(new Identifier(strToken),strToken.GetSourcePosn()), e, strToken.GetSourcePosn());
+					}
+					else if(token.spelling.equals("(") && token.kind == TokenKind.BRACE){
+						Token strLitToken;
+						parseSpecificToken(TokenKind.BRACE, "(");
+						if(token.kind==TokenKind.STRING){
+							strLitToken =token;
+							acceptIt();
+						}
+						else{
+							strLitToken = new Token(TokenKind.STRING, "",token.posn);
+						}
+						parseSpecificToken(TokenKind.BRACE, ")");
+						return new LiteralExpr(new StringLiteral(strLitToken), strLitToken.GetSourcePosn());
+					}
+					else{
+						parseError("Invalid String initialization " + token.kind + token.spelling);
+						return null;
+					}
+						
+				}
 				else if(token.kind == TokenKind.ID){
 
 					idToken=acceptIt();
@@ -1309,6 +1425,9 @@ private Statement parseForInit() throws SyntaxError{ //parses init statement of 
 
 
 			return new LiteralExpr(new IntLiteral(numToken),numToken.GetSourcePosn()); 
+		case STRING:
+			Token strToken =acceptIt();
+			return new LiteralExpr(new StringLiteral(strToken), strToken.GetSourcePosn()); //added to  basetype
 		default:
 			parseError("Invalid Term - expecting ID or KEYWORD but found " + token.kind);
 

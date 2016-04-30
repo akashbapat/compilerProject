@@ -27,7 +27,13 @@ import miniJava.SyntacticAnalyzer.TokenKind;
 public class idTable {
 	private ArrayList <HashMap<String,Declaration> > levelList;
 	private ClassDecl currentClass; //added to support calling of static functions from static functions in same class without using class name 
-
+	private MethodDecl printlnStringMd;
+	
+	
+	
+	
+	
+	
 	public void setCurrentClass(ClassDecl cd){ //added to support calling of static functions from static functions in same class without using class name 
 		currentClass =cd;
 	}
@@ -60,19 +66,21 @@ public class idTable {
 		level0.put("System", cdSys);
 
 		cdString = new ClassDecl("String", null, null , new SourcePosition());
-		cdString.type = new ClassType(new Identifier(new Token(TokenKind.ID, "String")), new SourcePosition());
-		cdString.type.typeKind = TypeKind.UNSUPPORTED;
+		cdString.type = new ClassType(new Identifier(new Token(TokenKind.STRING, "String")), new SourcePosition());
+		cdString.type.typeKind = TypeKind.CLASS; //changed from unsupported to string to support string as basetype
 		
 		level0.put("String", cdString );
 		
 
 
 		ParameterDeclList pdlPrintStream = new ParameterDeclList();
-
+		
+		
 		pdlPrintStream.add( new ParameterDecl( new BaseType(TypeKind.INT,new SourcePosition()), "n", new SourcePosition()));
+		
+		
 		MethodDeclList mdPrintStream = new MethodDeclList();
 		mdPrintStream.add( new MethodDecl( new FieldDecl(false, false, new BaseType(TypeKind.VOID,new SourcePosition()) , "println", new SourcePosition()) , pdlPrintStream, null, new SourcePosition()));
-
 		
 		cd_printStream =new ClassDecl("_PrintStream", null,   mdPrintStream, new SourcePosition()) ;
 		cd_printStream.type= new ClassType(new Identifier(new Token(TokenKind.ID, "_PrintStream")), new SourcePosition());
@@ -82,6 +90,16 @@ public class idTable {
 
 		levelList.add(level0);
 
+		
+		
+		ParameterDeclList pdlPrintStreamString = new ParameterDeclList();
+		pdlPrintStreamString.add( new ParameterDecl( new ClassType(new Identifier(new Token(TokenKind.STRING,"String", new SourcePosition())),new SourcePosition()), "s", new SourcePosition()));		
+		printlnStringMd = new MethodDecl( new FieldDecl(false, false, new BaseType(TypeKind.VOID,new SourcePosition()) , "printlnString", new SourcePosition()) , pdlPrintStreamString, null, new SourcePosition());
+		
+		
+		
+		
+		
 	}
 
 	public void openScope(){
@@ -217,7 +235,7 @@ public class idTable {
 				else
 					return d  ; */
 			}
-
+	
 		}
 
 		return null;
@@ -328,6 +346,34 @@ public class idTable {
 
 	}
 
+
+public MethodDecl getPrintlnDecl(){
+	
+	Declaration printStreamClass = levelList.get(0).get("_PrintStream") ;
+	ClassDecl printStreamCd ;
+	MethodDecl printlnDecl =null;
+	if(printStreamClass instanceof ClassDecl){
+		printStreamCd = (ClassDecl) printStreamClass;
+		
+		printlnDecl =	printStreamCd.methodDeclList.get(0); //hardcoded
+	}
+	else{
+	System.out.print("***Fatal idtable error: _PrintStream is not a type of class");
+	System.exit(-1);
+	}
+return	printlnDecl	;
+}
+
+
+
+
+public MethodDecl getPrintlnStringDecl(){
+ 	 
+return	printlnStringMd	;
+}
+
+
+ 
 
 
 }

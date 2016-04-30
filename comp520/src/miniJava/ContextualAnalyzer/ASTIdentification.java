@@ -21,6 +21,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	private boolean isCall;
 	private boolean isVarDeclStmt;
 	private String  varName;
+	private idTable idTabVar ; //added to support overloading of println
 	class IdentificationError extends Error {
 		private static final long serialVersionUID = 1L;	
 	}
@@ -42,10 +43,12 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	}
 
-	public boolean showTree(AST ast){
+	public MethodDecl showTree(AST ast){
 		System.out.println("======= AST Identify =========================");
+		
 		idTable idTab = new idTable();
-
+		
+		idTabVar = idTab;
 
 
 		try {
@@ -53,21 +56,90 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		}
 		catch (IdentificationError ie) {
 			System.out.println("Identification error occurred");
-			return false;
+			return null;
 		}
 
 		System.out.println("Identification successfully completed");
 		System.out.println("==============================================");
-		return true;
+		return idTab.getPrintlnDecl();
 	}
 
 
+public MethodDecl getPrintlnStringMdDecl(){
+	return idTabVar.getPrintlnStringDecl();
+}
 
 
+private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass,String name , boolean isFuncStatic,boolean isCall,ClassDecl cd ){ //currClass is passed to enable recursion
+	
+	ClassDecl parentClassDecl ;
+	Declaration d;
+	Declaration retD=null;
+	FieldDecl fd;
+	Declaration  childD;
+	ClassType ct;
+	MethodDecl md;
+	
+	
+	
+			 //searches in fields
+			if(cd.fieldDeclList!=null){
+				for(int i=0;i<cd.fieldDeclList.size();i++){
+					fd =     cd.fieldDeclList.get(i);
 
+					if(    ((!fd.isPrivate||sameClass)  || (!fd.isPrivate||sameClass) && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && fd.isStatic) ){
 
+						childD =fd;
+						qr.id.setDecl(childD);
 
+						if(childD.type.typeKind==TypeKind.CLASS){
+							ct = (ClassType) childD.type;
+							qr.setDecl(idTab.getClass(ct.className.spelling));
+						}
+						else{
+							qr.setDecl(childD);
+						}
 
+						break;
+					}
+				}
+			}
+			//searches in methods
+			if(cd.methodDeclList!=null && isCall){
+				for(int i=0;i<cd.methodDeclList.size();i++){
+					md =     cd.methodDeclList.get(i);
+
+					if( ((!md.isPrivate||sameClass)  || (!md.isPrivate||sameClass)   && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && md.isStatic) ){
+
+						childD =md;
+						qr.id.setDecl(childD);
+
+					 
+							qr.setDecl(childD);
+						 
+
+						break;
+					}
+				}
+			}
+
+			
+			
+			// now check in parent class
+			
+			if(!cd.isBaseClass){
+			parentClassDecl = (ClassDecl) idTab.getClass(cd.parentClassName);
+			 
+		     getFieldMethodDecl( qr,  idTab, false, name ,  isFuncStatic, isCall, parentClassDecl ); //false because we cannot access private members of parentclasses
+			 
+			
+			
+			}
+		 
+		
+}
+			
+	 
 
 
 
@@ -437,8 +509,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		ClassType ct;
 		MethodDecl md;
 		QualifiedRef qrMiddle;
-		boolean sameClass  = false; 	//for private filed/method access from object instances of current class
-		boolean isCallLocal =false;
+		boolean sameClass  = false; 	//for private field/method access from object instances of current class
+	 
 	 
 		
 	 	if(qr.id!=null && !(qr.ref instanceof QualifiedRef))
@@ -458,12 +530,12 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			return idTab;
 		}
 		else{
-			idTab  = qr.id.visit(this, idTab);
+			idTab  = qr.id.visit(this, idTab); //this does nothing
 			
 		}
 		
 		
-		
+		//just checks that the middle qr is not a function, qrMiddle not used afterwards
 		if(qr.ref instanceof QualifiedRef){
 			qrMiddle =  (QualifiedRef) qr.ref;
 		if(	qrMiddle.id.getDecl() instanceof MethodDecl)
@@ -476,7 +548,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		if(!(qr.ref.getDecl() instanceof ClassDecl)){
 			identificationError(" Qualified reference can be made only to objects: " +qr.ref+" is not a static access/object ");
 		}
-		else{
+		else{ //this is the block that processes all the valid qualified references
 			cd = (ClassDecl) qr.ref.getDecl();		
 
 			 currCd =idTab.getCurrentClass();
@@ -487,51 +559,12 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 			 
 			 }
 			
-			if(cd.fieldDeclList!=null){
-				for(int i=0;i<cd.fieldDeclList.size();i++){
-					fd =     cd.fieldDeclList.get(i);
-
-					if(    ((!fd.isPrivate||sameClass)  || (!fd.isPrivate||sameClass) && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && fd.isStatic) ){
-
-						childD =fd;
-						qr.id.setDecl(childD);
-
-						if(childD.type.typeKind==TypeKind.CLASS){
-							ct = (ClassType) childD.type;
-							qr.setDecl(idTab.getClass(ct.className.spelling));
-						}
-						else{
-							qr.setDecl(childD);
-						}
-
-						break;
-					}
-				}
-			}
-			if(cd.methodDeclList!=null && isCall){
-				for(int i=0;i<cd.methodDeclList.size();i++){
-					md =     cd.methodDeclList.get(i);
-
-					if( ((!md.isPrivate||sameClass)  || (!md.isPrivate||sameClass)   && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && md.isStatic) ){
-
-						childD =md;
-						qr.id.setDecl(childD);
-
-						//if(childD.type.typeKind==TypeKind.CLASS){
-						//	ct = (ClassType) childD.type;
-						//	qr.setDecl(idTab.getClass(ct.className.spelling));
-
-						//}
-						//else{
-							qr.setDecl(childD);
-						//}
-
-						break;
-					}
-				}
-			}
-
-
+			 
+// search in fields and methods
+			 getFieldMethodDecl( qr,  idTab, sameClass,qr.id.spelling,  isFuncStatic, isCall,  cd );
+			
+			
+			//this just throws error when no decl is found
 			if(qr.id.getDecl()==null){
 				identificationError(qr.id +"  " + qr.id.spelling + " not found in class " + qr.ref.getDecl().name);
 			}

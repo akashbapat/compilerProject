@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
- 
+
 public class codeGenerator implements Visitor<Boolean,Object> {
 	private HashMap<String,Prim> opToPrimMap; 
 	functionPatcher fp;
@@ -22,10 +22,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	CodeGenEntityCreator cgec;
 	int displacement;
 	boolean inAssign = false;
-	
-	
-	
-	
+
+
+
+
 	public boolean generate(AST ast){
 		System.out.println("======= Generating code =====================");
 		try{
@@ -94,47 +94,47 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	private void allocateOnHeap(ClassDecl d){
 		FieldDecl fd;
-		 ClassDecl cdfd;
-		 ClassType ct;
-		 Declaration ctD;
-		 
+		ClassDecl cdfd;
+		ClassType ct;
+		Declaration ctD;
+
 		int classSize =  cgec.getClassDeclSize(d) ;
 		Machine.emit(Op.LOADL,-1 );  // inheritance flag indicating no superclass		 	
 		Machine.emit(Op.LOADL,classSize ); 	
 		Machine.emit(Prim.newobj);	
-		
-	/*	for (int i=0;i<classSize;i++){ // this was for automatic child object creation
+
+		/*	for (int i=0;i<classSize;i++){ // this was for automatic child object creation
 			fd =d.fieldDeclList.get(i);
 			if(fd.type instanceof ClassType){
-				
-				
-				
+
+
+
 				ct = (ClassType) fd.type ;
 				ctD = ct.className.getDecl();
 				if(ctD instanceof ClassDecl){
-					
+
 					Machine.emit(Op.LOAD, Reg.ST, -1);
 					Machine.emit(Op.LOADL, i);
-			 
+
 	  	allocateOnHeap( ( ClassDecl) ct.className.getDecl());
 	  				Machine.emit(Prim.fieldupd); // patching pointers of child classes
-	  	
-	  	
-	  	
+
+
+
 				}
-	  	
-	  	
-	  	
-			
+
+
+
+
 			}
-			
-			
-			
-			
+
+
+
+
 		}*/
-		
-		
-		
+
+
+
 	}
 
 
@@ -142,7 +142,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	private void encodeAssign(Declaration d ){
 
-	/*	if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
+		/*	if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
 			if(d instanceof FieldDecl){
 				if(((FieldDecl) d).isStatic)
 				{
@@ -156,39 +156,39 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
 			}
 		}*/
-		
-		
-		 
-		
-		
-		
+
+
+
+
+
+
 		//valid   access
-		
+
 		FieldDecl fd;
-		
-	//	if(d instanceof ClassDecl){
-		
-	//	}
-	 	
-		
+
+		//	if(d instanceof ClassDecl){
+
+		//	}
+
+
 		if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
-		
+
 			if(d instanceof  LocalDecl)
-			Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
-			
+				Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
+
 			else if (d instanceof  FieldDecl){
 				fd = (FieldDecl) d;
 				if(fd.isStatic)
-				Machine.emit(Op.STORE, 1,Reg.SB, d.getEntity().address) ;
+					Machine.emit(Op.STORE, 1,Reg.SB, d.getEntity().address) ;
 				else
-				Machine.emit(Op.STORE, 1,Reg.OB, d.getEntity().address) ;
+					Machine.emit(Op.STORE, 1,Reg.OB, d.getEntity().address) ;
 			}
-			
-			
+
+
 		} 
-		
-		 
-		
+
+
+
 	}
 
 	private void createEntity(Declaration d, int s){
@@ -248,7 +248,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			}
 			else{
 				Machine.emit(Op.LOADL, re.address);	
-			 //	Machine.emit(Op.LOAD, Reg.OB, re.address);
+				//	Machine.emit(Op.LOAD, Reg.OB, re.address);
 			}
 		}
 		else if(d instanceof VarDecl){
@@ -258,14 +258,14 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			Machine.emit(Op.LOADL, 0);
 		}
 		else if(d instanceof MethodDecl){
-			 
+
 			int address = Machine.nextInstrAddr();
-			
+
 			if(((MethodDecl) d).isStatic)
 				Machine.emit(Op.CALL,Reg.CB,-1);
 			else
-			Machine.emit(Op.CALLI,Reg.CB,-1);
-			
+				Machine.emit(Op.CALLD,Reg.CB,-1);
+
 			fp.addFunction((MethodDecl)d, address);
 		}
 		else if(d instanceof ParameterDecl){
@@ -279,83 +279,134 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	}
 
-	  private Boolean checkQRForPrintln(QualifiedRef qr){
-          Stack<Identifier> unRolledRef = new Stack<Identifier>();
-          Reference ref = qr;
-          do{
-              QualifiedRef qqr = (QualifiedRef)ref;
-              unRolledRef.push(qqr.id);
-              ref = qqr.ref;
-          }while (ref instanceof QualifiedRef);
-         
-          if(!(ref instanceof IdRef) )  //handles thisref
-        	return false;  
-        	  
-        	  
-          IdRef idr = (IdRef)ref;
-          unRolledRef.push(idr.id);
-          
-          if(unRolledRef.size() == 3){
-              Identifier id = unRolledRef.pop();
-              Declaration d = id.getDecl();
-              if(d instanceof ClassDecl){
-                  ClassDecl cd = (ClassDecl)d;
-                  if(cd.name.equals("System")){
-                      id = unRolledRef.pop();
-                      d = id.getDecl();
-                      FieldDecl fd = (FieldDecl)d;
-                      if (fd.type.typeKind == TypeKind.CLASS){
-                          ClassType ct = (ClassType)fd.type;
-                          if(fd.name.equals("out") && ct.className.spelling.equals("_PrintStream") ){
-                              id = unRolledRef.pop();
-                              d = id.getDecl();
-                              if(d instanceof MethodDecl){
-                                  MethodDecl md = (MethodDecl) d;
-                                  if(md.name.equals("println") && md.parameterDeclList.size() == 1){
-                                  //    md.parameterDeclList.get(0).visit(this, false);
-                                	  
-                                	  
-                                	  
-                                      Machine.emit(Prim.putintnl);
-                                      return true;
-                                  }
-                                  else if(md.name.equals("Println") && md.parameterDeclList.size() != 1 ){
-                                      codeGenError("Incorrect number of arguments in println at line: "+md.posn.line);
-                                      return false;
-                                  }
-                                  else{
-                                      return false;
-                                  }
-                              }
-                              else{
-                                  return false;
-                              }
-                              
-                          }
-                          else{
-                              return false;
-                          }
-                      }
-                      else{
-                          return false;
-                      }
-                  }
-                  else{
-                      return false;
-                  }
-          }
-          else{
-              return false;
-          }
-                  
-          }
-          else
-          {
-              return false;
-          }
-      }
-	
-	
+	private Boolean checkQRForPrintln(QualifiedRef qr){
+		Stack<Identifier> unRolledRef = new Stack<Identifier>();
+		Reference ref = qr;
+		do{
+			QualifiedRef qqr = (QualifiedRef)ref;
+			unRolledRef.push(qqr.id);
+			ref = qqr.ref;
+		}while (ref instanceof QualifiedRef);
+
+		if(!(ref instanceof IdRef) )  //handles thisref
+		return false;  
+
+
+		IdRef idr = (IdRef)ref;
+		unRolledRef.push(idr.id);
+
+		if(unRolledRef.size() == 3){
+			Identifier id = unRolledRef.pop();
+			Declaration d = id.getDecl();
+			if(d instanceof ClassDecl){
+				ClassDecl cd = (ClassDecl)d;
+				if(cd.name.equals("System")){
+					id = unRolledRef.pop();
+					d = id.getDecl();
+					FieldDecl fd = (FieldDecl)d;
+					if (fd.type.typeKind == TypeKind.CLASS){
+						ClassType ct = (ClassType)fd.type;
+						if(fd.name.equals("out") && ct.className.spelling.equals("_PrintStream") ){
+							id = unRolledRef.pop();
+							d = id.getDecl();
+							if(d instanceof MethodDecl){
+								MethodDecl md = (MethodDecl) d;
+								if(md.name.equals("println") && md.parameterDeclList.size() == 1){
+									//    md.parameterDeclList.get(0).visit(this, false);
+
+									Machine.emit(Prim.putintnl);
+									return true;
+								}
+								else if(md.name.equals("printlnString") && md.parameterDeclList.size() == 1 ){
+									//print a string
+
+
+									Machine.emit(Op.LOADL,0); 	//to load the address of array holding the string
+									Machine.emit(Prim.fieldref);//brings address of array holding the string on stack top.
+									Machine.emit(Op.LOAD,1,Reg.ST,-1); //load stack top, ie copies address of array holding the string on stack top.
+									Machine.emit(Prim.arraylen); //loads string length on stack top                   
+									Machine.emit(Op.LOADL,0 );  // value of index of for loop
+									//this completes the init statement of for loop
+									for(int i=0;i<3;i++){
+										Machine.emit(Op.LOADL,'>'); 
+										Machine.emit(Prim.put); //prints the char
+									}
+									Machine.emit(Op.LOADL,' '); 
+									Machine.emit(Prim.put); //prints the space char
+
+									int addrC = Machine.nextInstrAddr(); 
+
+									Machine.emit(Op.LOAD,1,Reg.ST,-1); //load stack top,  ie loads index
+									Machine.emit(Op.LOAD,1,Reg.ST,-3); //load stack top-2,  ie loads string length
+									Machine.emit(Prim.lt); //compare with zero
+									//completes the  condition checking in for loop
+									int jumpExitLoop = Machine.nextInstrAddr();
+									Machine.emit(Op.JUMPIF, 0, Reg.CB, -1);
+
+
+									Machine.emit(Op.LOAD,1,Reg.ST,-3); //load stack top-1, ie copies address of array holding the string on stack top.
+									Machine.emit(Op.LOAD,1,Reg.ST,-2); //load stack top,  ie loads index                                   
+									Machine.emit(Prim.fieldref); //loads index character
+									Machine.emit(Prim.put); //prints the char
+									//completes for loop body 
+
+
+									Machine.emit(Op.LOADL,1); 
+									Machine.emit(Prim.add); //adds 1 to index  
+									//now stack top holds index++                                                        		
+									Machine.emit(Op.JUMP, 0, Reg.CB, addrC);
+
+
+									int addrAfterB = Machine.nextInstrAddr();
+									Machine.patch(jumpExitLoop, addrAfterB);
+
+									Machine.emit(Op.LOADL,'\n'); 
+									Machine.emit(Prim.put); //prints newline
+
+
+
+									return true;
+
+ 
+
+								}
+								else if(md.name.equals("println") && md.parameterDeclList.size() != 1 ){
+									codeGenError("Incorrect number of arguments in println at line: "+md.posn.line);
+									return false;
+								}
+								else{
+									return false;
+								}
+							}
+							else{
+								return false;
+							}
+
+						}
+						else{
+							return false;
+						}
+					}
+					else{
+						return false;
+					}
+				}
+				else{
+					return false;
+				}
+			}
+			else{
+				return false;
+			}
+
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
 	private Boolean isQRlength(QualifiedRef qr){
 		Stack<Identifier> unRolledRef = new Stack<Identifier>();
 		Reference ref = qr; 
@@ -364,11 +415,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			unRolledRef.push(qqr.id);
 			ref = qqr.ref;
 		}while (ref instanceof QualifiedRef);
-		
+
 		if(!(ref instanceof IdRef)) 	//handles thisref
 			return false;
-		
-		
+
+
 		IdRef idr = (IdRef)ref;
 		unRolledRef.push(idr.id);
 		if(unRolledRef.size() == 2){
@@ -465,7 +516,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		ParameterDeclList pdl = m.parameterDeclList;
 
-		 
+
 		for (ParameterDecl pd: pdl) {
 			pd.visit(this, false);
 		}
@@ -550,11 +601,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitVardeclStmt(VarDeclStmt stmt, Boolean isLHS){
-    	if(!stmt.hasVisited){
-	        stmt.varDecl.visit(this, false);	
-	        stmt.initExp.visit(this, false);
-	        stmt.hasVisited = true;
-    	}
+		if(!stmt.hasVisited){
+			stmt.varDecl.visit(this, false);	
+			stmt.initExp.visit(this, false);
+			stmt.hasVisited = true;
+		}
 		return null;
 	}
 
@@ -576,7 +627,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			encodeAssign(idr.id.getDecl() );
 		}
 		else
-		encodeAssign(stmt.ref.getDecl() );
+			encodeAssign(stmt.ref.getDecl() );
 		inAssign = false;
 		return null;
 	}
@@ -597,8 +648,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		for (Expression e: al) {
 			e.visit(this, false);
 		}
-		
-		
+
+
 		stmt.methodRef.visit(this, false);
 		Declaration d = stmt.methodRef.getDecl();
 		if(d instanceof MethodDecl){
@@ -609,7 +660,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				}
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -617,8 +668,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		if (stmt.returnExpr != null)
 			stmt.returnExpr.visit(this, false);
-		
-	
+
+
 		return null;
 	}
 
@@ -653,36 +704,36 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitForStmt(ForStmt stmt, Boolean isLHS){ //TODO : add codegenerator
 		//always check for null in for stmt for init,cond and inc
-	 
-		 
+
+
 		if(stmt.init!=null)
-		  stmt.init.visit(this, false);
-		
+			stmt.init.visit(this, false);
+
 		int addrC = Machine.nextInstrAddr();
 		if(stmt.cond!=null){
-			  stmt.cond.visit(this, false);
+			stmt.cond.visit(this, false);
 		}
 		else 
 			Machine.emit(Op.LOADL, 1);	   //loads true
-		
+
 		int jumpAdd = Machine.nextInstrAddr();
 		Machine.emit(Op.JUMPIF, 0, Reg.CB, -1);
-		
-		
-		if(stmt.increment!=null)
-			  stmt.increment.visit(this, false);
-		
+
 		stmt.body.visit(this,false);
+
+		if(stmt.increment!=null)
+			stmt.increment.visit(this, false);
+
 		Machine.emit(Op.JUMP, 0, Reg.CB, addrC);
-		
+
 		int addrAfterB = Machine.nextInstrAddr();
 		Machine.patch(jumpAdd, addrAfterB);
-		 
-		 
+
+
 		return null;
 	}
 
-	
+
 
 	///////////////////////////////////////////////////////////////////////////////
 	//
@@ -733,18 +784,18 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitCallExpr(CallExpr expr, Boolean isLHS){
 
-		
+
 		ExprList al = expr.argList;
 
 
 		for (Expression e: al) {
 			e.visit(this, false);
 		}
-		
-		
+
+
 		expr.functionRef.visit(this, false);
 
-		
+
 		return null;
 	}
 
@@ -754,11 +805,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		return null;
 	}
 
-	 public Object visitNewArrayExpr(NewArrayExpr expr, Boolean isLHS){
-	    	expr.sizeExpr.visit(this, false);
-	    	Machine.emit(Prim.newarr);
-	        return null;
-	    }
+	public Object visitNewArrayExpr(NewArrayExpr expr, Boolean isLHS){
+		expr.sizeExpr.visit(this, false);
+		Machine.emit(Prim.newarr);
+		return null;
+	}
 
 	public Object visitNewObjectExpr(NewObjectExpr expr, Boolean isLHS){
 		expr.classtype.visit(this, false);
@@ -785,28 +836,28 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
 		if(!checkQRForPrintln(qr) && !(isQRlength(qr))){
 			boolean isStatic = false;
-			
+
 			if(qr.ref.getDecl() instanceof FieldDecl)
 				Machine.emit(Op.LOADA,Machine.Reg.OB,0);
-			
- 		qr.ref.visit(this, false); //even if qr is in lhs, we need to load addresses
-		 
-		qr.id.visit(this, false);
-	 	if(qr.id.getDecl() instanceof FieldDecl){
-	 		FieldDecl fd = (FieldDecl)qr.id.getDecl();
-	 		if(fd.isStatic){
-	 			isStatic = true;
-	 		}
-	 	}
-		
-		if(!isLHS && !( qr.id.getDecl() instanceof MethodDecl) && !isStatic)
-		  Machine.emit(Prim.fieldref); //last call should not happen
-  
-	  
+
+			qr.ref.visit(this, false); //even if qr is in lhs, we need to load addresses
+
+			qr.id.visit(this, false);
+			if(qr.id.getDecl() instanceof FieldDecl){
+				FieldDecl fd = (FieldDecl)qr.id.getDecl();
+				if(fd.isStatic){
+					isStatic = true;
+				}
+			}
+
+			if(!isLHS && !( qr.id.getDecl() instanceof MethodDecl) && !isStatic)
+				Machine.emit(Prim.fieldref); //last call should not happen
+
+
 
 		}
- 			 
-	 
+
+
 		return null;
 	}
 
@@ -821,9 +872,9 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitIdRef(IdRef ref, Boolean isLHS) {
-	Declaration refD =	ref.id.getDecl();
-	MethodDecl refMd;
-	FieldDecl refFd;
+		Declaration refD =	ref.id.getDecl();
+		MethodDecl refMd;
+		FieldDecl refFd;
 		if(ref.id.getDecl() instanceof FieldDecl  ){
 			refFd = (FieldDecl) refD;
 			if(refFd.isStatic){
@@ -836,24 +887,24 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
 			}
 		}
-			
+
 		else if(refD instanceof MethodDecl  ){
 			refMd = (MethodDecl) refD;
 			if(refMd.isStatic){
 				ref.id.visit(this, isLHS);
 			}
 			else{				
-			Machine.emit(Op.LOADA,Machine.Reg.OB,0);
-			ref.id.visit(this, isLHS);
+				Machine.emit(Op.LOADA,Machine.Reg.OB,0);
+				ref.id.visit(this, isLHS);
 			}
-			
-			
+
+
 		}
-	//	else if(ref.id.getDecl() instanceof FieldDecl && ref.getDecl().type instanceof BaseType){
-	//		Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
-	//	}
+		//	else if(ref.id.getDecl() instanceof FieldDecl && ref.getDecl().type instanceof BaseType){
+		//		Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
+		//	}
 		else
-		ref.id.visit(this, isLHS);
+			ref.id.visit(this, isLHS);
 		return null;
 	}
 
@@ -870,12 +921,12 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	///////////////////////////////////////////////////////////////////////////////
 
 	public Object visitIdentifier(Identifier id, Boolean isLHS){
-		 
+
 		if(!isLHS)
 			encodeFetch(id.getDecl());
-		 
-			
-		 
+
+
+
 		return null;
 	}
 
@@ -888,11 +939,28 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		Machine.emit(Op.LOADL, numInt);
 		return null;
 	}
-	
-	public Object visitStringLiteral(StringLiteral num, Boolean isLHS){//TODO
-		//int numInt = Integer.parseInt(num.spelling);
-		//Machine.emit(Op.LOADL, numInt);
-		System.out.println("TODO: stirng in code generator");
+
+	public Object visitStringLiteral(StringLiteral s, Boolean isLHS){ 		   	
+
+
+		Machine.emit(Op.LOADL,-1 );  // inheritance flag indicating no superclass		 	
+		Machine.emit(Op.LOADL,1 ); 	//to store the address of array holding the string
+		Machine.emit(Prim.newobj);	
+		Machine.emit(Op.LOAD,1,Reg.ST,-1); //load stack top, ie copies address of string object
+		Machine.emit(Op.LOADL,0 ); //0th holds the address to the array of chars
+
+		Machine.emit(Op.LOADL, s.spelling.length());
+		Machine.emit(Prim.newarr);
+
+		for(int i=0;i<s.spelling.length();i++){
+			Machine.emit(Op.LOAD,1,Reg.ST,-1); //load stack top 
+			Machine.emit(Op.LOADL,i);
+			Machine.emit(Op.LOADL, (int)s.spelling.charAt(i));
+			Machine.emit(Prim.arrayupd);
+		}
+
+		Machine.emit(Prim.fieldupd);
+
 		return null;
 	}
 

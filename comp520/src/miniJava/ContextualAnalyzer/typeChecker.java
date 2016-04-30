@@ -1,14 +1,18 @@
 package miniJava.ContextualAnalyzer;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.*;
+import miniJava.SyntacticAnalyzer.Token;
+import miniJava.SyntacticAnalyzer.TokenKind;
 
 
 public class typeChecker implements Visitor<Object,Type> {
 
 	private ErrorReporter reporter;
-	
+
 	private int numMainFunc;
 	MethodDecl mainMethodDecl;
+	MethodDecl printlnDecl; //added to support overloading of println by string and int
+	MethodDecl printlnStringDecl;//added to support overloading of println by string and int
 	private void checkForMain(MethodDecl md,Type retType){
 
 		ParameterDecl pd;
@@ -20,6 +24,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 			if(pd.type instanceof ArrayType){
 				arType = (ArrayType) pd.type;
+
 
 				if(arType.eltType instanceof ClassType){
 
@@ -37,13 +42,13 @@ public class typeChecker implements Visitor<Object,Type> {
 
 		}
 	}
-	
+
 
 
 	private typeEquality isEqual(Type el, Type er){
 
 
-		
+
 		if(el.typeKind == TypeKind.UNSUPPORTED || er.typeKind ==TypeKind.UNSUPPORTED)
 			return typeEquality.UNSUPPORTED;
 		else if (el.typeKind == TypeKind.ERROR )
@@ -52,7 +57,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			return typeEquality.ERROR;
 		else if((el.typeKind==TypeKind.NULL && er.typeKind!=TypeKind.VOID) || (er.typeKind==TypeKind.NULL  && el.typeKind!=TypeKind.VOID))
 			return typeEquality.EQUAL;
-		 
+
 		else if(er.typeKind ==el.typeKind){
 
 			if(er.typeKind==TypeKind.CLASS ){
@@ -78,10 +83,10 @@ public class typeChecker implements Visitor<Object,Type> {
 				 *   int [] a;
 				 *     a [] b;
 				 * in this case we  wont find a*/
-				if(atEr.eltType.typeKind==TypeKind.UNSUPPORTED && atEl.eltType.typeKind==TypeKind.UNSUPPORTED ) //added for case when both arrays are string UNSUPPORTED
+				if(atEr.eltType.typeKind==TypeKind.UNSUPPORTED && atEl.eltType.typeKind==TypeKind.UNSUPPORTED ) //added for case when both arrays are  UNSUPPORTED
 					return typeEquality.EQUAL;
 				else
-				return isEqual(atEl.eltType, atEr.eltType); 
+					return isEqual(atEl.eltType, atEr.eltType); 
 			}
 
 			return typeEquality.EQUAL; 
@@ -126,17 +131,17 @@ public class typeChecker implements Visitor<Object,Type> {
 		switch(typeEq){
 
 		case ERROR:
-			 
-		 
+
+
 			return   operatorAgreement(l,r,o);
 		case UNEQUAL:
 			typeCheckError("In binary expression,  LHS " + l  +" of typeKind " + l.typeKind + " and  RHS " + r +" of typeKind " + r.typeKind + " doesnt match with operator " + o + " of spelling  " + o.spelling);
-			  
+
 			return new BaseType(TypeKind.ERROR, o.posn);//added position of output expr as position of operator
 
 		case UNSUPPORTED:
 			typeCheckFatalError("Type check fatal error: In binary expression unsupported type occured,  LHS " + l  +" of typeKind " + l.typeKind + " and  RHS " + r +" of typeKind " + r.typeKind + " doesnt match with operator " + o + " of spelling  " + o.spelling);
-			
+
 			return new BaseType(TypeKind.UNSUPPORTED, o.posn);//added position of output expr as position of operator
 
 		case EQUAL:
@@ -155,9 +160,9 @@ public class typeChecker implements Visitor<Object,Type> {
 	Type operatorAgreement(Type l,Type r, Operator o){
 		// if you enter this function, it means l/r are either equal or have error
 
-		 
-			
-		  if(o.spelling.equals("+") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
+
+
+		if(o.spelling.equals("+") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
 			return new BaseType(TypeKind.INT, o.posn);//added position of output expr as position of operator
 
 		else if(o.spelling.equals("-") && (l.typeKind==TypeKind.INT || l.typeKind==TypeKind.ERROR))
@@ -205,7 +210,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 		typeEquality tEq;
 
- 
+
 		tEq = isEqual(l,r);
 
 		switch(tEq){
@@ -215,8 +220,8 @@ public class typeChecker implements Visitor<Object,Type> {
 			break;
 
 		case EQUAL:
-			
-			 
+
+
 			break;
 
 		case UNSUPPORTED:
@@ -226,10 +231,10 @@ public class typeChecker implements Visitor<Object,Type> {
 
 		case ERROR:
 			errorFlag=true;
-			
+
 			break;
-	 
-			
+
+
 		default:
 			typeCheckFatalError("Shouldnt reach here");
 			break;
@@ -243,9 +248,11 @@ public class typeChecker implements Visitor<Object,Type> {
 
 	}
 
-	public typeChecker(ErrorReporter er){
+	public typeChecker(ErrorReporter er,MethodDecl _printlnDecl,MethodDecl _printlnStringDecl){
 		numMainFunc =0;
 		reporter =er;
+		printlnDecl =_printlnDecl;
+		printlnStringDecl = _printlnStringDecl;
 	}
 
 
@@ -277,7 +284,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 	public MethodDecl typeCheckAST(AST ast){
 		System.out.println("======= AST  Type Checker ====================");
-Type astType =null;
+		Type astType =null;
 
 
 
@@ -290,16 +297,16 @@ Type astType =null;
 		}
 		if(astType!=null){
 			if(astType.typeKind==TypeKind.VOID && numMainFunc==1){
-			System.out.println("Type checking successfully completed");			
-			return mainMethodDecl;
+				System.out.println("Type checking successfully completed");			
+				return mainMethodDecl;
 			}
 			else 
 				return null;
-			
+
 		}
 		else
 			return null;
-		 
+
 	}
 
 
@@ -367,8 +374,8 @@ Type astType =null;
 	}
 
 	public Type visitMethodDecl(MethodDecl m, Object arg){
-		
-		
+
+
 
 		boolean errorFlag=false;	
 		boolean hasRetStmt=false;
@@ -379,8 +386,8 @@ Type astType =null;
 		ParameterDeclList pdl = m.parameterDeclList;
 		Statement s;
 		checkForMain(  m,  methodRetType);
-		
-		
+
+
 		for (ParameterDecl pd: pdl) {
 			pd.visit(this, null);
 		}
@@ -392,7 +399,7 @@ Type astType =null;
 
 			if(stmtType.typeKind==TypeKind.ERROR)
 				errorFlag =   true;
-			
+
 			if( methodRetType.typeKind!=TypeKind.VOID && i==sl.size()-1 && !(s instanceof ReturnStmt)) // asserts that nonvoid functions have last line as return statement
 				errorFlag= true;
 
@@ -433,12 +440,12 @@ Type astType =null;
 		if(errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
 		else if(!hasRetStmt && methodRetType.typeKind!=TypeKind.VOID  ){
-			
+
 			typeCheckError("In method declaration "+m.name + " return type is " +methodRetType+" but method doesnt contain return statement");
 			return new BaseType(TypeKind.ERROR,null);
 
 		}
-			
+
 		else
 			return new BaseType(TypeKind.VOID, null);
 
@@ -459,10 +466,10 @@ Type astType =null;
 
 
 	}
-	
-	
+
+
 	public Type visitNullDecl(NullDecl decl, Object arg) {
-		 typeCheckFatalError("Shouldnt reach here : visiting   null decl");
+		typeCheckFatalError("Shouldnt reach here : visiting   null decl");
 		return null;
 	}
 
@@ -479,7 +486,7 @@ Type astType =null;
 	}
 
 	public Type visitClassType(ClassType type, Object arg){
-		
+
 		return type;
 	}
 
@@ -524,7 +531,7 @@ Type astType =null;
 
 	public Type visitAssignStmt(AssignStmt stmt, Object arg){
 
-		
+
 		Type	refRHS =	stmt.val.visit(this, null);
 		Type	refLHS= stmt.ref.visit(this, null);
 
@@ -550,22 +557,40 @@ Type astType =null;
 		Type retTypeOfFunc = stmt.methodRef.visit(this, null);
 		typeEquality tEq;
 		MethodDecl md;
-		 
-		 md = (MethodDecl) stmt.methodRef.getDecl();
-		  	
+		ClassType ct;
+		QualifiedRef qr;
+		md = (MethodDecl) stmt.methodRef.getDecl();
+
 		ExprList al = stmt.argList;
 		Type expType;	 
-	 
+
 		if(al.size()!=md.parameterDeclList.size())
 			typeCheckFatalError("Number of arguments for declared function " + md + " of name " + md.name + " is " + md.parameterDeclList.size() + " but you provided " +al.size() + " arguments at " + stmt);
-		
-		
+
+
 		for (int i =0;i<al.size();i++) {
 
 			Expression e = al.get(i);
 			expType =	e.visit(this, null);
 
+
+
 			tEq = isEqual(expType, md.parameterDeclList.get(i).type);
+
+			if(md == printlnDecl && expType instanceof ClassType ){ //override the result of isEqual to simulate overloading of println
+				ct = (ClassType) expType;
+				if(ct.className.spelling.equals("String")){	
+					tEq = typeEquality.EQUAL;
+					stmt.methodRef.setDecl(printlnStringDecl);
+					if(stmt.methodRef instanceof QualifiedRef){
+						qr =  (QualifiedRef) stmt.methodRef;
+
+						qr.id.setDecl(printlnStringDecl);
+					}
+				}
+			}
+
+
 
 			switch(tEq){
 			case UNEQUAL:
@@ -623,7 +648,7 @@ Type astType =null;
 
 		if(condType.typeKind == TypeKind.ERROR || thenType.typeKind == TypeKind.ERROR )
 			return new BaseType(TypeKind.ERROR,null);
- 
+
 		else if(elseType!=null){
 			if(elseType.typeKind==TypeKind.ERROR)
 				return new BaseType(TypeKind.ERROR,null);
@@ -654,52 +679,52 @@ Type astType =null;
 		else 
 			return new BaseType(TypeKind.ERROR,null) ;
 	}
-	
-	
+
+
 	public Type visitForStmt(ForStmt stmt, Object arg){
 		//always check for null in for stmt for init,cond and inc
 		Type initT=null;
 		Type condT=null;
 		Type incT=null;
-		  boolean errorFlag =false;
-		 
+		boolean errorFlag =false;
+
 		if(stmt.init!=null)
 			initT  = stmt.init.visit(this, null);
-		
+
 		if(stmt.cond!=null)
 			condT  = stmt.cond.visit(this, null);
-		
+
 		if(stmt.increment!=null)
 			incT	  = stmt.increment.visit(this, null);
-		
-		
-		
+
+
+
 		Type bodyT =	stmt.body.visit(this,null);
-		 
-		 
 
-		  if(initT!=null && initT.typeKind == TypeKind.ERROR )//the first exp should be !=null, taking advantage of short-circuiting
-			  errorFlag =true;
-		
-		  else if(condT!=null && condT.typeKind != TypeKind.BOOLEAN) //the first exp should be !=null, taking advantage of short-circuiting
-			  errorFlag =true;
-		  
-		  else if(incT!=null && incT.typeKind == TypeKind.ERROR) //the first exp should be !=null, taking advantage of short-circuiting
-			  errorFlag =true;
-		  
-		  else if(bodyT!=null && bodyT.typeKind == TypeKind.ERROR) //the first exp should be !=null, taking advantage of short-circuiting
-			  errorFlag =true;
 
-		  if(errorFlag)
+
+		if(initT!=null && initT.typeKind == TypeKind.ERROR )//the first exp should be !=null, taking advantage of short-circuiting
+			errorFlag =true;
+
+		else if(condT!=null && condT.typeKind != TypeKind.BOOLEAN) //the first exp should be !=null, taking advantage of short-circuiting
+			errorFlag =true;
+
+		else if(incT!=null && incT.typeKind == TypeKind.ERROR) //the first exp should be !=null, taking advantage of short-circuiting
+			errorFlag =true;
+
+		else if(bodyT!=null && bodyT.typeKind == TypeKind.ERROR) //the first exp should be !=null, taking advantage of short-circuiting
+			errorFlag =true;
+
+		if(errorFlag)
 			return    new BaseType(TypeKind.ERROR,null) ;
-		  else
-				return new BaseType(TypeKind.VOID,null) ;
+		else
+			return new BaseType(TypeKind.VOID,null) ;
 
-		 
-	 
+
+
 	}
-	
-	
+
+
 
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -730,7 +755,7 @@ Type astType =null;
 		Type reType = 	expr.right.visit(this, null);
 
 		Type retType = getTypeOfExpr(leType,reType, expr.operator);
-		
+
 		return retType;
 
 	}
@@ -742,7 +767,7 @@ Type astType =null;
 	}
 
 	public Type visitCallExpr(CallExpr expr, Object arg){
-	
+
 		boolean errorFlag =false;
 		Type funcRetType =	expr.functionRef.visit(this, null);
 		ExprList al = expr.argList;
@@ -751,59 +776,59 @@ Type astType =null;
 		MethodDecl md;
 		Expression e;
 		Declaration d =expr.functionRef.getDecl();
-			
-		
+
+
 		if(d instanceof MethodDecl){
-		md = (MethodDecl) d;
-		
-		if(al.size() != md.parameterDeclList.size())
-			typeCheckFatalError("Number of arguments for declared function " + md + " of name " + md.name + " is " + md.parameterDeclList.size() + " but you provided " +al.size() + " arguments at function call in expression " + expr);
-		
-		
-		
-		for (int i=0;i<al.size();i++ ) {
-			e = al.get(i);
-		argType =	e.visit(this, null);
-		argDefType =md.parameterDeclList.get(i).type;
-		
-		tEq = isEqual(argType,argDefType);
-		
-		switch(tEq){
+			md = (MethodDecl) d;
 
-		case ERROR:
-			errorFlag =true;
-			break;
-		case UNEQUAL:
-			typeCheckError("Argument type in function definition " + md.name + " is " + argDefType + " of typekind " + argDefType.typeKind +" and argument input type is " +argType + " of typekind " + argType.typeKind + " they dont match");
-			errorFlag =true;
-			break;
+			if(al.size() != md.parameterDeclList.size())
+				typeCheckFatalError("Number of arguments for declared function " + md + " of name " + md.name + " is " + md.parameterDeclList.size() + " but you provided " +al.size() + " arguments at function call in expression " + expr);
 
-		case UNSUPPORTED:
-			typeCheckFatalError("Argument type in function definition " + md.name + " is " +  argDefType  + " of typekind " + argDefType.typeKind +" and argument input type is " + argType  + " of typekind " + argType.typeKind   + " either of them is unsupported");
-			return new BaseType(TypeKind.UNSUPPORTED, null);
-			
-			
-		case EQUAL:
-			break;
-		default:
-			typeCheckFatalError("shouldnt reach here, left and right types are neither equal/unequal/error/unsupported");
-			return new BaseType(TypeKind.ERROR, null);
-		 
-		}
-		
-		
-		}
+
+
+			for (int i=0;i<al.size();i++ ) {
+				e = al.get(i);
+				argType =	e.visit(this, null);
+				argDefType =md.parameterDeclList.get(i).type;
+
+				tEq = isEqual(argType,argDefType);
+
+				switch(tEq){
+
+				case ERROR:
+					errorFlag =true;
+					break;
+				case UNEQUAL:
+					typeCheckError("Argument type in function definition " + md.name + " is " + argDefType + " of typekind " + argDefType.typeKind +" and argument input type is " +argType + " of typekind " + argType.typeKind + " they dont match");
+					errorFlag =true;
+					break;
+
+				case UNSUPPORTED:
+					typeCheckFatalError("Argument type in function definition " + md.name + " is " +  argDefType  + " of typekind " + argDefType.typeKind +" and argument input type is " + argType  + " of typekind " + argType.typeKind   + " either of them is unsupported");
+					return new BaseType(TypeKind.UNSUPPORTED, null);
+
+
+				case EQUAL:
+					break;
+				default:
+					typeCheckFatalError("shouldnt reach here, left and right types are neither equal/unequal/error/unsupported");
+					return new BaseType(TypeKind.ERROR, null);
+
+				}
+
+
+			}
 		}
 		else{
 			typeCheckFatalError("Shouldnt reach here : reference to function doesnt have a declaration of type methodDecl");
 		}
-		
+
 		if(errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
 		else
 			return funcRetType;
-		
-	 
+
+
 	}
 
 	public Type visitLiteralExpr(LiteralExpr expr, Object arg){
@@ -836,11 +861,11 @@ Type astType =null;
 		if(	errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
 		else{
-			  	arrType = new ArrayType(eltType,expr.posn);
-			  	
-			  	arrType.setLengthExpression( expr.sizeExpr);//added to maintain length
-			
-			  	return arrType;
+			arrType = new ArrayType(eltType,expr.posn);
+
+			arrType.setLengthExpression( expr.sizeExpr);//added to maintain length
+
+			return arrType;
 		}
 	}
 
@@ -890,20 +915,20 @@ Type astType =null;
 		if(	errorFlag)
 			return new BaseType(TypeKind.ERROR,null);
 		else{
-			 
+
 			idRefType = 	ir.idRef.visit(this, null);   
 			if(idRefType instanceof ArrayType){
 				arrType= (ArrayType) idRefType;
-				
+
 				if(arrType.eltType.typeKind == TypeKind.UNSUPPORTED)
 					typeCheckFatalError("IndexedRef's  " + ir.idRef + " is of unsupported type");
-			return arrType.eltType;
+				return arrType.eltType;
 			}
 			else{
 				typeCheckFatalError("IndexedRef's  " + ir.idRef + " is not of type array");
 				return new BaseType(TypeKind.ERROR,null);
-			
-			
+
+
 			}
 		}
 	}
@@ -918,10 +943,10 @@ Type astType =null;
 
 		return ref.getDecl().type;
 	}
-	
-	
+
+
 	public Type visitNullRef(NullRef ref, Object arg) {
-		 
+
 		return ref.getDecl().type;
 	}
 
@@ -946,7 +971,7 @@ Type astType =null;
 	}
 
 	public Type visitIntLiteral(IntLiteral num, Object arg){
-		 
+
 		return new  BaseType(TypeKind.INT,num.posn);
 	}
 
@@ -955,12 +980,12 @@ Type astType =null;
 	}
 
 	public Type visitStringLiteral(StringLiteral s, Object arg){
-		System.out.println("TODO: stirng in type checker");
-		//return new  BaseType(TypeKind.BOOLEAN,bool.posn);
-		return null;
+
+		return    new ClassType(new Identifier(new Token(TokenKind.STRING,"String",s.posn)),s.posn); //added to support string as classtype
+
 	}
- 
-	
+
+
 }
 
 

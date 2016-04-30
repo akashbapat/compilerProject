@@ -13,6 +13,8 @@ public class ClassDecl extends Declaration {
 	  super(cn, null, posn);
 	  fieldDeclList = fdl;
 	  methodDeclList = mdl;
+	  isBaseClass = false;
+	  parentClassName ="";
   }
   
   public <A,R> R visit(Visitor<A, R> v, A o) {
@@ -21,4 +23,6 @@ public class ClassDecl extends Declaration {
       
   public FieldDeclList fieldDeclList;
   public MethodDeclList methodDeclList;
+  public boolean  isBaseClass;
+  public String parentClassName;
 }

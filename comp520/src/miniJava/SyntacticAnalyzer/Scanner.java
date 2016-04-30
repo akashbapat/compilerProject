@@ -285,7 +285,8 @@ public class Scanner{
 		keywordHmap.put("boolean",1);
 		keywordHmap.put("null",1);
 		keywordHmap.put("for",1);
-		//keywordHmap.put("String",1);
+		keywordHmap.put("String",1);
+		keywordHmap.put("extends",1);
 	}
 	private boolean isKeyword(String s){
 		return this.keywordHmap.containsKey(s);
@@ -335,12 +336,13 @@ public class Scanner{
 	}
 
 	private boolean scanString(){
-		while(!(currentChar == '"')){
+		while(currentChar != '"'){
 			if(eot){
 				return false;
 			}
 			takeIt();
 		}
+		skipIt();
 		return true;
 	}
 
