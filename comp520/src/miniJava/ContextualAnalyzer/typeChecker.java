@@ -67,9 +67,26 @@ public class typeChecker implements Visitor<Object,Type> {
 				ctEr = (ClassType) er;
 				ctEl = (ClassType) el;
 
-				if(!ctEr.className.spelling.equals(ctEl.className.spelling))
-					return typeEquality.UNEQUAL;
-
+				if(!ctEr.className.spelling.equals(ctEl.className.spelling)){
+					//return typeEquality.UNEQUAL;
+					//added to support inheritance
+				    Declaration dRight =	ctEr.className.getDecl();
+					if(dRight instanceof ClassDecl){
+						ClassDecl cdRight = (ClassDecl) dRight;
+						
+						if(!cdRight.isBaseClass)
+					return 	 isEqual( el,cdRight.parentClassDecl.type );
+						else
+							return typeEquality.UNEQUAL;
+					}
+					else{
+						System.out.println("classtype doesnt have a classdecl");
+						 System.exit(-1); 
+					}
+				
+				
+				}
+					
 			}
 			else if (er.typeKind==TypeKind.ARRAY ){
 

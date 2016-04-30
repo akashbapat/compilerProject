@@ -5,6 +5,8 @@
  */
 package miniJava.AbstractSyntaxTrees;
 
+import java.util.HashMap;
+
 import  miniJava.SyntacticAnalyzer.SourcePosition;
 
 public class ClassDecl extends Declaration {
@@ -15,6 +17,8 @@ public class ClassDecl extends Declaration {
 	  methodDeclList = mdl;
 	  isBaseClass = false;
 	  parentClassName ="";
+	  
+	//  parentClassList = new HashMap<String, Boolean>();
   }
   
   public <A,R> R visit(Visitor<A, R> v, A o) {
@@ -25,4 +29,17 @@ public class ClassDecl extends Declaration {
   public MethodDeclList methodDeclList;
   public boolean  isBaseClass;
   public String parentClassName;
+  public ClassDecl parentClassDecl;
+ // private HashMap<String, Boolean> parentClassList;
+  
+  /*public void addParentClass(String s){
+	  parentClassList.put(s, true);
+  }
+  
+  public boolean isParentClass(String s){
+	  
+ return parentClassList.get(s) ;
+  }
+  */
+  
 }

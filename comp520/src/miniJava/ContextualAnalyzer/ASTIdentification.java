@@ -45,9 +45,9 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 	public MethodDecl showTree(AST ast){
 		System.out.println("======= AST Identify =========================");
-		
+
 		idTable idTab = new idTable();
-		
+
 		idTabVar = idTab;
 
 
@@ -65,81 +65,98 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	}
 
 
-public MethodDecl getPrintlnStringMdDecl(){
-	return idTabVar.getPrintlnStringDecl();
-}
+	public MethodDecl getPrintlnStringMdDecl(){
+		return idTabVar.getPrintlnStringDecl();
+	}
 
 
-private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass,String name , boolean isFuncStatic,boolean isCall,ClassDecl cd ){ //currClass is passed to enable recursion
-	
-	ClassDecl parentClassDecl ;
-	Declaration d;
-	Declaration retD=null;
-	FieldDecl fd;
-	Declaration  childD;
-	ClassType ct;
-	MethodDecl md;
-	
-	
-	
-			 //searches in fields
-			if(cd.fieldDeclList!=null){
-				for(int i=0;i<cd.fieldDeclList.size();i++){
-					fd =     cd.fieldDeclList.get(i);
+	private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass,String name , boolean isFuncStatic,boolean isCall,ClassDecl cd ){ //currClass is passed to enable recursion
 
-					if(    ((!fd.isPrivate||sameClass)  || (!fd.isPrivate||sameClass) && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && fd.isStatic) ){
+		ClassDecl parentClassDecl ;
+		Declaration d;
+		Declaration retD=null;
+		FieldDecl fd;
+		Declaration  childD;
+		ClassType ct;
+		MethodDecl md;
 
-						childD =fd;
-						qr.id.setDecl(childD);
 
-						if(childD.type.typeKind==TypeKind.CLASS){
-							ct = (ClassType) childD.type;
-							qr.setDecl(idTab.getClass(ct.className.spelling));
-						}
-						else{
-							qr.setDecl(childD);
-						}
 
-						break;
+		//searches in fields
+		if(cd.fieldDeclList!=null){
+			for(int i=0;i<cd.fieldDeclList.size();i++){
+				fd =     cd.fieldDeclList.get(i);
+
+				if(    ((!fd.isPrivate||sameClass)  || (!fd.isPrivate||sameClass) && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && fd.isStatic) ){
+
+					childD =fd;
+					qr.id.setDecl(childD);
+
+					if(childD.type.typeKind==TypeKind.CLASS){
+						ct = (ClassType) childD.type;
+						qr.setDecl(idTab.getClass(ct.className.spelling));
 					}
+					else{
+						qr.setDecl(childD);
+					}
+
+					break;
 				}
 			}
-			//searches in methods
-			if(cd.methodDeclList!=null && isCall){
-				for(int i=0;i<cd.methodDeclList.size();i++){
-					md =     cd.methodDeclList.get(i);
+		}
+		//searches in methods
+		if(cd.methodDeclList!=null && isCall){
+			for(int i=0;i<cd.methodDeclList.size();i++){
+				md =     cd.methodDeclList.get(i);
 
-					if( ((!md.isPrivate||sameClass)  || (!md.isPrivate||sameClass)   && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && md.isStatic) ){
+				if( ((!md.isPrivate||sameClass)  || (!md.isPrivate||sameClass)   && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && md.isStatic) ){
 
-						childD =md;
-						qr.id.setDecl(childD);
+					childD =md;
+					qr.id.setDecl(childD);
 
-					 
-							qr.setDecl(childD);
-						 
 
-						break;
-					}
+					qr.setDecl(childD);
+
+
+					break;
 				}
 			}
+		}
 
-			
-			
-			// now check in parent class
-			
-			if(!cd.isBaseClass){
+
+
+		// now check in parent class
+
+		if(!cd.isBaseClass){
 			parentClassDecl = (ClassDecl) idTab.getClass(cd.parentClassName);
-			 
-		     getFieldMethodDecl( qr,  idTab, false, name ,  isFuncStatic, isCall, parentClassDecl ); //false because we cannot access private members of parentclasses
-			 
-			
-			
+
+			getFieldMethodDecl( qr,  idTab, false, name ,  isFuncStatic, isCall, parentClassDecl ); //false because we cannot access private members of parentclasses
+
+
+
+		}
+
+
+	}
+
+	private boolean isCyclicalInheritance(ClassDecl parentClass, String childClassName){
+
+		if(!parentClass.name.equals(childClassName))
+		{
+			if(!parentClass.isBaseClass){
+				ClassDecl gParentClass =parentClass.parentClassDecl;
+
+
+				return isCyclicalInheritance(  gParentClass,   childClassName);
+
+
 			}
-		 
-		
-}
-			
-	 
+			else
+				return false;
+		}
+		else
+			return true;
+	}
 
 
 
@@ -163,8 +180,36 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 				identificationError("Class declaration failed - " + c.name + " already declared at level "+res );
 			}
 		}
+
+
+
+
+		for (ClassDecl c: prog.classDeclList){
+			//adding parent class Decl to support inheritance
+
+			if(!c.isBaseClass){
+				if(!c.name.equals(c.parentClassName)){				
+					c.parentClassDecl	= (ClassDecl) idTab.getClass(c.parentClassName);
+				}
+				else{
+					identificationError("Class declaration failed - " + c.name + " cannot have itself as parent class" );
+				}
+			}
+
+
+		}
+
+
+
 		for (ClassDecl c: prog.classDeclList){
 
+			//checking for cyclical inheritance
+			if(!c.isBaseClass ){
+
+				if( isCyclicalInheritance(c.parentClassDecl,c.name)){
+					identificationError("Class declaration failed - " +c+" of name " + c.name + "  has cyclical inheritance" );
+				}
+			}
 
 			idTab = c.visit(this, idTab);
 		}
@@ -180,6 +225,9 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 	///////////////////////////////////////////////////////////////////////////////
 
 	public idTable visitClassDecl(ClassDecl clas, idTable idTab){
+
+
+
 		idTab.setCurrentClass(clas); //added to support calling of static functions from static functions in same class without using class name 
 		idTab.openScope();
 		VarDecl thisVarDecl ;
@@ -213,7 +261,7 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 			idTab = m.visit(this, idTab);
 		}
 
-		
+
 		idTab.closeScope();
 		return idTab;
 
@@ -328,7 +376,7 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 		{
 			identificationError("Local declaration failed - " + stmt.varDecl.name + " already declared at level " + res );
 		}
-		
+
 		isVarDeclStmt =false;
 		return idTab;
 	}
@@ -338,7 +386,7 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 		if(stmt.ref instanceof ThisRef){
 			identificationError("Cannot assign to this, lhs must be a variable, error at " + stmt.ref);
 		}
-	
+
 		idTab = stmt.val.visit(this, idTab);
 		idTab = stmt.ref.visit(this, idTab);
 
@@ -355,9 +403,9 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 
 		isCall =true;
 		idTab=  stmt.methodRef.visit(this, idTab );
-		 
-		
-		
+
+
+
 		if(stmt.methodRef instanceof ThisRef || stmt.methodRef instanceof IndexedRef)	
 			identificationError(stmt.methodRef + "is not a valid method call");
 		ExprList al = stmt.argList;
@@ -366,9 +414,9 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 		for (Expression e: al) {
 			idTab=        e.visit(this, idTab);
 		}
-		
+
 		isCall =false;
-		
+
 		return idTab;
 
 	}
@@ -417,23 +465,23 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 
 		return idTab;
 	}
-	
+
 	public idTable visitForStmt(ForStmt stmt, idTable idTab){
 		//always check for null in for stmt for init,cond and inc
 		idTab.openScope(); // to account for declaration eg. for(int i=0;i<n;i=i+1) 
-		 
+
 		if(stmt.init!=null)
-		idTab = stmt.init.visit(this, idTab);
-		
+			idTab = stmt.init.visit(this, idTab);
+
 		if(stmt.cond!=null)
 			idTab = stmt.cond.visit(this, idTab);
-		
+
 		if(stmt.increment!=null)
 			idTab = stmt.increment.visit(this, idTab);
-		
+
 		stmt.body.visit(this,idTab);
-		 
-		 
+
+
 		idTab.closeScope();
 		return idTab;
 	}
@@ -459,9 +507,9 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 	}
 
 	public idTable visitRefExpr(RefExpr expr, idTable idTab){
-		 
+
 		idTab = expr.ref.visit(this, idTab);
-		 
+
 		return idTab;
 	}
 
@@ -510,20 +558,20 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 		MethodDecl md;
 		QualifiedRef qrMiddle;
 		boolean sameClass  = false; 	//for private field/method access from object instances of current class
-	 
-	 
-		
-	 	if(qr.id!=null && !(qr.ref instanceof QualifiedRef))
-	 		staticClassAccessPossible = true;
-	 	else
-	 		staticClassAccessPossible = false;
-		
-	 	 
-		 idTab  = qr.ref.visit(this, idTab);
-		
-		  
-		 
-		
+
+
+
+		if(qr.id!=null && !(qr.ref instanceof QualifiedRef))
+			staticClassAccessPossible = true;
+		else
+			staticClassAccessPossible = false;
+
+
+		idTab  = qr.ref.visit(this, idTab);
+
+
+
+
 		if(qr.ref.getDecl().type instanceof ArrayType && qr.id.spelling.equals("length")){ //added to support array.length
 			qr.setDecl(qr.ref.getDecl());
 			qr.id.setDecl(new VarDecl(new BaseType(TypeKind.INT,new SourcePosition()),"length",new SourcePosition()));
@@ -531,48 +579,48 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 		}
 		else{
 			idTab  = qr.id.visit(this, idTab); //this does nothing
-			
+
 		}
-		
-		
+
+
 		//just checks that the middle qr is not a function, qrMiddle not used afterwards
 		if(qr.ref instanceof QualifiedRef){
 			qrMiddle =  (QualifiedRef) qr.ref;
-		if(	qrMiddle.id.getDecl() instanceof MethodDecl)
-			identificationError(" Qualified reference can be made only to objects: " + qrMiddle.id +" is a function of name "+ qrMiddle.id.spelling);
+			if(	qrMiddle.id.getDecl() instanceof MethodDecl)
+				identificationError(" Qualified reference can be made only to objects: " + qrMiddle.id +" is a function of name "+ qrMiddle.id.spelling);
 		}
-		
-		
-		
-		
+
+
+
+
 		if(!(qr.ref.getDecl() instanceof ClassDecl)){
 			identificationError(" Qualified reference can be made only to objects: " +qr.ref+" is not a static access/object ");
 		}
 		else{ //this is the block that processes all the valid qualified references
 			cd = (ClassDecl) qr.ref.getDecl();		
 
-			 currCd =idTab.getCurrentClass();
-			 
-			 
-			 if(currCd.name.equals(cd.name)){
-			sameClass =true;
-			 
-			 }
-			
-			 
-// search in fields and methods
-			 getFieldMethodDecl( qr,  idTab, sameClass,qr.id.spelling,  isFuncStatic, isCall,  cd );
-			
-			
+			currCd =idTab.getCurrentClass();
+
+
+			if(currCd.name.equals(cd.name)){
+				sameClass =true;
+
+			}
+
+
+			// search in fields and methods
+			getFieldMethodDecl( qr,  idTab, sameClass,qr.id.spelling,  isFuncStatic, isCall,  cd );
+
+
 			//this just throws error when no decl is found
 			if(qr.id.getDecl()==null){
 				identificationError(qr.id +"  " + qr.id.spelling + " not found in class " + qr.ref.getDecl().name);
 			}
- 	
-			
+
+
 		}
-		
-		
+
+
 		return idTab;
 	}
 
@@ -604,19 +652,19 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 	}
 
 	public idTable visitIdRef(IdRef ref, idTable idTab) {
-		
+
 		// added to support fail case 305: class A{int x; foo(){ int x= x+y;}}
 		String lhsRepeat=null;
-		 	if(isVarDeclStmt ){
-			 
+		if(isVarDeclStmt ){
+
 			lhsRepeat =ref.id.spelling;
-			
+
 			if(varName.equals(lhsRepeat))
 				identificationError(" Cannot use variable being declared in RHS of varDeclstmt in  " + ref + " of name " + ref.id.spelling );
 		}
-		
-		 
-		
+
+
+
 		Declaration d = idTab.getIdentifier(ref.id.spelling, isFuncStatic,isCall); //static func access static func/fields, non-static func can access all func/fields
 
 		ClassType ct;
@@ -640,41 +688,41 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 
 		ref.id.setDecl(d);
 		ref.setDecl(d);
-		
-		
+
+
 		//if(ref.isQualifiedStaticAcess){
-	//		ref.setDecl(d);
-	//	}
-	//	else if(d.type.typeKind==TypeKind.CLASS){
-			 if(d.type.typeKind==TypeKind.CLASS){
+		//		ref.setDecl(d);
+		//	}
+		//	else if(d.type.typeKind==TypeKind.CLASS){
+		if(d.type.typeKind==TypeKind.CLASS){
 			ct = (ClassType) d.type;
 			ref.setDecl(idTab.getClass(ct.className.spelling));
 		}
-	  
+
 		idTab = ref.id.visit(this, idTab);
 		return idTab;
 	}
 
 	public idTable visitThisRef(ThisRef ref, idTable idTab) {
-		
+
 		if(isFuncStatic){
 			identificationError(" Cannot access 'this' in static function " + ref);
 		}
-		
-		
-		
-		
+
+
+
+
 		ClassType ct;
 		Declaration dClass;
 		Declaration d = idTab.getIdentifier("this",false,false);
 		if(d==null)
 			identificationError(" Identifier 'this' not found");
- 		 
+
 
 		if(d.type.typeKind==TypeKind.CLASS){
 			ct = (ClassType) d.type;
 			dClass = idTab.getClass(ct.className.spelling);
-			 
+
 			ref.setDecl(dClass);
 
 		}
@@ -710,7 +758,7 @@ private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass
 	public idTable visitIntLiteral(IntLiteral num, idTable idTab){
 		return idTab;
 	}
-	
+
 	public idTable visitStringLiteral(StringLiteral s, idTable idTab){
 		return idTab;
 	}
