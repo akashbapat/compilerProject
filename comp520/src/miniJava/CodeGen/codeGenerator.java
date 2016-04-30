@@ -22,7 +22,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	CodeGenEntityCreator cgec;
 	int displacement;
 	boolean inAssign = false;
-
+	boolean isLastStatic = false;
 
 
 
@@ -54,7 +54,6 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		displacement=3;
 		cgec = new CodeGenEntityCreator(er);
 		//Flags
-		boolean isStaticLast = false;
 	}
 
 	class CodeGenError extends Error {
@@ -141,7 +140,6 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 
 	private void encodeAssign(Declaration d ){
-
 		/*	if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
 			if(d instanceof FieldDecl){
 				if(((FieldDecl) d).isStatic)
@@ -156,20 +154,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
 			}
 		}*/
-
-
-
-
-
-
 		//valid   access
-
 		FieldDecl fd;
-
 		//	if(d instanceof ClassDecl){
 
 		//	}
-
 
 		if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
 
@@ -183,12 +172,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				else
 					Machine.emit(Op.STORE, 1,Reg.OB, d.getEntity().address) ;
 			}
-
-
 		} 
-
-
-
 	}
 
 	private void createEntity(Declaration d, int s){
@@ -264,7 +248,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			if(((MethodDecl) d).isStatic)
 				Machine.emit(Op.CALL,Reg.CB,-1);
 			else
-				Machine.emit(Op.CALLD,Reg.CB,-1);
+				Machine.emit(Op.CALLI,Reg.CB,-1);
 
 			fp.addFunction((MethodDecl)d, address);
 		}
@@ -424,9 +408,29 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		if(unRolledRef.size() == 2){
 			Identifier idArr = unRolledRef.pop();
 			Declaration d = idArr.getDecl();
-			if(d instanceof VarDecl){
+			if(d instanceof VarDecl ){
 				VarDecl vd = (VarDecl)d;
 				if(vd.type.typeKind == TypeKind.ARRAY){
+					Identifier id = unRolledRef.pop();
+					d = id.getDecl();
+					if(id.spelling.equals("length")){
+						idArr.visit(this, false);
+						Machine.emit(Prim.arraylen);
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else{
+					return false;
+				}
+			}
+			else if(d instanceof FieldDecl)
+			{
+				FieldDecl fd = (FieldDecl)d;
+				if(fd.type.typeKind == TypeKind.ARRAY){
 					Identifier id = unRolledRef.pop();
 					d = id.getDecl();
 					if(id.spelling.equals("length")){
@@ -614,11 +618,21 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		stmt.ref.visit(this, true);
 		stmt.val.visit(this, false);
 		if(stmt.ref instanceof QualifiedRef){
+			QualifiedRef qr = (QualifiedRef)(stmt.ref);
+			boolean isLastStatic = false;
+			if(qr.id.getDecl() instanceof FieldDecl){
+				FieldDecl fd = (FieldDecl)qr.id.getDecl();
+				if(fd.isStatic){
+					isLastStatic = true;
+				}
+			}
 			if(!isLastStatic){
 				Machine.emit(Prim.fieldupd);
 			}
 			else{
-				//Pop
+				encodeAssign(qr.id.getDecl());
+				Machine.emit(Op.POP);
+				//Pop 
 			}	
 		}
 		else if(stmt.ref instanceof IdRef) {
