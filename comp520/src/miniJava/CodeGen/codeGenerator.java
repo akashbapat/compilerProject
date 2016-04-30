@@ -264,7 +264,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			if(((MethodDecl) d).isStatic)
 				Machine.emit(Op.CALL,Reg.CB,-1);
 			else
-				Machine.emit(Op.CALLD,Reg.CB,-1);
+				Machine.emit(Op.CALLI,Reg.CB,-1);
 
 			fp.addFunction((MethodDecl)d, address);
 		}
