@@ -362,8 +362,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 									Machine.emit(Op.LOADL,'\n'); 
 									Machine.emit(Prim.put); //prints newline
-
-
+								Machine.emit(Op.POP,3);//pop index, array length,address of array holding string
 
 									return true;
 
