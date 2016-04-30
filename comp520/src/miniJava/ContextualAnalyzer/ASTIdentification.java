@@ -70,9 +70,76 @@ public MethodDecl getPrintlnStringMdDecl(){
 }
 
 
+private void getFieldMethodDecl(QualifiedRef qr, idTable idTab,boolean sameClass,String name , boolean isFuncStatic,boolean isCall,ClassDecl cd ){ //currClass is passed to enable recursion
+	
+	ClassDecl parentClassDecl ;
+	Declaration d;
+	Declaration retD=null;
+	FieldDecl fd;
+	Declaration  childD;
+	ClassType ct;
+	MethodDecl md;
+	
+	
+	
+			 //searches in fields
+			if(cd.fieldDeclList!=null){
+				for(int i=0;i<cd.fieldDeclList.size();i++){
+					fd =     cd.fieldDeclList.get(i);
 
+					if(    ((!fd.isPrivate||sameClass)  || (!fd.isPrivate||sameClass) && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && fd.isStatic) ){
 
+						childD =fd;
+						qr.id.setDecl(childD);
 
+						if(childD.type.typeKind==TypeKind.CLASS){
+							ct = (ClassType) childD.type;
+							qr.setDecl(idTab.getClass(ct.className.spelling));
+						}
+						else{
+							qr.setDecl(childD);
+						}
+
+						break;
+					}
+				}
+			}
+			//searches in methods
+			if(cd.methodDeclList!=null && isCall){
+				for(int i=0;i<cd.methodDeclList.size();i++){
+					md =     cd.methodDeclList.get(i);
+
+					if( ((!md.isPrivate||sameClass)  || (!md.isPrivate||sameClass)   && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && md.isStatic) ){
+
+						childD =md;
+						qr.id.setDecl(childD);
+
+					 
+							qr.setDecl(childD);
+						 
+
+						break;
+					}
+				}
+			}
+
+			
+			
+			// now check in parent class
+			
+			if(!cd.isBaseClass){
+			parentClassDecl = (ClassDecl) idTab.getClass(cd.parentClassName);
+			 
+		     getFieldMethodDecl( qr,  idTab, false, name ,  isFuncStatic, isCall, parentClassDecl ); //false because we cannot access private members of parentclasses
+			 
+			
+			
+			}
+		 
+		
+}
+			
+	 
 
 
 
@@ -493,50 +560,8 @@ public MethodDecl getPrintlnStringMdDecl(){
 			 }
 			
 			 
-			 
-			 
-			 //searches in fields
-			if(cd.fieldDeclList!=null){
-				for(int i=0;i<cd.fieldDeclList.size();i++){
-					fd =     cd.fieldDeclList.get(i);
-
-					if(    ((!fd.isPrivate||sameClass)  || (!fd.isPrivate||sameClass) && (qr.ref instanceof ThisRef) )      && qr.id.spelling.equals(fd.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && fd.isStatic) ){
-
-						childD =fd;
-						qr.id.setDecl(childD);
-
-						if(childD.type.typeKind==TypeKind.CLASS){
-							ct = (ClassType) childD.type;
-							qr.setDecl(idTab.getClass(ct.className.spelling));
-						}
-						else{
-							qr.setDecl(childD);
-						}
-
-						break;
-					}
-				}
-			}
-			//searches in methods
-			if(cd.methodDeclList!=null && isCall){
-				for(int i=0;i<cd.methodDeclList.size();i++){
-					md =     cd.methodDeclList.get(i);
-
-					if( ((!md.isPrivate||sameClass)  || (!md.isPrivate||sameClass)   && (qr.ref instanceof ThisRef) )   && qr.id.spelling.equals(md.name) &&  (!qr.ref.isQualifiedStaticAcess || qr.ref.isQualifiedStaticAcess && md.isStatic) ){
-
-						childD =md;
-						qr.id.setDecl(childD);
-
-					 
-							qr.setDecl(childD);
-						 
-
-						break;
-					}
-				}
-			}
-
-			
+// search in fields and methods
+			 getFieldMethodDecl( qr,  idTab, sameClass,qr.id.spelling,  isFuncStatic, isCall,  cd );
 			
 			
 			//this just throws error when no decl is found
