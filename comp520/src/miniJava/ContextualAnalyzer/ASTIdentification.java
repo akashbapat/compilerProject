@@ -442,8 +442,8 @@ public MethodDecl getPrintlnStringMdDecl(){
 		ClassType ct;
 		MethodDecl md;
 		QualifiedRef qrMiddle;
-		boolean sameClass  = false; 	//for private filed/method access from object instances of current class
-		boolean isCallLocal =false;
+		boolean sameClass  = false; 	//for private field/method access from object instances of current class
+	 
 	 
 		
 	 	if(qr.id!=null && !(qr.ref instanceof QualifiedRef))
@@ -463,12 +463,12 @@ public MethodDecl getPrintlnStringMdDecl(){
 			return idTab;
 		}
 		else{
-			idTab  = qr.id.visit(this, idTab);
+			idTab  = qr.id.visit(this, idTab); //this does nothing
 			
 		}
 		
 		
-		
+		//just checks that the middle qr is not a function, qrMiddle not used afterwards
 		if(qr.ref instanceof QualifiedRef){
 			qrMiddle =  (QualifiedRef) qr.ref;
 		if(	qrMiddle.id.getDecl() instanceof MethodDecl)
@@ -481,7 +481,7 @@ public MethodDecl getPrintlnStringMdDecl(){
 		if(!(qr.ref.getDecl() instanceof ClassDecl)){
 			identificationError(" Qualified reference can be made only to objects: " +qr.ref+" is not a static access/object ");
 		}
-		else{
+		else{ //this is the block that processes all the valid qualified references
 			cd = (ClassDecl) qr.ref.getDecl();		
 
 			 currCd =idTab.getCurrentClass();
@@ -492,6 +492,10 @@ public MethodDecl getPrintlnStringMdDecl(){
 			 
 			 }
 			
+			 
+			 
+			 
+			 //searches in fields
 			if(cd.fieldDeclList!=null){
 				for(int i=0;i<cd.fieldDeclList.size();i++){
 					fd =     cd.fieldDeclList.get(i);
@@ -513,6 +517,7 @@ public MethodDecl getPrintlnStringMdDecl(){
 					}
 				}
 			}
+			//searches in methods
 			if(cd.methodDeclList!=null && isCall){
 				for(int i=0;i<cd.methodDeclList.size();i++){
 					md =     cd.methodDeclList.get(i);
@@ -522,21 +527,19 @@ public MethodDecl getPrintlnStringMdDecl(){
 						childD =md;
 						qr.id.setDecl(childD);
 
-						//if(childD.type.typeKind==TypeKind.CLASS){
-						//	ct = (ClassType) childD.type;
-						//	qr.setDecl(idTab.getClass(ct.className.spelling));
-
-						//}
-						//else{
+					 
 							qr.setDecl(childD);
-						//}
+						 
 
 						break;
 					}
 				}
 			}
 
-
+			
+			
+			
+			//this just throws error when no decl is found
 			if(qr.id.getDecl()==null){
 				identificationError(qr.id +"  " + qr.id.spelling + " not found in class " + qr.ref.getDecl().name);
 			}

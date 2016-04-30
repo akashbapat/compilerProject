@@ -367,23 +367,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 									return true;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
 
 								}
 								else if(md.name.equals("println") && md.parameterDeclList.size() != 1 ){

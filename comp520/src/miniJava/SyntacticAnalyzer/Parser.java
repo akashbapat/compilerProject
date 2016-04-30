@@ -51,9 +51,13 @@ public class Parser {
 	private miniJava.AbstractSyntaxTrees.Package parseP() throws SyntaxError {
 		
 		ClassDeclList	cdl = new ClassDeclList();
-
-		while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class"))
-			cdl.add(parseCD());
+		ClassDecl cd;
+		while(token.kind == TokenKind.KEYWORD && token.spelling.equals("class")){
+		cd =	parseCD();
+		 
+		cdl.add(cd);
+		
+		}
 		accept(TokenKind.EOT);
 		return new miniJava.AbstractSyntaxTrees.Package( cdl, new SourcePosition(0,0,0,0));
 	}
@@ -276,13 +280,30 @@ public class Parser {
 		String visiblityStr,accessStr;
 		boolean isPrivate, isStatic;
 		Token idToken;
-
+		boolean isBaseClass = false;
+		String parentClassName ="";
 
 		parseSpecificToken(TokenKind.KEYWORD,"class");
 
 		cn=token.spelling;
 		Token classNameToken = token;
 		parseSpecificToken(TokenKind.ID, token.spelling);
+		
+		
+
+		if(token.kind ==TokenKind.KEYWORD && token.spelling.equals("extends")){
+			acceptIt();
+			 
+			 
+			parentClassName = token.spelling;
+			parseSpecificToken(TokenKind.ID, token.spelling);
+		 
+		}
+		else{
+			isBaseClass = true;
+			 
+		}
+		
 
 		parseSpecificToken(TokenKind.BRACE, "{");
 
@@ -373,7 +394,12 @@ public class Parser {
 
 		parseSpecificToken(TokenKind.BRACE, "}");
 
-		return new ClassDecl(cn, fdList, mdList, classNameToken.GetSourcePosn());
+		
+		ClassDecl cd =new ClassDecl(cn, fdList, mdList, classNameToken.GetSourcePosn());
+		cd.isBaseClass =isBaseClass;
+	 
+		cd.parentClassName = parentClassName;
+		return cd ;
 	}	
 
 

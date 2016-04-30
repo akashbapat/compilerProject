@@ -28,6 +28,12 @@ public class idTable {
 	private ArrayList <HashMap<String,Declaration> > levelList;
 	private ClassDecl currentClass; //added to support calling of static functions from static functions in same class without using class name 
 	private MethodDecl printlnStringMd;
+	
+	
+	
+	
+	
+	
 	public void setCurrentClass(ClassDecl cd){ //added to support calling of static functions from static functions in same class without using class name 
 		currentClass =cd;
 	}
@@ -229,7 +235,7 @@ public class idTable {
 				else
 					return d  ; */
 			}
-
+	
 		}
 
 		return null;
@@ -358,10 +364,102 @@ public MethodDecl getPrintlnDecl(){
 return	printlnDecl	;
 }
 
+
+
+
 public MethodDecl getPrintlnStringDecl(){
-	
-	 
+ 	 
 return	printlnStringMd	;
 }
+
+
+
+private Declaration getInheritedDecl(String name , boolean isFuncStatic,boolean isCall,ClassDecl currClass ){ //currClass is passed to enable recursion
+	
+	ClassDecl parentClassDecl ;
+	Declaration d;
+	Declaration retD=null;
+	FieldDecl fd;
+	
+		if(currClass.isBaseClass){
+			return null;
+			}
+		else{
+			
+			d = getClass(currClass.parentClassName);
+			if(d instanceof ClassDecl){
+			parentClassDecl = (ClassDecl) d;
+			
+			for(int i = 0;i<parentClassDecl.fieldDeclList.size(); i++){ //checks for parent fields
+				fd = parentClassDecl.fieldDeclList.get(i);
+				
+				
+				//check for private and static
+				 if(!fd.isPrivate){
+				  if(isFuncStatic){  //function is   static
+					 if(isCall){  // call inside   static func 
+						 if(d instanceof MemberDecl && ((MemberDecl) d).isStatic)
+						 return d;
+						 else 
+							 return null;
+						 
+					 }
+					 else{	 // field inside   static func 
+						 if(d instanceof FieldDecl &&  ((FieldDecl) d).isStatic)
+							 return d;
+							 else 
+								 return null;
+					 }
+					 
+				 }
+				 else{//function is   NOT static
+					 
+					 
+						if (d instanceof VarDecl && name.equals("this"))
+							return d;
+					 
+					 
+						else if(isCall){   // call inside non static func 
+					 		 if(d instanceof MemberDecl)
+								 return d;
+								 else 
+									 return null;
+					 }
+					 else{// field inside non static func 
+						 if(d instanceof FieldDecl)
+							 return d;
+							 else 
+								 return null;
+					 }
+					 
+					 
+					 
+					 
+				 }
+				 }
+				 // no need for else block here as we are checking afterwards for null values
+			}
+			
+			
+			//check in parent class
+			
+			if(retD == null)
+			retD = getInheritedDecl(  name ,  isFuncStatic, isCall, parentClassDecl);
+			
+			return retD;
+			}
+			else{
+				System.out.println("Parent class doesnt have class decl type");
+				return null;
+			}
+			
+			
+			
+		}
+	
+	
+}
+
+
 
 }
