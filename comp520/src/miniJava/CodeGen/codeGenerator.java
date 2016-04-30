@@ -140,27 +140,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 
 	private void encodeAssign(Declaration d ){
-		/*	if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
-			if(d instanceof FieldDecl){
-				if(((FieldDecl) d).isStatic)
-				{
-					Machine.emit(Op.STORE, 1,Reg.SB, d.getEntity().address) ;
-				}
-				else
-				{
-					}
-			}
-			else{
-				Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
-			}
-		}*/
-		//valid   access
+		 
 		FieldDecl fd;
-		//	if(d instanceof ClassDecl){
+		 
 
-		//	}
-
-		if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) && d.getEntity()!=null){			 
+		if((d.type instanceof ClassType) || (d.type instanceof BaseType && (d.type.typeKind==TypeKind.INT || d.type.typeKind==TypeKind.BOOLEAN)) ||(d.type instanceof ArrayType) && d.getEntity()!=null){			 
 
 			if(d instanceof  LocalDecl)
 				Machine.emit(Op.STORE, 1,Reg.LB, d.getEntity().address) ;
@@ -273,7 +257,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		}while (ref instanceof QualifiedRef);
 
 		if(!(ref instanceof IdRef) )  //handles thisref
-		return false;  
+			return false;  
 
 
 		IdRef idr = (IdRef)ref;
@@ -346,11 +330,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 									Machine.emit(Op.LOADL,'\n'); 
 									Machine.emit(Prim.put); //prints newline
-								Machine.emit(Op.POP,3);//pop index, array length,address of array holding string
+									Machine.emit(Op.POP,3);//pop index, array length,address of array holding string
 
 									return true;
 
- 
+
 
 								}
 								else if(md.name.equals("println") && md.parameterDeclList.size() != 1 ){
@@ -391,69 +375,78 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 
 	private Boolean isQRlength(QualifiedRef qr){
-		Stack<Identifier> unRolledRef = new Stack<Identifier>();
-		Reference ref = qr; 
-		do{
-			QualifiedRef qqr = (QualifiedRef)ref;
-			unRolledRef.push(qqr.id);
-			ref = qqr.ref;
-		}while (ref instanceof QualifiedRef);
-
-		if(!(ref instanceof IdRef)) 	//handles thisref
-			return false;
-
-
-		IdRef idr = (IdRef)ref;
-		unRolledRef.push(idr.id);
-		if(unRolledRef.size() == 2){
-			Identifier idArr = unRolledRef.pop();
-			Declaration d = idArr.getDecl();
-			if(d instanceof VarDecl ){
-				VarDecl vd = (VarDecl)d;
-				if(vd.type.typeKind == TypeKind.ARRAY){
-					Identifier id = unRolledRef.pop();
-					d = id.getDecl();
-					if(id.spelling.equals("length")){
-						idArr.visit(this, false);
-						Machine.emit(Prim.arraylen);
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else{
-					return false;
-				}
-			}
-			else if(d instanceof FieldDecl)
-			{
-				FieldDecl fd = (FieldDecl)d;
-				if(fd.type.typeKind == TypeKind.ARRAY){
-					Identifier id = unRolledRef.pop();
-					d = id.getDecl();
-					if(id.spelling.equals("length")){
-						idArr.visit(this, false);
-						Machine.emit(Prim.arraylen);
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else{
-					return false;
-				}
-			}
-			else{
-				return false;
-			}
+		if(qr.id.spelling.equalsIgnoreCase("length")){
+			qr.ref.visit(this,false);
+			Machine.emit(Prim.arraylen);
+			return true;
 		}
-		else{
+		else
+		{
 			return false;
 		}
+//		Stack<Identifier> unRolledRef = new Stack<Identifier>();
+//		Reference ref = qr; 
+//		do{
+//			QualifiedRef qqr = (QualifiedRef)ref;
+//			unRolledRef.push(qqr.id);
+//			ref = qqr.ref;
+//		}while (ref instanceof QualifiedRef);
+//
+//		if(!(ref instanceof IdRef)) 	//handles thisref
+//			return false;
+//
+//
+//		IdRef idr = (IdRef)ref;
+//		unRolledRef.push(idr.id);
+//		if(unRolledRef.size() == 2){
+//			Identifier idArr = unRolledRef.pop();
+//			Declaration d = idArr.getDecl();
+//			if(d instanceof VarDecl ){
+//				VarDecl vd = (VarDecl)d;
+//				if(vd.type.typeKind == TypeKind.ARRAY){
+//					Identifier id = unRolledRef.pop();
+//					d = id.getDecl();
+//					if(id.spelling.equals("length")){
+//						idArr.visit(this, false);
+//						Machine.emit(Prim.arraylen);
+//						return true;
+//					}
+//					else
+//					{
+//						return false;
+//					}
+//				}
+//				else{
+//					return false;
+//				}
+//			}
+//			else if(d instanceof FieldDecl)
+//			{
+//				FieldDecl fd = (FieldDecl)d;
+//				if(fd.type.typeKind == TypeKind.ARRAY){
+//					Identifier id = unRolledRef.pop();
+//					d = id.getDecl();
+//					if(id.spelling.equals("length")){
+//						idArr.visit(this, false);
+//						Machine.emit(Prim.arraylen);
+//						return true;
+//					}
+//					else
+//					{
+//						return false;
+//					}
+//				}
+//				else{
+//					return false;
+//				}
+//			}
+//			else{
+//				return false;
+//			}
+//		}
+//		else{
+//			return false;
+//		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -897,7 +890,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				}
 			}
 			else{
+				if(!isLHS){
 				Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
+				}
+				
+					
 			}
 		}
 
