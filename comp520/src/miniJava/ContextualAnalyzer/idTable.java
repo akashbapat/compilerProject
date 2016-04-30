@@ -63,12 +63,13 @@ public class idTable {
 
 		cdSys =new ClassDecl("System", sysFDList, null , new SourcePosition()) ;
 		cdSys.type = new ClassType(new Identifier(new Token(TokenKind.ID, "System")), new SourcePosition());
+		cdSys.isBaseClass = true;//added to support inheritance
 		level0.put("System", cdSys);
 
 		cdString = new ClassDecl("String", null, null , new SourcePosition());
 		cdString.type = new ClassType(new Identifier(new Token(TokenKind.STRING, "String")), new SourcePosition());
 		cdString.type.typeKind = TypeKind.CLASS; //changed from unsupported to string to support string as basetype
-		
+		cdString.isBaseClass = true; //added to support inheritance
 		level0.put("String", cdString );
 		
 
@@ -84,7 +85,7 @@ public class idTable {
 		
 		cd_printStream =new ClassDecl("_PrintStream", null,   mdPrintStream, new SourcePosition()) ;
 		cd_printStream.type= new ClassType(new Identifier(new Token(TokenKind.ID, "_PrintStream")), new SourcePosition());
-		
+		cd_printStream.isBaseClass = true; //added to support inheritance
 		level0.put("_PrintStream",cd_printStream  );
 
 
