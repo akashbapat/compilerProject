@@ -423,7 +423,7 @@ public class typeChecker implements Visitor<Object,Type> {
 			if(s instanceof ReturnStmt){
 				hasRetStmt=true;
 
-				tEq = isEqual(stmtType,methodRetType);
+				tEq = isEqual(methodRetType,stmtType);
 
 				switch(tEq){
 				case UNEQUAL:
@@ -561,9 +561,9 @@ public class typeChecker implements Visitor<Object,Type> {
 
 	public Type visitIxAssignStmt(IxAssignStmt stmt, Object arg){
 
-
-		Type	refLHS = stmt.ixRef.visit(this, null);
 		Type	refRHS = stmt.val.visit(this, null);
+		Type	refLHS = stmt.ixRef.visit(this, null);
+		
 
 		return typeCheckAssignment(refLHS,refRHS);
 
@@ -592,7 +592,7 @@ public class typeChecker implements Visitor<Object,Type> {
 
 
 
-			tEq = isEqual(expType, md.parameterDeclList.get(i).type);
+			tEq = isEqual(md.parameterDeclList.get(i).type,expType);
 
 			if(md == printlnDecl && expType instanceof ClassType ){ //override the result of isEqual to simulate overloading of println
 				ct = (ClassType) expType;
@@ -808,7 +808,7 @@ public class typeChecker implements Visitor<Object,Type> {
 				argType =	e.visit(this, null);
 				argDefType =md.parameterDeclList.get(i).type;
 
-				tEq = isEqual(argType,argDefType);
+				tEq = isEqual(argDefType,argType);
 
 				switch(tEq){
 
