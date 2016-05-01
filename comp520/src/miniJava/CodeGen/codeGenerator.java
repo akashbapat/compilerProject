@@ -20,6 +20,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	ErrorReporter reporter;
 	MethodDecl mainMethodDecl;
 	CodeGenEntityCreator cgec;
+	classDescriptorCreator cdc;
 	int displacement;
 	boolean inAssign = false;
 	boolean isLastStatic = false;
@@ -53,6 +54,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		mainMethodDecl=md;
 		displacement=3;
 		cgec = new CodeGenEntityCreator(er);
+		cdc = new classDescriptorCreator();
 		//Flags
 	}
 
@@ -98,7 +100,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		Declaration ctD;
 
 		int classSize =  cgec.getClassDeclSize(d) ;
-		Machine.emit(Op.LOADL,-1 );  // inheritance flag indicating no superclass		 	
+		Machine.emit(Op.LOADL,cdc.getDescDisplacement(d.name) );  // inheritance flag indicating no superclass		 	
 		Machine.emit(Op.LOADL,classSize ); 	
 		Machine.emit(Prim.newobj);	
 
@@ -1151,6 +1153,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		}
 		
 	 public int	getDescDisplacement(String classname){
+ 
 			
 		  
 		 if( classDesc.containsKey(classname)){
@@ -1160,12 +1163,12 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			 System.out.println("No such class is created by class descriptor");
 			 return -1;
 		 }
-			
+  			
 		}
 	 
 	 public void create(ClassDecl  cd){
 		 
-		 Machine.emit
+	//	 Machine.emit
 		 
 	 }
 		

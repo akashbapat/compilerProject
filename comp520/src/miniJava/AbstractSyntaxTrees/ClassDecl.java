@@ -18,6 +18,7 @@ public class ClassDecl extends Declaration {
 	  isBaseClass = false;
 	  parentClassName ="";
 	  classSize = 0;
+	  numNonStaticMethods = 0;
 	//  parentClassList = new HashMap<String, Boolean>();
   }
   
@@ -31,6 +32,7 @@ public class ClassDecl extends Declaration {
   public String parentClassName;
   public ClassDecl parentClassDecl;
   public int classSize;
+  public int numNonStaticMethods;
  // private HashMap<String, Boolean> parentClassList;
   
   /*public void addParentClass(String s){
