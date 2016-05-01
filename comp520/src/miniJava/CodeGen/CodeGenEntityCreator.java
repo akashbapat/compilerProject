@@ -17,6 +17,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    int displacement;
 	    int stack_displacement;
 	    int object_displacement;
+	    int field_no;
 	    public Boolean generate(AST ast){
 	        System.out.println("======= Generating Enitities for Code and declaring static variables =====================");
 	    try{
@@ -34,6 +35,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		public CodeGenEntityCreator(ErrorReporter er){
 			reporter = er;
 			displacement=3;
+			field_no = 0;
 			Machine.initCodeGen();
 		}
 		
@@ -65,14 +67,14 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		}
 		
 		public int getClassDeclSize(ClassDecl cd){
-			int size = 0;
-			for (int i= 0; i< cd.fieldDeclList.size(); i++){
-				FieldDecl fd = cd.fieldDeclList.get(i);
-				if(!fd.isStatic){
-					size++;
-				}
-			}
-			return size;
+//			int size = 0;
+//			for (int i= 0; i< cd.fieldDeclList.size(); i++){
+//				FieldDecl fd = cd.fieldDeclList.get(i);
+//				if(!fd.isStatic){
+//					size++;
+//				}
+//			}
+			return cd.classSize;
 		}
 		
 		private void allocateOnHeap(ClassDecl d){
@@ -203,6 +205,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    public Object visitPackage(Package prog,Object obj){
 	
 	        for (ClassDecl c: prog.classDeclList){
+	        	field_no = 0;
 	            c.visit(this, null);
 	        }
 	        return prog;
@@ -215,7 +218,10 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		///////////////////////////////////////////////////////////////////////////////
 	    
 	    public Object visitClassDecl(ClassDecl clas, Object obj){
-	    	int k = 0;
+	    	if(!clas.isBaseClass){
+	    		visitClassDecl(clas.parentClassDecl, null);
+	    	}
+	    	
 	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
 	        	FieldDecl f = clas.fieldDeclList.get(i);
 	        	if(f.isStatic)
@@ -226,12 +232,12 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        	}
 	        	else
 	        	{
-	        		createEntity(f,k,Reg.OB);
-	        		k++;
+	        		createEntity(f,field_no,Reg.OB);
+	        		field_no++;
 	        	}
-	        	f.visit(this, null);
-	        	
+	        	f.visit(this, null);	
 	        }
+	        clas.classSize = field_no + 1;
 	        for (MethodDecl m: clas.methodDeclList)
 	        	m.visit(this, null);
 	        

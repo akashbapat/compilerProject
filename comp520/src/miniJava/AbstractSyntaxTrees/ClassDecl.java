@@ -17,7 +17,7 @@ public class ClassDecl extends Declaration {
 	  methodDeclList = mdl;
 	  isBaseClass = false;
 	  parentClassName ="";
-	  
+	  classSize = 0;
 	//  parentClassList = new HashMap<String, Boolean>();
   }
   
@@ -30,6 +30,7 @@ public class ClassDecl extends Declaration {
   public boolean  isBaseClass;
   public String parentClassName;
   public ClassDecl parentClassDecl;
+  public int classSize;
  // private HashMap<String, Boolean> parentClassList;
   
   /*public void addParentClass(String s){
