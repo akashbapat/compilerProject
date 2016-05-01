@@ -834,7 +834,19 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitBinaryExpr(BinaryExpr expr, Boolean isLHS){
+		int jumpExitbooleanExpr =0;
 		expr.left.visit(this, false);
+		if(expr.operator.spelling.equals("&&") ){
+			  jumpExitbooleanExpr = Machine.nextInstrAddr();
+			Machine.emit(Op.JUMPIF, 0, Reg.CB, -1);
+
+		}
+		else if(expr.operator.spelling.equals("||")){
+			  jumpExitbooleanExpr = Machine.nextInstrAddr();
+			Machine.emit(Op.JUMPIF, 1, Reg.CB, -1);
+		}
+		 
+		
 		expr.right.visit(this, false);	         
 		Prim p = null;
 		String spelling = expr.operator.spelling;
@@ -848,6 +860,21 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		}	    	
 		expr.operator.visit(this, false);
 		Machine.emit(p);
+		
+		int skipRExp =	Machine.nextInstrAddr();
+		
+		
+		if(  expr.operator.spelling.equals("&&") ){
+		Machine.patch(jumpExitbooleanExpr, skipRExp);
+		Machine.emit(Op.LOADL, 0);
+		
+		}
+		else if(expr.operator.spelling.equals("||") ){
+			Machine.patch(jumpExitbooleanExpr, skipRExp);
+			Machine.emit(Op.LOADL, 1);
+		}
+	
+		
 		return null;
 	}
 
