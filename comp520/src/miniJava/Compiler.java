@@ -95,7 +95,13 @@ public class Compiler {
  	 			CodeGenEntityCreator cgec = new CodeGenEntityCreator(reporter);
  	 			if(cgec.generate(ast)){
  	 				codeGenerator cg = new codeGenerator(reporter,mainMethodDecl);
- 	 	 			  cg.generate(ast);
+ 	 	 			
+ 	 				
+ 	 				if(!cg.generate(ast)){
+ 	 					System.out.println("Code generation failed ");
+ 	 					System.exit(4);
+ 	 				}
+ 	 				 
  	 	 			 //
  	 	 			String objectCodeFileName = args[0].substring(0, args[0].length()-5) + ".mJAM";
  	 	 			ObjectFile objF = new ObjectFile(objectCodeFileName);

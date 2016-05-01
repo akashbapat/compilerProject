@@ -212,6 +212,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		if( d instanceof FieldDecl ){
 			if(((FieldDecl) d).isStatic){
+				Machine.emit(Op.POP,1);
 				Machine.emit(Op.LOAD, Reg.SB, re.address);
 			}
 			else{
@@ -229,8 +230,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 			int address = Machine.nextInstrAddr();
 
-			if(((MethodDecl) d).isStatic)
+			if(((MethodDecl) d).isStatic){
+				Machine.emit(Op.POP,1);
+				address = Machine.nextInstrAddr();
 				Machine.emit(Op.CALL,Reg.CB,-1);
+			}
 			else
 				Machine.emit(Op.CALLI,Reg.CB,-1);
 
@@ -374,8 +378,16 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 
-	private Boolean isQRlength(QualifiedRef qr){
-		if(qr.id.spelling.equalsIgnoreCase("length")){
+	private Boolean isQRlength(QualifiedRef qr, boolean isLHS){
+		
+		 
+		if(qr.id.spelling.equalsIgnoreCase("length") ){
+			
+
+			if(isLHS){
+				codeGenError(" Fatal error: cannot assign to length of array "+ qr);
+			}
+			
 			qr.ref.visit(this,false);
 			Machine.emit(Prim.arraylen);
 			return true;
@@ -384,69 +396,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		{
 			return false;
 		}
-//		Stack<Identifier> unRolledRef = new Stack<Identifier>();
-//		Reference ref = qr; 
-//		do{
-//			QualifiedRef qqr = (QualifiedRef)ref;
-//			unRolledRef.push(qqr.id);
-//			ref = qqr.ref;
-//		}while (ref instanceof QualifiedRef);
-//
-//		if(!(ref instanceof IdRef)) 	//handles thisref
-//			return false;
-//
-//
-//		IdRef idr = (IdRef)ref;
-//		unRolledRef.push(idr.id);
-//		if(unRolledRef.size() == 2){
-//			Identifier idArr = unRolledRef.pop();
-//			Declaration d = idArr.getDecl();
-//			if(d instanceof VarDecl ){
-//				VarDecl vd = (VarDecl)d;
-//				if(vd.type.typeKind == TypeKind.ARRAY){
-//					Identifier id = unRolledRef.pop();
-//					d = id.getDecl();
-//					if(id.spelling.equals("length")){
-//						idArr.visit(this, false);
-//						Machine.emit(Prim.arraylen);
-//						return true;
-//					}
-//					else
-//					{
-//						return false;
-//					}
-//				}
-//				else{
-//					return false;
-//				}
-//			}
-//			else if(d instanceof FieldDecl)
-//			{
-//				FieldDecl fd = (FieldDecl)d;
-//				if(fd.type.typeKind == TypeKind.ARRAY){
-//					Identifier id = unRolledRef.pop();
-//					d = id.getDecl();
-//					if(id.spelling.equals("length")){
-//						idArr.visit(this, false);
-//						Machine.emit(Prim.arraylen);
-//						return true;
-//					}
-//					else
-//					{
-//						return false;
-//					}
-//				}
-//				else{
-//					return false;
-//				}
-//			}
-//			else{
-//				return false;
-//			}
-//		}
-//		else{
-//			return false;
-//		}
+ 
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -508,10 +458,13 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		m.type.visit(this, false);
 		Type retType =m.type;
 		boolean voidLastReturn =false;
-
-
+		WhileStmt wst;
+		ForStmt forst;
+		BlockStmt bodyBlock;
+		VarDeclStmt vdSt;
+		int numVdSt =0;
 		ParameterDeclList pdl = m.parameterDeclList;
-
+		
 
 		for (ParameterDecl pd: pdl) {
 			pd.visit(this, false);
@@ -520,9 +473,61 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 		for (int i = 0;i<sl.size(); i++) {
 			s=sl.get(i);
-
+			
+			if(s instanceof WhileStmt  ){
+				wst = (WhileStmt) s;
+				
+				if(wst.body instanceof BlockStmt){
+					bodyBlock = (BlockStmt) wst.body;
+					
+					for( int j=0; j<bodyBlock.sl.size();j++){
+						if(bodyBlock.sl.get(j)instanceof VarDeclStmt){
+							numVdSt++;
+							vdSt = (VarDeclStmt) bodyBlock.sl.get(j);
+							vdSt.visit(this,false);
+						}
+						
+					}
+				}
+				else if(wst.body instanceof VarDeclStmt){
+					wst.body.visit(this,false);
+					numVdSt =1;
+				}
+				 
+			}
+			else if(s instanceof ForStmt){
+				
+				forst = (ForStmt) s;
+				
+				if(forst.body instanceof BlockStmt){
+					bodyBlock = (BlockStmt) forst.body;
+					
+					for( int j=0; j<bodyBlock.sl.size();j++){
+						if(bodyBlock.sl.get(j)instanceof VarDeclStmt){
+							numVdSt++;
+							vdSt = (VarDeclStmt) bodyBlock.sl.get(j);
+							vdSt.visit(this,false);
+						}
+						
+					}
+					
+					
+				}
+				else if(forst.body instanceof VarDeclStmt){
+					forst.body.visit(this,false);
+					numVdSt =1;
+				}
+				
+				
+				
+			}
 			s.visit(this, false);
-
+			
+				//pops the vardecl stmt inside loops
+			if(numVdSt!=0){
+				Machine.emit(Op.POP,numVdSt);
+			}
+			
 			if(s instanceof ReturnStmt && retType.typeKind!=TypeKind.VOID ){
 				Machine.emit(Op.RETURN,1,Reg.LB,m.parameterDeclList.size());  
 			}
@@ -623,8 +628,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Prim.fieldupd);
 			}
 			else{
+				
 				encodeAssign(qr.id.getDecl());
-				Machine.emit(Op.POP);
+				Machine.emit(Op.POP,1);
+				
 				//Pop 
 			}	
 		}
@@ -697,10 +704,41 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	public Object visitWhileStmt(WhileStmt stmt, Boolean isLHS){
+		
+		BlockStmt bodyBlock;
+		VarDeclStmt vdSt;
+		Statement s;
 		int j = Machine.nextInstrAddr();
 		Machine.emit(Op.JUMP, 0, Reg.CB, 0);
 		int g = Machine.nextInstrAddr();
-		stmt.body.visit(this, false);
+		//stmt.body.visit(this, false);
+		if(stmt.body instanceof BlockStmt){
+			bodyBlock = (BlockStmt) stmt.body;
+			
+			for( int z=0;z<bodyBlock.sl.size();z++){
+				
+				s = bodyBlock.sl.get(z);
+				if(s instanceof VarDeclStmt){
+					vdSt = (VarDeclStmt)s;
+					
+				vdSt.initExp.visit(this, false);
+				Machine.emit(Op.STORE, 1,Reg.LB, vdSt.varDecl.getEntity().address) ;  
+				}
+				else{
+					s.visit(this, false);
+				}
+				
+			}
+			
+			
+		}
+		else if(stmt.body instanceof VarDeclStmt){
+			stmt.body.visit(this,false);
+			 
+		}
+		 
+		
+		
 		int h = Machine.nextInstrAddr();
 		Machine.patch(j, h);
 		stmt.cond.visit(this, false);
@@ -710,8 +748,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitForStmt(ForStmt stmt, Boolean isLHS){ //TODO : add codegenerator
 		//always check for null in for stmt for init,cond and inc
-
-
+		BlockStmt bodyBlock;
+		Statement s;
+		VarDeclStmt vdSt;
+		
+		
 		if(stmt.init!=null)
 			stmt.init.visit(this, false);
 
@@ -725,7 +766,35 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		int jumpAdd = Machine.nextInstrAddr();
 		Machine.emit(Op.JUMPIF, 0, Reg.CB, -1);
 
-		stmt.body.visit(this,false);
+		//stmt.body.visit(this,false);
+		
+		if(stmt.body instanceof BlockStmt){
+			bodyBlock = (BlockStmt) stmt.body;
+			
+			for( int z=0;z<bodyBlock.sl.size();z++){
+				
+				s = bodyBlock.sl.get(z);
+				if(s instanceof VarDeclStmt){
+					vdSt = (VarDeclStmt)s;
+					
+				vdSt.initExp.visit(this, false);
+				Machine.emit(Op.STORE, 1,Reg.LB, vdSt.varDecl.getEntity().address) ;  
+				}
+				else{
+					s.visit(this, false);
+				}
+				
+			}
+			
+			
+		}
+		else if(stmt.body instanceof VarDeclStmt){
+			stmt.body.visit(this,false);
+			 
+		}
+		 
+		 
+		
 
 		if(stmt.increment!=null)
 			stmt.increment.visit(this, false);
@@ -840,7 +909,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	///////////////////////////////////////////////////////////////////////////////
 
 	public Object visitQualifiedRef(QualifiedRef qr, Boolean isLHS) {
-		if(!checkQRForPrintln(qr) && !(isQRlength(qr))){
+		if(!checkQRForPrintln(qr) && !(isQRlength(qr,isLHS))){
 			boolean isStatic = false;
 
 			if(qr.ref.getDecl() instanceof FieldDecl)
@@ -852,6 +921,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			if(qr.id.getDecl() instanceof FieldDecl){
 				FieldDecl fd = (FieldDecl)qr.id.getDecl();
 				if(fd.isStatic){
+				//	if(isLHS){
+				//	Machine.emit(Op.POP,1);
+				//	}
+					 
 					isStatic = true;
 				}
 			}
@@ -885,8 +958,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			refFd = (FieldDecl) refD;
 			if(refFd.isStatic){
 				if(!isLHS){
-					Machine.emit(Op.POP);
-					//Machine.emit(Op.LOAD, Reg.SB, ref.id.getDecl() .getEntity().address);
+					 Machine.emit(Op.LOAD, Reg.SB, ref.id.getDecl() .getEntity().address);
 				}
 			}
 			else{
@@ -908,11 +980,9 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				ref.id.visit(this, isLHS);
 			}
 
-
+		 
 		}
-		//	else if(ref.id.getDecl() instanceof FieldDecl && ref.getDecl().type instanceof BaseType){
-		//		Machine.emit(Op.LOAD, Reg.OB, ref.id.getDecl() .getEntity().address);
-		//	}
+		 
 		else
 			ref.id.visit(this, isLHS);
 		return null;
@@ -976,10 +1046,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitBooleanLiteral(BooleanLiteral bool, Boolean isLHS){
 		if(bool.spelling.equals("true")){
-			Machine.emit(Op.LOADL, 0);
+			Machine.emit(Op.LOADL, 1);
 		}
 		else{
-			Machine.emit(Op.LOADL, 1);
+			Machine.emit(Op.LOADL, 0);
 		}
 		return null;
 	}
