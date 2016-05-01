@@ -54,7 +54,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		mainMethodDecl=md;
 		displacement=3;
 		cgec = new CodeGenEntityCreator(er);
-		cdc = new classDescriptorCreator();
+		cdc =  cgec.getclassDescriptorCreator();
 		//Flags
 	}
 
@@ -1143,36 +1143,6 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 
-	private class classDescriptorCreator{
-		
-		private HashMap<String, Integer> classDesc;
-		
-		
-		public classDescriptorCreator(){
-			classDesc = new HashMap<String, Integer>();
-		}
-		
-	 public int	getDescDisplacement(String classname){
- 
-			
-		  
-		 if( classDesc.containsKey(classname)){
-			return classDesc.get(classname);
-		 }
-		 else{
-			 System.out.println("No such class is created by class descriptor");
-			 return -1;
-		 }
-  			
-		}
-	 
-	 public void create(ClassDecl  cd){
-		 
-	//	 Machine.emit
-		 
-	 }
-		
-	}
 
 
 }

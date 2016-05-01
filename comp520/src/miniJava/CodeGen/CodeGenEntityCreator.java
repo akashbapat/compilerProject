@@ -1,6 +1,8 @@
 package miniJava.CodeGen;
 
 
+import java.util.HashMap;
+
 import mJAM.*;
 import mJAM.Machine.Op;
 import mJAM.Machine.Prim;
@@ -18,10 +20,20 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    int stack_displacement;
 	    int object_displacement;
 	    int field_no;
+	    classDescriptorCreator cdc;
+	    
+	    public classDescriptorCreator getclassDescriptorCreator(){
+	    	return cdc;
+	    }
+	    
 	    public Boolean generate(AST ast){
 	        System.out.println("======= Generating Enitities for Code and declaring static variables =====================");
 	    try{
 	    	 ast.visit(this, null);
+	    	 
+	    	 cdc.setStackDisplacement(stack_displacement);
+	    	 
+	    	 
 	    }
 	    catch (CodeGenError cge) {
 			System.out.println("Code generator error occurred");
@@ -36,6 +48,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			reporter = er;
 			displacement=3;
 			field_no = 0;
+			cdc = new classDescriptorCreator();
 			Machine.initCodeGen();
 		}
 		
@@ -208,6 +221,15 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        	field_no = 0;
 	            c.visit(this, null);
 	        }
+	        
+	        
+	        //allocates class descriptors
+	       for (ClassDecl c: prog.classDeclList){
+	        	 cdc.allocate(c);
+	            
+	        }
+	        
+	        cdc.patchParentClasses();
 	        return prog;
 	    }
 	    
@@ -524,6 +546,18 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		}
 
 
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 	
 }
 
