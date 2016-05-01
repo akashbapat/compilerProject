@@ -20,6 +20,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    int stack_displacement;
 	    int object_displacement;
 	    int field_no;
+        int method_no;
 	    classDescriptorCreator cdc;
 	    
 	    public classDescriptorCreator getclassDescriptorCreator(){
@@ -48,6 +49,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			reporter = er;
 			displacement=3;
 			field_no = 0;
+			method_no = 0;
 			cdc = new classDescriptorCreator();
 			Machine.initCodeGen();
 		}
@@ -219,9 +221,10 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	
 	        for (ClassDecl c: prog.classDeclList){
 	        	field_no = 0;
+	        	method_no = 0;
 	            c.visit(this, null);
 	        }
-	        
+	        cdc.AddClassDeclList(prog.classDeclList);
 	        cdc.setStackDisplacement(stack_displacement);
 	        //allocates class descriptors
 	       for (ClassDecl c: prog.classDeclList){
@@ -259,17 +262,16 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        	}
 	        	f.visit(this, null);	
 	        }
-	        clas.classSize = field_no + 1;
-	        int count = 0;
+	        clas.classSize = field_no;
 	        for (MethodDecl m: clas.methodDeclList){
 	        	m.visit(this, null);
 	        	MemberDecl md = (MemberDecl)m;
 	        	if(!md.isStatic){
-	        		createEntity(m,count,Reg.CB);
-	        		count++;
+	        		createEntity(m,method_no,Reg.CB);
+	        		method_no++;
 	        	}
 	        }
-	        	
+	        clas.numNonStaticMethods = method_no;	
 	        return clas;
 	    }
 	    
