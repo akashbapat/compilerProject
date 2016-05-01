@@ -7,6 +7,7 @@ import mJAM.Machine;
 import mJAM.Machine.Op;
 import mJAM.Machine.Reg;
 import miniJava.AbstractSyntaxTrees.ClassDecl;
+import miniJava.AbstractSyntaxTrees.ClassDeclList;
 import miniJava.AbstractSyntaxTrees.MethodDecl;
 
  public class classDescriptorCreator{
@@ -18,17 +19,18 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 	
 	
 	private ArrayList<Integer> childVirtualFuncAddr;
-	private ArrayList<MethodDecl> parentOverriddenFuncDecl;
-	
-	
+	private ArrayList<Integer> parentOverriddenFuncDelta;
+	private ClassDeclList cdl;
+	private ArrayList<Integer> deltaChildClass;
 	public classDescriptorCreator(){
+		 
 		classDesc = new HashMap<String, Integer>();
 		classDescPatcherClassName = new ArrayList<String>();
 		classDescPatcherClassAddr = new ArrayList<Integer>();
 		
-		parentOverriddenFuncDecl = new ArrayList<MethodDecl>();
+		parentOverriddenFuncDelta = new ArrayList<Integer>();
 		childVirtualFuncAddr = new ArrayList<Integer>();
-		
+		deltaChildClass = new ArrayList<Integer>();
 		stackDisplacement =0;
 	}
 	
@@ -46,6 +48,10 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 			
 	}
  
+ 
+ public void addClassDeclList(ClassDeclList _cdl){
+	 cdl =_cdl;
+ }
  public void allocate(ClassDecl  cd){
 	 
   
@@ -65,40 +71,43 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
  }
  
  
- public void addFunction(ClassDecl cd,String funcName, int delta, int FuncAddr){
+ public void addFunction(ClassDecl cd,MethodDecl funcMd, int delta, int FuncAddr){
 	 
 	int classDelta = classDesc.get(cd.name);
 	 
 	//classDelta +2+delta [SB] <- address
 	
- int 	stackaddr = classDelta +2+delta ;
+ int 	stackAddr = classDelta +2+delta ;
  
  Machine.emit(Op.LOADL, FuncAddr);
  
-	Machine.emit(Op.STORE, 1,Reg.SB, stackaddr) ;
+	Machine.emit(Op.STORE, 1,Reg.SB, stackAddr) ;
 	
-	
-  
+	funcMd.getEntity().stackAddress = stackAddr;
+	addToVirtualPatcher( cd, funcMd, delta, stackAddr,classDelta);
 	
  }
  
- private void addToVirtualPatcher(ClassDecl cd,MethodDecl funcMd, int stackAddr){
+ private void addToVirtualPatcher(ClassDecl cd,MethodDecl funcMd,int delta, int stackAddr,int classDelta){
 	 
 	 ClassDecl parentClassDecl ;
 	 MethodDecl md;
+	  
+	 
 	 if(!cd.isBaseClass){
-		 
+	 	 
 		 parentClassDecl = cd.parentClassDecl;
+		 
+		 addToVirtualPatcher(  parentClassDecl,  funcMd, delta,  stackAddr,classDelta); //necessary to pass whatever is received by outside call
 		 
 		 for(int i =1;i<parentClassDecl.methodDeclList.size(); i++){
 			 md = parentClassDecl.methodDeclList.get(i);
 			 
 			 if(md.name.equals(funcMd.name)){
-				 
-				 
+		 		 
 				 childVirtualFuncAddr.add(stackAddr);
-				 
-				 
+				 parentOverriddenFuncDelta.add(delta);
+				 deltaChildClass.add(classDelta);
 			 }
 			 
 		 }
@@ -108,7 +117,70 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 	 
  }
  
- public void patchParentClasses(){
+ 
+ public void virtualPatcher(){
+	 
+	 int overriddenFuncDelta;
+	 int overWriteAddr;
+	 for(int i=0;i<childVirtualFuncAddr.size();i++){
+		 Machine.emit(Op.LOADL, childVirtualFuncAddr.get(i));
+		 
+		 overriddenFuncDelta = parentOverriddenFuncDelta.get(i);
+		 overriddenFuncDelta = overriddenFuncDelta +2;
+		 overWriteAddr = overriddenFuncDelta + deltaChildClass.get(i);
+
+			Machine.emit(Op.STORE, 1,Reg.SB, overWriteAddr) ;
+		 
+	 }
+	 
+	
+	 
+	 
+ }
+ 
+ 
+ public void parentMethodCopy(){
+	 
+	 for(ClassDecl c : cdl){
+		 parentMethodCopyInChild(  c);
+	 }
+	 
+ }
+ 
+ 
+ private void parentMethodCopyInChild(ClassDecl c){
+	 
+	 ClassDecl parentClassDecl;
+	 int parentDeltaStack ;
+	 int ownDeltaStack;
+	 if(!c.isBaseClass){
+		 
+		 parentMethodCopyInChild(c.parentClassDecl);
+		 
+		 
+		 parentClassDecl = c.parentClassDecl;
+		 parentDeltaStack = classDesc.get(parentClassDecl.name);
+		 ownDeltaStack = classDesc.get(c.name);
+		 parentDeltaStack=parentDeltaStack+2;
+		 ownDeltaStack = ownDeltaStack+2;
+		 
+		 
+		 
+		 for(int i=0;i<parentClassDecl.numNonStaticMethods; i++){
+			
+			 Machine.emit(Op.LOAD, Reg.SB, parentDeltaStack);
+			 Machine.emit(Op.STORE,1, Reg.SB, ownDeltaStack);
+			 ownDeltaStack++;
+			 parentDeltaStack++;
+		 }
+		 
+		 
+	 }
+	  
+ }
+ 
+ 
+ public void patchParentClassesD(){
 	 // here all the empty descriptors have been allocated
 	 
 	 for(int i=0;i<classDescPatcherClassName.size();i++){
