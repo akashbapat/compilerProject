@@ -22,11 +22,16 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 	private ArrayList<Integer> parentOverriddenFuncDelta;
 	private ClassDeclList cdl;
 	private ArrayList<Integer> deltaChildClass;
+	private ArrayList<Integer> ownFuncCodeAddr;
+	private ArrayList< Integer> ownFuncStackWriteAddr;
 	public classDescriptorCreator(){
 		 
 		classDesc = new HashMap<String, Integer>();
 		classDescPatcherClassName = new ArrayList<String>();
 		classDescPatcherClassAddr = new ArrayList<Integer>();
+		
+		ownFuncCodeAddr = new ArrayList<Integer>();
+		ownFuncStackWriteAddr = new ArrayList<Integer>();
 		
 		parentOverriddenFuncDelta = new ArrayList<Integer>();
 		childVirtualFuncAddr = new ArrayList<Integer>();
@@ -52,8 +57,12 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
  public void addClassDeclList(ClassDeclList _cdl){
 	 cdl =_cdl;
  }
+ 
+ 
+ 
+ 
  public void allocate(ClassDecl  cd){
-	 
+	 /*
   
 classDesc.put(cd.name, stackDisplacement);
 
@@ -64,10 +73,28 @@ if(!cd.isBaseClass){
 	classDescPatcherClassAddr.add(stackDisplacement +1);
 }
 Machine.emit(Op.LOADL, -1);
-Machine.emit(Op.PUSH, cd.numNonStaticMethods);
+Machine.emit(Op.PUSH, cd.numNonStaticMethods);//creates  empty slots for func code addr
 	
 stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
-
+*/
+	 
+	 
+	 classDesc.put(cd.name, stackDisplacement);	 
+	 if(!cd.isBaseClass){
+	 	
+	 	classDescPatcherClassName.add(cd.parentClassName);
+	 	classDescPatcherClassAddr.add(stackDisplacement);
+	 }
+	 
+	 
+	 Machine.emit(Op.LOADL, -1);//creates dA
+	 Machine.emit(Op.LOADL, cd.numNonStaticMethods); // puts number of non static methods in the first field  
+	 Machine.emit(Op.PUSH, cd.numNonStaticMethods); //creates  empty slots for func code addr
+	 
+	 stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
+	 
+	 
+	 
  }
  
  
@@ -79,16 +106,39 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 	
  int 	stackAddr = classDelta +2+delta ;
  
- Machine.emit(Op.LOADL, FuncAddr);
+// Machine.emit(Op.LOADL, FuncAddr);
  
-	Machine.emit(Op.STORE, 1,Reg.SB, stackAddr) ;
+	//Machine.emit(Op.STORE, 1,Reg.SB, stackAddr) ;
 	
+ 
+ ownFuncCodeAddr.add(FuncAddr);
+ ownFuncStackWriteAddr.add(stackAddr);
+ 
 	funcMd.getEntity().stackAddress = stackAddr;
-	addToVirtualPatcher( cd, funcMd, delta, stackAddr,classDelta);
+	
+	
+	
+	
+	addToVirtualPatcher( cd, funcMd, stackAddr,classDelta);
 	
  }
  
- private void addToVirtualPatcher(ClassDecl cd,MethodDecl funcMd,int delta, int stackAddr,int classDelta){
+ public void ownFuncPatcher(){
+	 int FuncAddr,stackAddr;
+	  for(int i=0;i<ownFuncCodeAddr.size();i++){
+		  FuncAddr = ownFuncCodeAddr.get(i);
+		  stackAddr = ownFuncStackWriteAddr.get(i);
+		  
+		 Machine.emit(Op.LOADL, FuncAddr);
+		  
+			 Machine.emit(Op.STORE, 1,Reg.SB, stackAddr) ;
+		  
+	  }
+ }
+ 
+ 
+ 
+ private void addToVirtualPatcher(ClassDecl cd,MethodDecl funcMd, int stackAddr,int classDelta){
 	 
 	 ClassDecl parentClassDecl ;
 	 MethodDecl md;
@@ -98,15 +148,15 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 	 	 
 		 parentClassDecl = cd.parentClassDecl;
 		 
-		 addToVirtualPatcher(  parentClassDecl,  funcMd, delta,  stackAddr,classDelta); //necessary to pass whatever is received by outside call
+		 addToVirtualPatcher(  parentClassDecl,  funcMd,  stackAddr,classDelta); //necessary to pass whatever is received by outside call
 		 
-		 for(int i =1;i<parentClassDecl.methodDeclList.size(); i++){
+		 for(int i =0;i<parentClassDecl.methodDeclList.size(); i++){
 			 md = parentClassDecl.methodDeclList.get(i);
 			 
 			 if(md.name.equals(funcMd.name)){
 		 		 
 				 childVirtualFuncAddr.add(stackAddr);
-				 parentOverriddenFuncDelta.add(delta);
+				 parentOverriddenFuncDelta.add(md.getEntity().methodIndex);
 				 deltaChildClass.add(classDelta);
 			 }
 			 
@@ -123,7 +173,8 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 	 int overriddenFuncDelta;
 	 int overWriteAddr;
 	 for(int i=0;i<childVirtualFuncAddr.size();i++){
-		 Machine.emit(Op.LOADL, childVirtualFuncAddr.get(i));
+	//	 Machine.emit(Op.LOADL, childVirtualFuncAddr.get(i)  );
+		 Machine.emit(Op.LOAD, 1, Reg.SB,childVirtualFuncAddr.get(i)); 
 		 
 		 overriddenFuncDelta = parentOverriddenFuncDelta.get(i);
 		 overriddenFuncDelta = overriddenFuncDelta +2;

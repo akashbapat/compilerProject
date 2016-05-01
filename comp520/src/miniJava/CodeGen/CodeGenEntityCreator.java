@@ -224,7 +224,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        	method_no = 0;
 	            c.visit(this, null);
 	        }
-	        cdc.AddClassDeclList(prog.classDeclList);
+	        cdc.addClassDeclList(prog.classDeclList);
 	        cdc.setStackDisplacement(stack_displacement);
 	        //allocates class descriptors
 	       for (ClassDecl c: prog.classDeclList){
@@ -232,7 +232,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	            
 	        }
 	        
-	        cdc.patchParentClasses();
+	        cdc.patchParentClassesD();
 	        return prog;
 	    }
 	    
@@ -241,6 +241,8 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		// DECLARATIONS
 		//
 		///////////////////////////////////////////////////////////////////////////////
+	    
+	    
 	    
 	    public Object visitClassDecl(ClassDecl clas, Object obj){
 	    	if(!clas.isBaseClass){

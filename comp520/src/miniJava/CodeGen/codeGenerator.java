@@ -413,20 +413,36 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	/////////////////////////////////////////////////////////////////////////////// 
 
 	public Object visitPackage(Package prog, Boolean isLHS){
-
+		
+		int jumpToClassDescInit = Machine.nextInstrAddr();		
+		Machine.emit(Op.JUMP,Reg.CB,-1);
+		int jumpToMainInit = Machine.nextInstrAddr();
+		
+		
 		Machine.emit(Op.LOADL,0);            // array length 0
 		Machine.emit(Prim.newarr);           // empty String array argument
 		int patchAddr_Call_main = Machine.nextInstrAddr();  // record instr addr where
 		fp.addFunction(mainMethodDecl, patchAddr_Call_main);                                        // "main" is called
 		Machine.emit(Op.CALL,Reg.CB,-1);     // static call main (address to be patched)
 		Machine.emit(Op.HALT,0,0,0);         // end execution
+		
+		
+		
+		
 		ClassDeclList cl = prog.classDeclList;
-
-
 		for (ClassDecl c: prog.classDeclList){
 			c.visit(this, false);
 		}
 		fp.patchMembers();
+		
+		
+		int beforeClassDescInit =Machine.nextInstrAddr();
+		Machine.patch(jumpToClassDescInit,beforeClassDescInit);
+	 	cdc.ownFuncPatcher();		
+	 	cdc.parentMethodCopy();
+	 	cdc.virtualPatcher();
+		Machine.emit(Op.JUMP,Reg.CB,jumpToMainInit);
+		
 		return null;
 	}
 
@@ -468,7 +484,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		else
 		{
 			RuntimeEntity re = m.getEntity();
-			cdc.addFunction(currClassDecl,re.methodIndex,address);
+			cdc.addFunction(currClassDecl,m,re.methodIndex,address);
+			 
 		}
 		Statement s;
 		m.type.visit(this, false);
