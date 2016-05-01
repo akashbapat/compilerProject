@@ -21,6 +21,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	MethodDecl mainMethodDecl;
 	CodeGenEntityCreator cgec;
 	classDescriptorCreator cdc;
+	String currClassname;
 	int displacement;
 	boolean inAssign = false;
 	boolean isLastStatic = false;
@@ -54,7 +55,11 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		mainMethodDecl=md;
 		displacement=3;
 		cgec = new CodeGenEntityCreator(er);
+ 
 		cdc =  cgec.getclassDescriptorCreator();
+ 
+		currClassname = "";
+ 
 		//Flags
 	}
 
@@ -434,7 +439,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitClassDecl(ClassDecl clas, Boolean isLHS){
 
-
+		currClassname = clas.name;
 		for (int i= 0; i< clas.fieldDeclList.size(); i++){
 			FieldDecl f = clas.fieldDeclList.get(i);
 			//createEntity(f,i);
@@ -455,10 +460,19 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitMethodDecl(MethodDecl m, Boolean isLHS){
 		int address = Machine.nextInstrAddr();
-		createEntity(m, address);
+		MemberDecl md = (MemberDecl)m;
+		if(md.isStatic)
+		{
+			createEntity(m, address);
+		}
+		else
+		{
+			RuntimeEntity re = m.getEntity();
+			cdc.addFunction(currClassname,re.methodIndex,address);
+		}
 		Statement s;
 		m.type.visit(this, false);
-		Type retType =m.type;
+		Type retType = m.type;
 		boolean voidLastReturn =false;
 		WhileStmt wst;
 		ForStmt forst;

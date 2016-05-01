@@ -145,7 +145,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			}
 			else if(d instanceof MethodDecl ){
 				displacement = 3;
-				RuntimeEntity re =	 new KnownAddress(1, s);
+				RuntimeEntity re =	 new KnownAddress(1, -1,s);
 				re.base = base;
 				d.setEntity(re);
 					}
@@ -260,9 +260,16 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        	f.visit(this, null);	
 	        }
 	        clas.classSize = field_no + 1;
-	        for (MethodDecl m: clas.methodDeclList)
+	        int count = 0;
+	        for (MethodDecl m: clas.methodDeclList){
 	        	m.visit(this, null);
-	        
+	        	MemberDecl md = (MemberDecl)m;
+	        	if(!md.isStatic){
+	        		createEntity(m,count,Reg.CB);
+	        		count++;
+	        	}
+	        }
+	        	
 	        return clas;
 	    }
 	    
@@ -275,7 +282,6 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    
 	    public Object visitMethodDecl(MethodDecl m, Object obj){
 	    	ParameterDecl pd;
-	    	createEntity(m, -1,Reg.CB); //creating entity
 	    	Statement s;
 	     	m.type.visit(this, false);
 	     	
