@@ -76,7 +76,7 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 	 for(int i=0;i<classDescPatcherClassName.size();i++){
 		 
 		int  stackAddr = classDescPatcherClassAddr.get(i);
-		int parentDelta = classDesc.get(classDescPatcherClassName);
+		int parentDelta = classDesc.get(classDescPatcherClassName.get(i));
 		
 		 Machine.emit(Op.LOADL, parentDelta);
 		 

@@ -31,7 +31,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    try{
 	    	 ast.visit(this, null);
 	    	 
-	    	 cdc.setStackDisplacement(stack_displacement);
+	    	
 	    	 
 	    	 
 	    }
@@ -222,7 +222,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	            c.visit(this, null);
 	        }
 	        
-	        
+	        cdc.setStackDisplacement(stack_displacement);
 	        //allocates class descriptors
 	       for (ClassDecl c: prog.classDeclList){
 	        	 cdc.allocate(c);
