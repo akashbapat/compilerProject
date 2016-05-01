@@ -21,7 +21,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	MethodDecl mainMethodDecl;
 	CodeGenEntityCreator cgec;
 	classDescriptorCreator cdc;
-	String currClassname;
+	ClassDecl currClassDecl;
 	int displacement;
 	boolean inAssign = false;
 	boolean isLastStatic = false;
@@ -58,7 +58,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
  
 		cdc =  cgec.getclassDescriptorCreator();
  
-		currClassname = "";
+		currClassDecl = null;
  
 		//Flags
 	}
@@ -439,7 +439,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 
 	public Object visitClassDecl(ClassDecl clas, Boolean isLHS){
 
-		currClassname = clas.name;
+		currClassDecl = clas;
 		for (int i= 0; i< clas.fieldDeclList.size(); i++){
 			FieldDecl f = clas.fieldDeclList.get(i);
 			//createEntity(f,i);
@@ -468,7 +468,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		else
 		{
 			RuntimeEntity re = m.getEntity();
-			cdc.addFunction(currClassname,re.methodIndex,address);
+			cdc.addFunction(currClassDecl,re.methodIndex,address);
 		}
 		Statement s;
 		m.type.visit(this, false);
