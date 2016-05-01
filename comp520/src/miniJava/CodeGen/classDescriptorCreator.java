@@ -7,6 +7,7 @@ import mJAM.Machine;
 import mJAM.Machine.Op;
 import mJAM.Machine.Reg;
 import miniJava.AbstractSyntaxTrees.ClassDecl;
+import miniJava.AbstractSyntaxTrees.MethodDecl;
 
  public class classDescriptorCreator{
 	
@@ -14,10 +15,20 @@ import miniJava.AbstractSyntaxTrees.ClassDecl;
 	private  ArrayList<Integer> classDescPatcherClassAddr;
 	private ArrayList<String> classDescPatcherClassName;
 	private int stackDisplacement;
+	
+	
+	private ArrayList<Integer> childVirtualFuncAddr;
+	private ArrayList<Integer> parentOverriddenFuncAddr;
+	
+	
 	public classDescriptorCreator(){
 		classDesc = new HashMap<String, Integer>();
 		classDescPatcherClassName = new ArrayList<String>();
 		classDescPatcherClassAddr = new ArrayList<Integer>();
+		
+		parentOverriddenFuncAddr = new ArrayList<Integer>();
+		childVirtualFuncAddr = new ArrayList<Integer>();
+		
 		stackDisplacement =0;
 	}
 	
@@ -54,9 +65,9 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
  }
  
  
- public void addFunction(String classname, int delta, int FuncAddr){
+ public void addFunction(ClassDecl cd,String funcName, int delta, int FuncAddr){
 	 
-	int classDelta = classDesc.get(classname);
+	int classDelta = classDesc.get(cd.name);
 	 
 	//classDelta +2+delta [SB] <- address
 	
@@ -66,9 +77,27 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
  
 	Machine.emit(Op.STORE, 1,Reg.SB, stackaddr) ;
 	
+	
+  
+	
  }
  
- 
+ private void addToVirtualPatcher(ClassDecl cd,String funcName){
+	 
+	 ClassDecl parentClassDecl ;
+	 MethodDecl md;
+	 if(!cd.isBaseClass){
+		 
+		 parentClassDecl = cd.parentClassDecl;
+		 
+		 for(int i =1;i<parentClassDecl.methodDeclList.size(); i++){
+			 md =
+		 }
+		 
+	 }
+	 
+	 
+ }
  
  public void patchParentClasses(){
 	 // here all the empty descriptors have been allocated
