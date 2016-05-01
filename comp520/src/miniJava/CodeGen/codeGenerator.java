@@ -1145,10 +1145,29 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		
 		private HashMap<String, Integer> classDesc;
 		
+		
+		public classDescriptorCreator(){
+			classDesc = new HashMap<String, Integer>();
+		}
+		
 	 public int	getDescDisplacement(String classname){
 			
+		  
+		 if( classDesc.containsKey(classname)){
+			return classDesc.get(classname);
+		 }
+		 else{
+			 System.out.println("No such class is created by class descriptor");
+			 return -1;
+		 }
 			
 		}
+	 
+	 public void create(ClassDecl  cd){
+		 
+		 Machine.emit
+		 
+	 }
 		
 	}
 
