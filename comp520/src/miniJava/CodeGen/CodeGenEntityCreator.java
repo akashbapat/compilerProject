@@ -50,6 +50,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			displacement=3;
 			field_no = 0;
 			method_no = 0;
+			stack_displacement=0;
 			cdc = new classDescriptorCreator();
 			Machine.initCodeGen();
 		}
@@ -59,7 +60,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 			}
 
 		private void codeGenError(String e) throws CodeGenError {
-			reporter.reportError("*** CodeGenError error: " + e);
+			reporter.reportError(" CodeGenError error: " + e);
 			throw new CodeGenError();
 
 		}
@@ -216,10 +217,12 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		/////////////////////////////////////////////////////////////////////////////// 
 
 	    public Object visitPackage(Package prog,Object obj){
-	
+	    	Machine.emit(Op.PUSH, 1);// this is done to deal with a bug in interpreter code, see line 633
+	    	stack_displacement++;// this is done to deal with a bug in interpreter code, see line 633
+	    	
+	    	
 	        for (ClassDecl c: prog.classDeclList){
-	        	field_no = 0;
-	        	method_no = 0;
+	        	
 	            c.visit(this, null);
 	        }
 	        cdc.addClassDeclList(prog.classDeclList);
@@ -277,7 +280,8 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    }
 	    
 	    public Object visitClassDecl(ClassDecl clas, Object obj){
-	
+	    	field_no = 0;
+        	method_no = 0;
 	    	assignEntityToClassMembers(clas);
 	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
 	        	FieldDecl f = clas.fieldDeclList.get(i);

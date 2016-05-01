@@ -125,9 +125,9 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 
 
-		// now check in parent class
+		// now check in parent class, when unable to find in child class
 
-		if(!cd.isBaseClass){
+		if(!cd.isBaseClass && qr.id.getDecl()==null){
 			parentClassDecl = (ClassDecl) idTab.getClass(cd.parentClassName);
 
 			getFieldMethodDecl( qr,  idTab, false, name ,  isFuncStatic, isCall, parentClassDecl ); //false because we cannot access private members of parentclasses

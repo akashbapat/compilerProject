@@ -68,7 +68,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 	private void codeGenError(String e) throws CodeGenError {
-		reporter.reportError("*** CodeGenError error: " + e);
+		reporter.reportError("  CodeGenError error: " + e);
 		throw new CodeGenError();
 
 	}
@@ -241,6 +241,7 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Op.POP,1);
 				address = Machine.nextInstrAddr();
 				Machine.emit(Op.CALL,Reg.CB,-1);
+				fp.addFunction((MethodDecl)d, address);
 			}
 			else
 				Machine.emit(Op.CALLD,re.methodIndex);
@@ -587,8 +588,8 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	} 
 
 	public Object visitVarDecl(VarDecl vd, Boolean isLHS){
-		createEntity(  vd, 1);
-		// vd.type.visit(this, false);
+	//	createEntity(  vd, 1);
+		vd.type.visit(this, false);
 
 		return null;
 	}
@@ -872,11 +873,13 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		if(expr.operator.spelling.equals("&&") ){
 			  jumpExitbooleanExpr = Machine.nextInstrAddr();
 			Machine.emit(Op.JUMPIF, 0, Reg.CB, -1);
+			Machine.emit(Op.LOADL, 1); // this is to reintroduce the value that jumif consumed, we need it when jumpif fails
 
 		}
 		else if(expr.operator.spelling.equals("||")){
 			  jumpExitbooleanExpr = Machine.nextInstrAddr();
 			Machine.emit(Op.JUMPIF, 1, Reg.CB, -1);
+			Machine.emit(Op.LOADL, 0);// this is to reintroduce the value that jumif consumed, we need it when jumpif fails
 		}
 		 
 		
@@ -894,6 +897,10 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 		expr.operator.visit(this, false);
 		Machine.emit(p);
 		
+		int skipShortCircuitRestoreFrom =	Machine.nextInstrAddr();
+		Machine.emit(Op.JUMP,Reg.CB,-1);
+		
+		
 		int skipRExp =	Machine.nextInstrAddr();
 		
 		
@@ -907,7 +914,9 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 			Machine.emit(Op.LOADL, 1);
 		}
 	
+	int skipShortCircuitRestoreTo =	Machine.nextInstrAddr();
 		
+		Machine.patch(skipShortCircuitRestoreFrom, skipShortCircuitRestoreTo);
 		return null;
 	}
 
