@@ -1141,6 +1141,16 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 	}
 
 
+	private class classDescriptorCreator{
+		
+		private HashMap<String, Integer> classDesc;
+		
+	 public int	getDescDisplacement(String classname){
+			
+			
+		}
+		
+	}
 
 
 }
