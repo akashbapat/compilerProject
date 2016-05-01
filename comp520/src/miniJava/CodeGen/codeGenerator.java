@@ -243,9 +243,9 @@ public class codeGenerator implements Visitor<Boolean,Object> {
 				Machine.emit(Op.CALL,Reg.CB,-1);
 			}
 			else
-				Machine.emit(Op.CALLI,Reg.CB,-1);
-
-			fp.addFunction((MethodDecl)d, address);
+				Machine.emit(Op.CALLD,re.methodIndex);
+				//Machine.emit(Op.CALLI,Reg.CB,-1);
+				//fp.addFunction((MethodDecl)d, address);
 		}
 		else if(d instanceof ParameterDecl){
 			Machine.emit(Op.LOAD, Reg.LB,re.address);
