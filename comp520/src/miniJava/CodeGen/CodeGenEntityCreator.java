@@ -146,7 +146,6 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		d.setEntity(re);
 			}
 			else if(d instanceof MethodDecl ){
-				displacement = 3;
 				RuntimeEntity re =	 new KnownAddress(1, -1,s);
 				re.base = base;
 				d.setEntity(re);
@@ -181,7 +180,6 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 						 ClassType ct = (ClassType) (d.type);
 						 ClassDecl cd =  (ClassDecl)ct.className.getDecl();
 						 int n = cd.fieldDeclList.size();
-						
 						 RuntimeEntity re =	 new KnownAddress(n,s);
 						 re.base = base; 
 						 d.setEntity(re);
@@ -242,31 +240,33 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 		//
 		///////////////////////////////////////////////////////////////////////////////
 	    
-	    
-	    
-	    public Object visitClassDecl(ClassDecl clas, Object obj){
+	    private void assignEntityToClassMembers(ClassDecl clas)
+	    {
 	    	if(!clas.isBaseClass){
-	    		visitClassDecl(clas.parentClassDecl, null);
+	    		assignEntityToClassMembers(clas.parentClassDecl);
 	    	}
-	    	
 	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
 	        	FieldDecl f = clas.fieldDeclList.get(i);
 	        	if(f.isStatic)
 	        	{
 	        		createEntity(f,-1,Reg.SB);
-	        		allocateOnStack(f);
-	        		
+	        		allocateOnStack(f);	
 	        	}
 	        	else
 	        	{
 	        		createEntity(f,field_no,Reg.OB);
 	        		field_no++;
 	        	}
-	        	f.visit(this, null);	
 	        }
 	        clas.classSize = field_no;
+	    }
+	    
+	    private void assignEntityToClassFunctions(ClassDecl clas)
+	    {
+	    	if(!clas.isBaseClass){
+	    		assignEntityToClassFunctions(clas.parentClassDecl);
+	    	}
 	        for (MethodDecl m: clas.methodDeclList){
-	        	m.visit(this, null);
 	        	MemberDecl md = (MemberDecl)m;
 	        	if(!md.isStatic){
 	        		createEntity(m,method_no,Reg.CB);
@@ -274,6 +274,20 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	        	}
 	        }
 	        clas.numNonStaticMethods = method_no;	
+	    }
+	    
+	    public Object visitClassDecl(ClassDecl clas, Object obj){
+	
+	    	assignEntityToClassMembers(clas);
+	        for (int i= 0; i< clas.fieldDeclList.size(); i++){
+	        	FieldDecl f = clas.fieldDeclList.get(i);
+	        	f.visit(this, null);	
+	        }
+	        
+	        assignEntityToClassFunctions(clas);
+	        for (MethodDecl m: clas.methodDeclList){
+	        	m.visit(this, null);
+	        }
 	        return clas;
 	    }
 	    
@@ -285,6 +299,7 @@ public class CodeGenEntityCreator implements Visitor<Object,Object>{
 	    }
 	    
 	    public Object visitMethodDecl(MethodDecl m, Object obj){
+			displacement = 3;
 	    	ParameterDecl pd;
 	    	Statement s;
 	     	m.type.visit(this, false);
