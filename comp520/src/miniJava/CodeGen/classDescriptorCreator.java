@@ -18,7 +18,7 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 	
 	
 	private ArrayList<Integer> childVirtualFuncAddr;
-	private ArrayList<Integer> parentOverriddenFuncAddr;
+	private ArrayList<MethodDecl> parentOverriddenFuncDecl;
 	
 	
 	public classDescriptorCreator(){
@@ -26,7 +26,7 @@ import miniJava.AbstractSyntaxTrees.MethodDecl;
 		classDescPatcherClassName = new ArrayList<String>();
 		classDescPatcherClassAddr = new ArrayList<Integer>();
 		
-		parentOverriddenFuncAddr = new ArrayList<Integer>();
+		parentOverriddenFuncDecl = new ArrayList<MethodDecl>();
 		childVirtualFuncAddr = new ArrayList<Integer>();
 		
 		stackDisplacement =0;
@@ -82,7 +82,7 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 	
  }
  
- private void addToVirtualPatcher(ClassDecl cd,String funcName){
+ private void addToVirtualPatcher(ClassDecl cd,MethodDecl funcMd, int stackAddr){
 	 
 	 ClassDecl parentClassDecl ;
 	 MethodDecl md;
@@ -91,7 +91,16 @@ stackDisplacement = stackDisplacement + 2 +  cd.numNonStaticMethods;
 		 parentClassDecl = cd.parentClassDecl;
 		 
 		 for(int i =1;i<parentClassDecl.methodDeclList.size(); i++){
-			 md =
+			 md = parentClassDecl.methodDeclList.get(i);
+			 
+			 if(md.name.equals(funcMd.name)){
+				 
+				 
+				 childVirtualFuncAddr.add(stackAddr);
+				 
+				 
+			 }
+			 
 		 }
 		 
 	 }
