@@ -29,6 +29,5 @@ statement : added boolean variable isVarDecl, defaults to false
 4/22 akash: added string literal, added string typekind 
 4/28 akash: added string to tokenkind 
 4/29 akash: added boolean isBaseClass, string parentClassName to ClassDecl
-4/30 akash: added hashmap of parent classes to each classDecl
-
+4/30 rafay: added numNonStaticMethods andc classSize(number of nonstatic fields) to ClassDecl
 

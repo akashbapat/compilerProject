@@ -33,16 +33,6 @@ public class ClassDecl extends Declaration {
   public ClassDecl parentClassDecl;
   public int classSize;
   public int numNonStaticMethods;
- // private HashMap<String, Boolean> parentClassList;
-  
-  /*public void addParentClass(String s){
-	  parentClassList.put(s, true);
-  }
-  
-  public boolean isParentClass(String s){
-	  
- return parentClassList.get(s) ;
-  }
-  */
+ 
   
 }
