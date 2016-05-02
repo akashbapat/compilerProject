@@ -173,7 +173,10 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 		idTab.openScope();
 		for (ClassDecl c: prog.classDeclList){
 
-			c.type = new ClassType(new Identifier(new Token(TokenKind.ID, c.name)),c.posn   );
+			ClassType ctTemp = new ClassType(new Identifier(new Token(TokenKind.ID, c.name)),c.posn   );
+			
+			ctTemp.className.setDecl(c);
+			c.type =ctTemp;
 			int res = idTab.addDecl(c,idLevel.CLASS_LEVEL,idLevel.CLASS_LEVEL);
 			if(res != -1)
 			{
@@ -227,7 +230,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 	public idTable visitClassDecl(ClassDecl clas, idTable idTab){
 
 
-
+		
 		idTab.setCurrentClass(clas); //added to support calling of static functions from static functions in same class without using class name 
 		idTab.openScope();
 		VarDecl thisVarDecl ;
@@ -408,6 +411,8 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 		if(stmt.methodRef instanceof ThisRef || stmt.methodRef instanceof IndexedRef)	
 			identificationError(stmt.methodRef + "is not a valid method call");
+		
+		
 		ExprList al = stmt.argList;
 
 
@@ -688,6 +693,7 @@ public class ASTIdentification implements Visitor<idTable,idTable>{
 
 		ref.id.setDecl(d);
 		ref.setDecl(d);
+		
 
 
 		//if(ref.isQualifiedStaticAcess){

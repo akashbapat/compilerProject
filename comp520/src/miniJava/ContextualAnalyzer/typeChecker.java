@@ -979,7 +979,7 @@ public class typeChecker implements Visitor<Object,Type> {
 		Type idType =id.getDecl().type;
 		if(idType.typeKind == TypeKind.UNSUPPORTED)
 			typeCheckFatalError("Encountered UNSUPPORTED type for " + id + " of name " + id.spelling);
-		return id.getDecl().type;
+		return idType;
 	}
 
 	public Type visitOperator(Operator op, Object arg){
